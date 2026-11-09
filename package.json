@@ -1,0 +1,30 @@
+{
+  "name": "fig-and-fennel-fullstack",
+  "private": true,
+  "workspaces": [
+    "shared",
+    "server",
+    "mobile"
+  ],
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev:server": "npm run dev -w server",
+    "dev:mobile": "npm run start -w mobile",
+    "emulators": "npx --yes firebase-tools@15.34.0 emulators:start --only auth,firestore --project demo-fig",
+    "seed": "npm run seed -w server --",
+    "team:create": "npm run team:create -w server --",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "test:integration": "npm run test:integration -w server"
+  },
+  "allowScripts": {
+    "@firebase/util@1.15.3": true,
+    "esbuild@0.28.2": true,
+    "protobufjs@7.6.6": true
+  },
+  "dependencies": {},
+  "devDependencies": {}
+}

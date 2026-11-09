@@ -1,0 +1,42 @@
+node_modules/
+.expo/
+dist/
+web-build/
+expo-env.d.ts
+.kotlin/
+*.orig.*
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+.metro-health-check*
+npm-debug.*
+.DS_Store
+*.pem
+*.tsbuildinfo
+
+# Real keys live in .env files and never ship: copy .env.example to .env and fill it in.
+.env
+.env.*
+!.env.example
+
+# Generated native folders
+/mobile/ios
+/mobile/android
+
+# Firebase native config and service-account keys
+google-services.json
+GoogleService-Info.plist
+server/service-account*.json
+*firebase-adminsdk*.json
+# team logins made by `npm run team:create` (passwords)
+*.local.md
+
+# Firebase CLI
+.firebase/
+firebase-debug.log*
+firestore-debug.log*
+ui-debug.log*
+
+server/dist/

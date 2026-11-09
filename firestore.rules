@@ -1,0 +1,12 @@
+rules_version = '2';
+
+// Fig & Fennel — the app never reads or writes Firestore directly. Everything goes through the Fig API
+// (server/), which uses the Admin SDK (not subject to these rules), checks the caller's Firebase ID
+// token and role, prices orders from the live menu and keeps payments server-side. So: no client access.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
