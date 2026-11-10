@@ -1,0 +1,93 @@
+name: Build Tawseela Unsigned iOS IPA
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-ios:
+    runs-on: macos-15
+    timeout-minutes: 60
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Prepare Firebase configuration
+        working-directory: mobile
+        env:
+          IOS_FIREBASE_PLIST_BASE64: ${{ secrets.IOS_FIREBASE_PLIST_BASE64 }}
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+        run: |
+          test -n "$IOS_FIREBASE_PLIST_BASE64" || {
+            echo "Missing IOS_FIREBASE_PLIST_BASE64 secret"
+            exit 1
+          }
+
+          test -n "$GOOGLE_WEB_CLIENT_ID" || {
+            echo "Missing GOOGLE_WEB_CLIENT_ID secret"
+            exit 1
+          }
+
+          printf '%s' "$IOS_FIREBASE_PLIST_BASE64" | base64 --decode > GoogleService-Info.plist
+          plutil -lint GoogleService-Info.plist
+
+      - name: Generate iOS project and install Pods
+        working-directory: mobile
+        env:
+          GOOGLE_SERVICE_INFO_PLIST: ./GoogleService-Info.plist
+          GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
+        run: |
+          npx expo prebuild --platform ios --no-install
+          cd ios
+          pod install
+
+      - name: Verify Xcode workspace
+        working-directory: mobile
+        run: |
+          xcodebuild -version
+          xcodebuild -list -workspace ios/Tawseela.xcworkspace
+
+      - name: Build unsigned iOS archive
+        working-directory: mobile
+        run: |
+          xcodebuild \
+            -workspace ios/Tawseela.xcworkspace \
+            -scheme Tawseela \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$RUNNER_TEMP/Tawseela.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            archive
+
+      - name: Package unsigned IPA
+        run: |
+          mkdir -p "$RUNNER_TEMP/ipa/Payload"
+
+          cp -R "$RUNNER_TEMP/Tawseela.xcarchive/Products/Applications/Tawseela.app" \
+            "$RUNNER_TEMP/ipa/Payload/"
+
+          cd "$RUNNER_TEMP/ipa"
+          zip -r "$GITHUB_WORKSPACE/Tawseela-unsigned.ipa" Payload
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Tawseela-unsigned-IPA
+          path: Tawseela-unsigned.ipa
+          if-no-files-found: error
+          retention-days: 7
