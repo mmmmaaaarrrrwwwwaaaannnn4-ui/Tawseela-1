@@ -1,8 +1,18 @@
+run = "npm run dev:server"
 modules = ["nodejs-22"]
 [nix]
 channel = "stable-25_05"
 packages = ["unzip"]
 
 [[ports]]
-localPort = 8081
+localPort = 3000
 externalPort = 80
+
+[[ports]]
+localPort = 8081
+
+
+[deployment]
+build = "npm run build"
+run = "npm run start"
+deploymentTarget = "cloudrun"
