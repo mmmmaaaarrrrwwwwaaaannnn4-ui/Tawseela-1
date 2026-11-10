@@ -52,6 +52,7 @@ function firebaseExtra() {
     // the "web" OAuth client (type 3) — Google Sign-In uses it so the ID token is valid for Firebase Auth
     extra.googleWebClientId = client.oauth_client?.find((c) => c.client_type === 3)?.client_id;
   }
+  extra.googleWebClientId = process.env.GOOGLE_WEB_CLIENT_ID || extra.googleWebClientId;
   return extra;
 }
 
