@@ -49,7 +49,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Fig & Fennel uses your photos so the team can add pictures of dishes, kitchens and stories.",
+          "photosPermission": "Tawseela uses your photos so you can upload profile pictures and images for your orders.",
           "cameraPermission": false,
           "microphonePermission": false
         }

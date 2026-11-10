@@ -13,7 +13,7 @@ import { Txt } from '@/components/ui/txt';
 import { AUTH_IMAGES } from '@/data/images';
 import { useAuthExit, useFinishAuth } from '@/hooks/use-auth-nav';
 import { useStatusBar } from '@/hooks/use-status-bar';
-import { signInWithEmail, signInWithProvider } from '@/lib/account';
+import { signInWithEmail, signInWithProvider, startSession } from '@/lib/account';
 import type { OAuthProvider } from '@/lib/oauth';
 import { useApp } from '@/store/app-store';
 import { fixed } from '@/theme/tokens';
@@ -41,6 +41,11 @@ export default function LoginScreen() {
     setBusy(true);
     const r = await signInWithEmail(f.email, f.pw);
     setBusy(false);
+    if (r.ok && r.user.provider === 'password' && !r.user.emailVerified) {
+      startSession(r.user);
+      router.replace('/verify');
+      return;
+    }
     if (r.ok) finish(r.user, 'Welcome back', (name) => `Signed in as ${name}`);
     else toast('Couldn’t sign you in', r.message, 'error');
   };

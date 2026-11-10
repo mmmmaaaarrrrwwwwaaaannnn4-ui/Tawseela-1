@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { DarkTheme, DefaultTheme, Stack, ThemeProvider } from 'expo-router';
+import { DarkTheme, DefaultTheme, router, Stack, ThemeProvider, usePathname } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect, useMemo } from 'react';
@@ -66,6 +66,23 @@ function RootNavigator() {
   const signedIn = useSession(selectSignedIn);
   const staff = useSession(selectIsStaff);
   const admin = useSession(selectIsAdmin);
+  const pathname = usePathname();
+  const sessionReady = useSession((s) => s.ready);
+  const user = useSession((s) => s.user);
+
+  useEffect(() => {
+    const authRoutes = ['/login', '/register', '/forgot', '/verify'];
+    const requiresVerification =
+      user?.provider === 'password' && user.emailVerified !== true;
+
+    if (
+      sessionReady &&
+      requiresVerification &&
+      !authRoutes.includes(pathname)
+    ) {
+      router.replace('/verify');
+    }
+  }, [sessionReady, user?.uid, user?.provider, user?.emailVerified, pathname]);
 
   useEffect(() => {
     SystemUI.setBackgroundColorAsync(c.bg).catch(() => undefined);
