@@ -188,7 +188,7 @@ export const FulfilmentMode = z.enum(['delivery', 'pickup']);
 export type FulfilmentMode = z.infer<typeof FulfilmentMode>;
 
 /** Cash goes straight to the kitchen; online card orders are paid through Kashier Direct API. */
-export const PayMethod = z.enum(['cash', 'card', 'apple_pay', 'google_pay']);
+export const PayMethod = z.enum(['cash', 'card', 'apple_pay', 'google_pay', 'wallet']);
 export type PayMethod = z.infer<typeof PayMethod>;
 
 export const PayStatus = z.enum(['due', 'awaiting_payment', 'processing', 'paid', 'failed', 'canceled', 'refunded']);

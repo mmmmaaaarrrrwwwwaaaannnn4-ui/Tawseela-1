@@ -14,7 +14,7 @@ const webhookRoutes: FastifyPluginAsync = async (app) => {
       return reply.code(200).send();
     } catch (err: any) {
       req.log.warn({ err }, 'Kashier webhook rejected');
-      return reply.code(err?.status === 409 ? 409 : 400).send();
+      return reply.code(err?.status >= 500 ? 500 : 400).send();
     }
   });
 };

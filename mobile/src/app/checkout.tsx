@@ -51,19 +51,27 @@ function Checkout() {
   const [cardMonth, setCardMonth] = useState('');
   const [cardYear, setCardYear] = useState('');
   const [cardCvv, setCardCvv] = useState('');
+  const [walletPhone, setWalletPhone] = useState('');
   const set = useApp((st) => st.setCheckout);
 
   /** The server prices the order; card payments use Kashier Direct API with signed webhook settlement. */
   const pay = async () => {
     if (paying || !s.cart.length) return;
     const toast = useApp.getState().showToast;
-    if (s.payM !== 2 && (!cardNumber.trim() || !cardName.trim() || !cardMonth.trim() || !cardYear.trim() || !cardCvv.trim())) {
+    if (s.payM === 3 && !/^01[0125]\d{8}$/.test(walletPhone.replace(/[\s()-]/g, ''))) {
+      toast('رقم المحفظة غير صحيح', 'أدخل رقم محفظة مصريًا صحيحًا يبدأ بـ 010 أو 011 أو 012 أو 015.', 'error');
+      return;
+    }
+    if ((s.payM === 0 || s.payM === 1) && (!cardNumber.trim() || !cardName.trim() || !cardMonth.trim() || !cardYear.trim() || !cardCvv.trim())) {
       toast('بيانات البطاقة ناقصة', 'أكمل رقم البطاقة واسم حاملها وتاريخ الانتهاء ورمز الأمان.', 'error');
       return;
     }
     setPaying(true);
-    const r = await placeOrder(s.payM !== 2 ? { number: cardNumber, name: cardName, month: cardMonth, year: cardYear, cvv: cardCvv } : undefined);
-    setCardNumber(''); setCardName(''); setCardMonth(''); setCardYear(''); setCardCvv('');
+    const r = await placeOrder(
+      s.payM === 0 || s.payM === 1 ? { number: cardNumber, name: cardName, month: cardMonth, year: cardYear, cvv: cardCvv } : undefined,
+      s.payM === 3 ? walletPhone : undefined,
+    );
+    setCardNumber(''); setCardName(''); setCardMonth(''); setCardYear(''); setCardCvv(''); setWalletPhone('');
     setPaying(false);
     if (r.ok) router.replace('/success');
     else if (r.priceChanged) toast('Prices changed', `The menu was just updated — your new total is ${money(r.total ?? t.total)}`, 'sync');
@@ -71,9 +79,10 @@ function Checkout() {
     else toast('Order not placed', r.message, 'error');
   };
 
-  const pays: { t: string; s: string; icon: IconName }[] = [
-    { t: 'بطاقة بنكية عبر كاشير', s: 'Visa أو Mastercard أو Meeza مع تحقق 3D Secure', icon: 'credit_card' },
-    { t: 'الدفع عند الاستلام', s: s.mode === 'pickup' ? 'ادفع عند الاستلام من الفرع' : 'ادفع للمندوب عند وصول الطلب', icon: 'payments' },
+  const pays: { t: string; s: string; icon: IconName; value: number }[] = [
+    { t: 'بطاقة بنكية عبر كاشير', s: 'Visa أو Mastercard أو Meeza مع تحقق 3D Secure', icon: 'credit_card', value: 0 },
+    { t: 'محفظة موبايل', s: 'Vodafone Cash أو Orange Cash أو Etisalat Cash أو WE Pay', icon: 'payments', value: 3 },
+    { t: 'الدفع عند الاستلام', s: s.mode === 'pickup' ? 'ادفع عند الاستلام من الفرع' : 'ادفع للمندوب عند وصول الطلب', icon: 'payments', value: 2 },
   ];
   const sel = (on: boolean) => ({ borderColor: on ? c.accent : c.line, backgroundColor: on ? c.accentSoft : c.surface1 });
 
@@ -157,8 +166,8 @@ function Checkout() {
             Payment
           </Txt>
           <View style={{ gap: 8 }}>
-            {pays.map((o, i) => (
-              <PressableScale key={o.icon} onPress={() => set({ payM: i === 1 ? 2 : 0 })} scaleTo={0.98} style={[styles.pay, sel(s.payM === (i === 1 ? 2 : 0))]}>
+            {pays.map((o) => (
+              <PressableScale key={o.value} onPress={() => set({ payM: o.value })} scaleTo={0.98} style={[styles.pay, sel(s.payM === o.value || (o.value === 0 && s.payM === 1))]}>
                 <View style={[styles.payTile, { backgroundColor: c.surface2 }]}>
                   <Icon name={o.icon} size={21} />
                 </View>
@@ -170,13 +179,13 @@ function Checkout() {
                     {o.s}
                   </Txt>
                 </View>
-                <Radio on={s.payM === (i === 1 ? 2 : 0) || (i === 0 && s.payM === 1)} />
+                <Radio on={s.payM === o.value || (o.value === 0 && s.payM === 1)} />
               </PressableScale>
             ))}
           </View>
         </Reveal>
 
-        {s.payM !== 2 ? (
+        {(s.payM === 0 || s.payM === 1) ? (
           <Reveal i={3} style={{ gap: 12 }}>
             <Txt s={18} w={600}>بيانات البطاقة البنكية</Txt>
             <Card radius={20} style={{ padding: 16, gap: 10 }}>
@@ -188,6 +197,24 @@ function Checkout() {
                 <TextInput value={cardYear} onChangeText={(v) => setCardYear(v.replace(/\D/g, '').slice(0, 4))} placeholder="YY" keyboardType="number-pad" maxLength={4} style={[styles.note, { flex: 1, minHeight: 52, borderColor: c.line, backgroundColor: c.surface1, color: c.text1, fontFamily: family(500), textAlign: 'center' }]} />
                 <TextInput value={cardCvv} onChangeText={(v) => setCardCvv(v.replace(/\D/g, '').slice(0, 4))} placeholder="CVV" keyboardType="number-pad" secureTextEntry maxLength={4} autoComplete="cc-csc" style={[styles.note, { flex: 1, minHeight: 52, borderColor: c.line, backgroundColor: c.surface1, color: c.text1, fontFamily: family(500), textAlign: 'center' }]} />
               </View>
+            </Card>
+          </Reveal>
+        ) : s.payM === 3 ? (
+          <Reveal i={3} style={{ gap: 12 }}>
+            <Txt s={18} w={600}>رقم محفظة الموبايل</Txt>
+            <Card radius={20} style={{ padding: 16, gap: 10 }}>
+              <Txt s={12} color={c.text2}>أدخل رقم الهاتف المرتبط بمحفظتك. ستصلك رسالة طلب دفع على تطبيق المحفظة، ولن يتم تأكيد الطلب إلا بعد موافقتك والتحقق من Kashier.</Txt>
+              <TextInput
+                value={walletPhone}
+                onChangeText={(v) => setWalletPhone(v.replace(/[^0-9]/g, '').slice(0, 11))}
+                placeholder="01XXXXXXXXX"
+                keyboardType="phone-pad"
+                maxLength={11}
+                autoComplete="tel"
+                textContentType="telephoneNumber"
+                style={[styles.note, { minHeight: 52, borderColor: c.line, backgroundColor: c.surface1, color: c.text1, fontFamily: family(500), textAlign: 'left' }]}
+              />
+              <Txt s={12} color={c.text3}>المحافظ المدعومة: Vodafone Cash · Orange Cash · Etisalat Cash · WE Pay</Txt>
             </Card>
           </Reveal>
         ) : null}
@@ -233,8 +260,8 @@ function Checkout() {
         <AccentButton
           height={54}
           loading={paying}
-          loadingLabel={s.payM === 2 ? 'جارٍ تأكيد الطلب…' : 'جارٍ معالجة البطاقة…'}
-          label={s.payM === 2 ? `تأكيد الطلب · ${money(t.total)}` : `ادفع ${money(t.total)}`}
+          loadingLabel={s.payM === 2 ? 'جارٍ تأكيد الطلب…' : s.payM === 3 ? 'في انتظار موافقة المحفظة…' : 'جارٍ معالجة البطاقة…'}
+          label={s.payM === 2 ? `تأكيد الطلب · ${money(t.total)}` : s.payM === 3 ? `ادفع بالمحفظة · ${money(t.total)}` : `ادفع ${money(t.total)}`}
           icon="lock"
           iconFill
           onPress={() => void pay()}

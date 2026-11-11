@@ -162,7 +162,7 @@ async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInpu
   return { items, totals, promo, usedVouchers, store };
 }
 
-const DEFAULT_LABEL: Record<PayMethod, string> = { cash: 'Cash', card: 'Card', apple_pay: 'Apple Pay', google_pay: 'Google Pay' };
+const DEFAULT_LABEL: Record<PayMethod, string> = { cash: 'Cash', card: 'Card', apple_pay: 'Apple Pay', google_pay: 'Google Pay', wallet: 'Mobile Wallet' };
 
 export type CreatedOrder = { order: OrderT; replay: boolean };
 

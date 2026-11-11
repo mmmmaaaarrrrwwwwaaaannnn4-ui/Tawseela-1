@@ -1288,5 +1288,6 @@ export const WALLET = process.env.EXPO_OS === 'android' ? 'Google Pay' : 'Apple 
 export const payLabel = (s: AppStore, short = false): string => {
   if (s.payM === 0) return WALLET;
   if (s.payM === 2) return short ? 'Cash' : 'Cash on delivery';
+  if (s.payM === 3) return short ? 'Wallet' : 'Mobile Wallet';
   return short ? 'Card' : 'Credit or debit card';
 };

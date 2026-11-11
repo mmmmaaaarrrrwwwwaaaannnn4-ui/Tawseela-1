@@ -18,6 +18,7 @@ export const COL = {
   config: 'config',
   meta: 'meta',
   idempotency: 'idempotency',
+  paymentAttempts: 'paymentAttempts',
 } as const;
 
 /** `{ sections: HomeSection[], deal: Deal }` — the Home layout and the deal of the day. */

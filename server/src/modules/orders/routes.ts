@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { AppError } from '../../lib/errors';
 import { requireUser } from '../../plugins/auth';
-import { createKashierDirectIntent, requireKashier, verifyKashierSession } from '../payments/kashier';
+import { createKashierDirectIntent, initiateKashierWallet, reconcileKashierWallet, requireKashier, verifyKashierSession } from '../payments/kashier';
 import { cancelUnpaid, createOrder, getOrderFor, inKitchen, listOrders, rateOrder, reportIssue } from './service';
 
 const secured = { security: [{ firebase: [] }] };
@@ -44,6 +44,29 @@ const orderRoutes: FastifyPluginAsyncZod = async (app) => {
       const { order } = await createOrder(db, user, req.body, { now: now(), idempotencyKey: req.headers['idempotency-key'], live: live() });
       const payment = null; // Direct API intent is issued separately after the order is created.
       return reply.code(201).send({ order, payment });
+    },
+  );
+
+  app.post(
+    '/orders/:id/payment/wallet/initiate',
+    {
+      config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+      schema: {
+        tags: ['payments'],
+        summary: 'Initiate an Egyptian mobile wallet R2P payment',
+        ...secured,
+        params: idParam,
+        body: z.object({ walletPhone: z.string().min(10).max(20) }),
+        response: { 200: z.object({ status: z.literal('PENDING') }), ...errors },
+      },
+    },
+    async (req) => {
+      const user = requireUser(req);
+      const order = await getOrderFor(db, user, req.params.id);
+      if (order.payment.method !== 'wallet' || order.stage === 'cancelled' || order.payment.status === 'paid') {
+        throw new AppError(409, 'payment_not_available', 'This order is not awaiting wallet payment.');
+      }
+      return initiateKashierWallet(config, db, order.id, user.uid, req.body.walletPhone, now());
     },
   );
 
@@ -115,7 +138,11 @@ const orderRoutes: FastifyPluginAsyncZod = async (app) => {
       const order = await getOrderFor(db, user, req.params.id);
       if (order.payment.method === 'cash') return order;
       const storedOrder = await db.collection('orders').doc(order.id).get();
-      if (storedOrder.get('payment.kashierSessionId')) await verifyKashierSession(config, db, order.id, now());
+      if (order.payment.method === 'wallet') {
+        await reconcileKashierWallet(config, db, order.id, user.uid, now());
+      } else if (storedOrder.get('payment.kashierSessionId')) {
+        await verifyKashierSession(config, db, order.id, now());
+      }
       return getOrderFor(db, user, order.id);
     },
   );

@@ -13,9 +13,9 @@ import { syncCatalog, syncMe } from './sync';
  * an Idempotency-Key, so a dropped connection can be retried without placing a second order.
  */
 
-/** payM → the API's payment method: card or cash. */
+/** payM → the API payment method. */
 export const methodOf = (payM: number): PayMethod =>
-  payM === 2 ? 'cash' : 'card';
+  payM === 2 ? 'cash' : payM === 3 ? 'wallet' : 'card';
 
 /** What the server needs to price and place the cart. */
 export function buildOrderRequest(): CreateOrder {
@@ -40,7 +40,7 @@ export function buildOrderRequest(): CreateOrder {
     note: s.note.trim(),
     promo: s.promo?.code ?? null,
     method,
-    payLabel: method === 'cash' ? 'Cash' : method === 'card' ? 'Card' : WALLET,
+    payLabel: method === 'cash' ? 'Cash' : method === 'wallet' ? 'Mobile Wallet' : WALLET,
     useCredit: false,
     expectedTotal: round2(s.totals().total),
   };
@@ -59,7 +59,7 @@ let last: { sig: string; key: string } | null = null;
  */
 export type CardDetails = { number: string; name: string; month: string; year: string; cvv: string };
 
-export async function placeOrder(card?: CardDetails): Promise<CheckoutResult> {
+export async function placeOrder(card?: CardDetails, walletPhone?: string): Promise<CheckoutResult> {
   const req = buildOrderRequest();
   if (!req.items.length) return { ok: false, message: 'Your cart is empty.' };
   // the same key while the request is unchanged: a retry returns the same order
@@ -91,6 +91,40 @@ export async function placeOrder(card?: CardDetails): Promise<CheckoutResult> {
 
   const { order } = result;
   if (order.payment.method === 'cash') return done(order);
+
+  if (order.payment.method === 'wallet') {
+    const phone = String(walletPhone || '').replace(/[\\s()-]/g, '');
+    if (!/^01[0125]\\d{8}$/.test(phone)) {
+      return { ok: false, message: 'أدخل رقم محفظة مصري صحيح مكوّن من 11 رقمًا.' };
+    }
+
+    try {
+      await request<{ status: 'PENDING' }>(
+        `/v1/orders/${encodeURIComponent(order.id)}/payment/wallet/initiate`,
+        { method: 'POST', body: { walletPhone: phone }, timeoutMs: 25_000 },
+      );
+
+      for (let i = 0; i < 45; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 2000));
+        const current = await api.post<Order>(
+          `/v1/orders/${encodeURIComponent(order.id)}/payment/sync`,
+        ).catch(() => null);
+
+        if (current?.payment.status === 'paid') return done(current);
+        if (current?.payment.status === 'failed') {
+          return { ok: false, message: 'لم تتم الموافقة على طلب الدفع من المحفظة. يمكنك المحاولة مرة أخرى.' };
+        }
+      }
+
+      return {
+        ok: false,
+        message: 'تم إرسال طلب الدفع إلى المحفظة، لكن لم يصل التأكيد بعد. افتح تطبيق المحفظة وراجع طلب الدفع قبل إعادة المحاولة.',
+      };
+    } catch (e) {
+      return { ok: false, message: errorMessage(e, 'تعذر إرسال طلب الدفع إلى المحفظة.') };
+    }
+  }
+
   if (!card) return { ok: false, message: 'أدخل بيانات البطاقة لإتمام الدفع.' };
 
   try {
