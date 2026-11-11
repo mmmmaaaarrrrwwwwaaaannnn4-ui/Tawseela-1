@@ -78,7 +78,7 @@ export default function VerifyScreen() {
       return;
     }
     const name = refreshed.name.split(' ')[0];
-    finish(refreshed, 'Email verified', `Welcome to Fig & Fennel, ${name}`);
+    finish(refreshed, 'Email verified', `Welcome to Tawseela, ${name}`);
   };
 
   const again = async () => {
