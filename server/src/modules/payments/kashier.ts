@@ -72,7 +72,7 @@ export async function createKashierDirectIntent(config: any, order: Order) {
     currency,
     customerReference: order.uid,
     webhookUrl: `${base}/v1/webhooks/kashier`,
-    merchantRedirect: `${base}/v1/payments/kashier/return?orderId=${encodeURIComponent(order.id)}`,
+    merchantRedirect: encodeURIComponent(`${base}/v1/payments/kashier/return?orderId=${encodeURIComponent(order.id)}`),
   };
 }
 
