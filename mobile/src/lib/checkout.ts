@@ -117,6 +117,16 @@ export async function placeOrder(card?: CardDetails): Promise<CheckoutResult> {
       }),
     });
     const gateway: any = await paymentResponse.json().catch(() => ({}));
+
+    console.log('[Kashier diagnostic]', {
+      httpStatus: paymentResponse.status,
+      httpOk: paymentResponse.ok,
+      status: gateway?.status,
+      responseStatus: gateway?.response?.status,
+      code: gateway?.code ?? gateway?.response?.code,
+      messages: gateway?.messages,
+      responseMessage: gateway?.response?.message,
+    });
     if (!paymentResponse.ok || gateway?.status === 'FAILURE' || gateway?.response?.status === 'FAILURE') {
       last = null;
       return { ok: false, message: gateway?.messages?.ar || gateway?.messages?.en || 'لم يقبل كاشير عملية الدفع. راجع بيانات البطاقة وحاول مرة أخرى.' };
