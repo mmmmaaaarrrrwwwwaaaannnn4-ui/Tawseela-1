@@ -51,6 +51,7 @@ function firebaseExtra() {
 
 module.exports = ({ config }) => {
   const { extra: firebase, iosReversedClientId } = firebaseExtra();
+  const { googleWebClientId, ...firebaseOptions } = firebase;
   const plugins = (config.plugins ?? []).map((plugin) => {
     const name = Array.isArray(plugin) ? plugin[0] : plugin;
     if (name !== '@react-native-google-signin/google-signin') return plugin;
@@ -62,6 +63,6 @@ module.exports = ({ config }) => {
     plugins,
     ios: { ...config.ios, ...(exists(IOS_FILE) ? { googleServicesFile: IOS_FILE } : {}) },
     android: { ...config.android, ...(exists(ANDROID_FILE) ? { googleServicesFile: ANDROID_FILE } : {}) },
-    extra: { ...config.extra, firebase },
+    extra: { ...config.extra, firebase: firebaseOptions, googleWebClientId },
   };
 };
