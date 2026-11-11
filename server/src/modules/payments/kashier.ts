@@ -144,7 +144,7 @@ export async function applyKashierWebhook(config: any, db: Firestore, payload: a
   const status = String(data.status).toUpperCase();
   if (status === 'SUCCESS') await applyPaid(db, orderId, now, String(data.transactionId ?? ''));
   else if (['FAILURE', 'FAILED'].includes(status)) await ref.update({ 'payment.status': 'failed', updatedAt: FieldValue.serverTimestamp() });
-  else if (status === 'PENDING') await ref.update({ 'payment.status': 'processing', updatedAt: FieldValue.serverTimestamp() });
+  // PENDING is not proof of payment; keep the order awaiting_payment.
 }
 
 /** Kashier refunds are deliberately not auto-marked as refunded here; use the Kashier dashboard until a refund API workflow is configured. */

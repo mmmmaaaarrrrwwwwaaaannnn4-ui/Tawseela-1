@@ -73,7 +73,7 @@ export const safeOrder = (snap: DocumentSnapshot): OrderT[] => {
 };
 
 /** Paid, or cash: the order is real and the restaurant works on it. Unpaid card checkouts are not. */
-export const inKitchen = (o: Pick<OrderT, 'payment'>) => ['due', 'paid', 'processing', 'refunded'].includes(o.payment.status);
+export const inKitchen = (o: Pick<OrderT, 'payment'>) => ['due', 'paid'].includes(o.payment.status);
 
 export type Actor = { uid: string; name: string; role: Role };
 export const event = (stage: OrderStage, at: number, by: Actor | null, note?: string): OrderEvent => ({

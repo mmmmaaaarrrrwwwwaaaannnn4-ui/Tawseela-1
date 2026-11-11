@@ -1270,7 +1270,7 @@ export const selectLiveMenu = (s: AppStore): Dish[] => {
 };
 
 /** The console's orders: paid, cash or being paid — never an abandoned card checkout. */
-export const selectBoard = (s: AppStore): Order[] => s.orders.filter((o) => ['due', 'paid', 'processing', 'refunded'].includes(o.payment.status));
+export const selectBoard = (s: AppStore): Order[] => s.orders.filter((o) => ['due', 'paid'].includes(o.payment.status));
 
 /** The signed-in customer's own orders (the console also loads everyone else's). */
 export const selectMyOrders = (s: AppStore): Order[] => {

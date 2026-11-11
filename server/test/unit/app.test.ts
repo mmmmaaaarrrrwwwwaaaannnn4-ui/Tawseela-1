@@ -129,7 +129,7 @@ describe('http', () => {
     const res = await app.inject({ method: 'GET', url: '/docs/json' });
     expect(res.statusCode).toBe(200);
     const spec = res.json();
-    expect(spec.info.title).toBe('Fig & Fennel API');
+    expect(spec.info.title).toBe('Tawseela API');
     for (const path of ['/v1/catalog', '/v1/orders', '/v1/ops/orders/{id}/advance', '/v1/admin/orders/{id}/fire', '/v1/admin/users/{uid}', '/v1/posts/{id}/like']) {
       expect(spec.paths).toHaveProperty([path]);
     }

@@ -190,7 +190,7 @@ export async function syncAccount(): Promise<void> {
 /* ------------------------------------------------------------------ restaurant console */
 
 /** An order the kitchen should see: paid, cash, or being paid — not an abandoned card checkout. */
-export const inKitchen = (o: Pick<Order, 'payment'>) => ['due', 'paid', 'processing', 'refunded'].includes(o.payment.status);
+export const inKitchen = (o: Pick<Order, 'payment'>) => ['due', 'paid'].includes(o.payment.status);
 
 /** The live board: every order and today's reservations onwards. Returns new tickets. */
 export async function syncAdminLive(): Promise<Order[]> {
