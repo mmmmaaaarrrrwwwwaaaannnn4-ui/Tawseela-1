@@ -63,6 +63,6 @@ module.exports = ({ config }) => {
     plugins,
     ios: { ...config.ios, ...(exists(IOS_FILE) ? { googleServicesFile: IOS_FILE } : {}) },
     android: { ...config.android, ...(exists(ANDROID_FILE) ? { googleServicesFile: ANDROID_FILE } : {}) },
-    extra: { ...config.extra, firebase: firebaseOptions, googleWebClientId },
+    extra: { ...config.extra, firebase: { ...firebaseOptions, googleWebClientId }, googleWebClientId },
   };
 };
