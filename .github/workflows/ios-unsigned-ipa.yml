@@ -12,6 +12,7 @@ jobs:
     timeout-minutes: 60
     env:
       EXPO_PUBLIC_API_URL: https://tawseela-ap-pzip-1--marwankomanda0.replit.app
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
 
     steps:
       - name: Checkout repository
