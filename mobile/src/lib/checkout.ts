@@ -93,8 +93,8 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string): Prom
   if (order.payment.method === 'cash') return done(order);
 
   if (order.payment.method === 'wallet') {
-    const phone = String(walletPhone || '').replace(/[\\s()-]/g, '');
-    if (!/^01[0125]\\d{8}$/.test(phone)) {
+    const phone = String(walletPhone || '').replace(/[\s()-]/g, '');
+    if (!/^01[0125]\d{8}$/.test(phone)) {
       return { ok: false, message: 'أدخل رقم محفظة مصري صحيح مكوّن من 11 رقمًا.' };
     }
 
