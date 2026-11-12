@@ -40,4 +40,7 @@ export const firebaseConfigured = !!firebaseOptions?.apiKey;
 export const nativeFirebaseConfig = !!registered?.apiKey;
 
 /** Google's "web" OAuth client, which makes Google Sign-In ID tokens valid for Firebase Auth. */
-export const googleWebClientId = extra.googleWebClientId ?? Constants.expoConfig?.extra?.googleWebClientId;
+export const googleWebClientId =
+  extra.googleWebClientId ??
+  Constants.expoConfig?.extra?.googleWebClientId ??
+  process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID;
