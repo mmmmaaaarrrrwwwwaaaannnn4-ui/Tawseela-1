@@ -1,7 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { GlassContainer, GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import { Icon, type IconName } from '@/components/icons/icon';
@@ -36,7 +36,7 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
   const [w, setW] = useState(0);
   const x = useSharedValue(0);
   const seg = w / items.length;
-  const nativeGlassAvailable = isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
+  const nativeGlassAvailable = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
   useEffect(() => {
     if (seg) x.set(withSpring(index * seg, { damping: 14, stiffness: 170, mass: 0.8 }));
