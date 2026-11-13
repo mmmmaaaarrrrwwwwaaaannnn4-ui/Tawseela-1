@@ -1,5 +1,15 @@
 /** Arabic UI labels used by the shared text component. Unknown/server-provided content is preserved. */
 const AR: Record<string, string> = {
+  'Tawseela':'توصيلة', 'Fig & Fennel':'توصيلة', 'SoHo':'', 'Good morning':'صباح الخير', 'Good afternoon':'مساء الخير',
+  'Search':'بحث', 'Search history cleared':'تم مسح سجل البحث', 'Your recent searches are gone':'تم حذف عمليات البحث الأخيرة',
+  'Order updates':'تحديثات الطلبات', 'New journal stories':'مقالات جديدة', 'Recipes and kitchen news':'وصفات وأخبار المطبخ',
+  'Live status from kitchen to door':'تابع حالة طلبك من التجهيز حتى التوصيل', 'Weekly codes and limited dishes':'أكواد خصم وعروض لفترة محدودة',
+  'Text me when my courier is close':'أرسل لي رسالة عند اقتراب المندوب', 'Faster address detection at checkout':'تحديد العنوان بشكل أسرع عند إتمام الطلب',
+  'Recommendations based on your orders':'اقتراحات بناءً على طلباتك', 'Warm dark theme, easier on the eyes at night':'مظهر داكن مريح للعين أثناء الليل',
+  'Payment methods':'طرق الدفع', 'Book a table for tonight':'احجز طلبك الآن', 'All caught up':'لا توجد إشعارات جديدة',
+  'Sign in to order and track deliveries':'سجّل الدخول لطلب احتياجاتك ومتابعة التوصيل', 'Name, email, phone':'الاسم والبريد الإلكتروني ورقم الهاتف',
+  'Language, notifications, privacy':'اللغة والإشعارات والخصوصية', 'Orders, refunds, contact us':'الطلبات والاسترداد والتواصل معنا',
+  'Tawseela Rewards':'مكافآت توصيلة', 'Fig Club':'مكافآت توصيلة', 'The Fig Journal':'مجلة توصيلة',
   'Home':'الرئيسية','Menu':'القائمة','Saved':'المفضلة','Cart':'السلة','Profile':'حسابي',
   'Dashboard':'لوحة التحكم','Orders':'الطلبات','Kitchen':'المطبخ','More':'المزيد',
   'Sign in':'تسجيل الدخول','Sign in to Tawseela':'تسجيل الدخول إلى توصيلة','Sign in to place your order':'سجّل الدخول لإتمام طلبك',
