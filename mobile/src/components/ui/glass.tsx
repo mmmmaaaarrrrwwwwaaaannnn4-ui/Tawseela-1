@@ -1,4 +1,4 @@
-import { GlassView } from 'expo-glass-effect';
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
@@ -31,7 +31,9 @@ export function Glass({ variant = 'strong', style, children, pointerEvents }: Pr
     borderBottomRightRadius: flat.borderBottomRightRadius,
   };
 
-  if (Platform.OS === 'ios') {
+  const nativeGlassAvailable = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
+
+  if (nativeGlassAvailable) {
     return (
       <View pointerEvents={pointerEvents} style={[{ overflow: 'hidden' }, style]}>
         <GlassView
@@ -42,7 +44,6 @@ export function Glass({ variant = 'strong', style, children, pointerEvents }: Pr
           tintColor={tint}
           style={[StyleSheet.absoluteFill, radius]}
         />
-        <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, radius, { backgroundColor: tint, opacity: 0.22 }]} />
         {children}
       </View>
     );
