@@ -1,6 +1,7 @@
 import { Platform, Text, type TextProps, type TextStyle } from 'react-native';
 
 import { useTheme } from '@/theme/theme';
+import { arText } from '@/lib/ar';
 import { family, type Weight } from '@/theme/typography';
 
 export interface TxtProps extends TextProps {
@@ -20,7 +21,7 @@ export interface TxtProps extends TextProps {
 }
 
 /** Outfit text with the design's `font: <w> <s>px/<lh>` shorthand semantics. */
-export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, strike, style, ...rest }: TxtProps) {
+export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, strike, style, children, ...rest }: TxtProps) {
   const { c } = useTheme();
   const t: TextStyle = {
     fontFamily: family(w),
@@ -28,11 +29,12 @@ export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, str
     color: color ?? c.text1,
     ...(lh ? { lineHeight: Math.round(s * Math.max(lh, 1.08)) } : null),
     ...(ls ? { letterSpacing: ls * s } : null),
-    ...(align ? { textAlign: align } : null),
+    textAlign: align ?? 'right',
+    writingDirection: 'rtl',
     ...(upper ? { textTransform: 'uppercase' as const } : null),
     ...(tabular ? { fontVariant: ['tabular-nums' as const] } : null),
     ...(strike ? { textDecorationLine: 'line-through' as const } : null),
     ...(Platform.OS === 'android' ? { includeFontPadding: false } : null),
   };
-  return <Text allowFontScaling={false} {...rest} style={[t, style]} />;
+  return <Text allowFontScaling={false} {...rest} style={[t, style]}>{typeof children === 'string' ? arText(children) : children}</Text>;
 }
