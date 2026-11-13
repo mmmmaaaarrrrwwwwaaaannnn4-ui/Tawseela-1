@@ -1,5 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassView } from 'expo-glass-effect';
+import { GlassContainer, GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -36,6 +36,7 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
   const [w, setW] = useState(0);
   const x = useSharedValue(0);
   const seg = w / items.length;
+  const nativeGlassAvailable = isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
   useEffect(() => {
     if (seg) x.set(withSpring(index * seg, { damping: 14, stiffness: 170, mass: 0.8 }));
@@ -53,7 +54,9 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: floatBottom }]}>
       <View style={styles.shadow}>
-        <Glass variant="nav" intensity={isDark ? 50 : 70} style={[styles.bar, { borderColor: c.glassLine }]}>
+        {nativeGlassAvailable ? (
+          <GlassContainer spacing={12}>
+            <Glass variant="nav" intensity={isDark ? 50 : 70} style={[styles.bar, { borderColor: c.glassLine }]}>
           <LinearGradient
             pointerEvents="none"
             colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.04)']}
@@ -66,7 +69,6 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
               <Animated.View style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, width: seg }, pill]}>
                 <View style={[styles.pill, { left: pillInset, right: pillInset, borderTopColor: c.navPillHi, overflow: 'hidden' }]}>
                   <GlassView pointerEvents="none" glassEffectStyle="regular" isInteractive colorScheme={isDark ? 'dark' : 'light'} tintColor={c.accent} style={StyleSheet.absoluteFill} />
-                  <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: c.navPill, opacity: 0.5, borderRadius: 26 }]} />
                 </View>
               </Animated.View>
             ) : null}
@@ -76,7 +78,17 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
               <TabButton key={t.key} item={t} active={i === index} onPress={() => onPress(i)} bump={bump} />
             ))}
           </View>
-        </Glass>
+            </Glass>
+          </GlassContainer>
+        ) : (
+          <Glass variant="nav" intensity={isDark ? 50 : 70} style={[styles.bar, { borderColor: c.glassLine }]}>
+            <View style={styles.row}>
+              {items.map((item, i) => (
+                <TabButton key={item.key} item={item} active={i === index} onPress={() => onPress(i)} bump={bump} />
+              ))}
+            </View>
+          </Glass>
+        )}
       </View>
     </View>
   );
