@@ -71,7 +71,6 @@ const AR: Record<string, string> = {
   "Preparing": "جارٍ التجهيز",
   "On the way": "في الطريق",
   "Delivered": "تم التوصيل",
-  "Tawseela": "توصيلة",
   "Fig & Fennel": "توصيلة",
   "SoHo": "",
   "Good morning": "صباح الخير",
