@@ -37,7 +37,7 @@ export interface Palette {
 }
 
 export const light: Palette = {
-  bg: '#F8F8F6',
+  bg: '#FAFAFA',
   surface1: '#FFFFFF',
   surface2: '#F1F1EE',
   line: 'rgba(26,26,26,0.08)',
@@ -48,7 +48,7 @@ export const light: Palette = {
   navGlass: 'rgba(255,255,255,0.46)',
   navHi: 'rgba(255,255,255,0.95)',
   navLo: 'rgba(26,26,26,0.08)',
-  navPill: 'rgba(255,212,0,0.18)',
+  navPill: 'rgba(255,240,0,0.18)',
   navPillHi: 'rgba(255,255,255,0.75)',
   text1: '#1A1A1A',
   text2: '#55575B',
@@ -58,29 +58,29 @@ export const light: Palette = {
   warn: '#A86A12',
   err: '#C93434',
   info: '#2563B8',
-  accent: '#FFD400',
+  accent: '#FFF000',
   accentInk: '#111111',
-  accentText: '#8A6B00',
-  accentSoft: 'rgba(255,212,0,0.18)',
+  accentText: '#665F00',
+  accentSoft: 'rgba(255,240,0,0.18)',
   glassSolid: 'rgba(255,253,250,0.96)',
   navSolid: 'rgba(255,255,255,0.94)',
 };
 
 export const dark: Palette = {
-  bg: '#141210',
-  surface1: '#1E1B18',
-  surface2: '#2A2622',
+  bg: '#090909',
+  surface1: '#151515',
+  surface2: '#202020',
   line: 'rgba(255,255,255,0.08)',
   lineStrong: 'rgba(255,255,255,0.16)',
-  glass: 'rgba(30,27,24,0.58)',
-  glassStrong: 'rgba(22,20,18,0.82)',
+  glass: 'rgba(21,21,21,0.58)',
+  glassStrong: 'rgba(12,12,12,0.88)',
   glassLine: 'rgba(255,255,255,0.12)',
-  navGlass: 'rgba(42,38,34,0.42)',
+  navGlass: 'rgba(32,32,32,0.42)',
   navHi: 'rgba(255,255,255,0.22)',
   navLo: 'rgba(0,0,0,0.35)',
   navPill: 'rgba(255,255,255,0.12)',
   navPillHi: 'rgba(255,255,255,0.2)',
-  text1: '#F8F8F6',
+  text1: '#FAFAFA',
   text2: '#B5ACA1',
   text3: '#8F867B',
   scrim: 'rgba(0,0,0,0.55)',
@@ -88,24 +88,24 @@ export const dark: Palette = {
   warn: '#F5B93A',
   err: '#FF6B6B',
   info: '#62A8FF',
-  accent: '#FFD400',
+  accent: '#FFF000',
   accentInk: '#111111',
-  accentText: '#FFE45C',
-  accentSoft: 'rgba(255,212,0,0.18)',
+  accentText: '#FFF45A',
+  accentSoft: 'rgba(255,240,0,0.18)',
   glassSolid: 'rgba(30,27,24,0.97)',
   navSolid: 'rgba(42,38,34,0.95)',
 };
 
 /** Theme-independent colours used literally in the design. */
 export const fixed = {
-  ink: '#1C1C1C',
-  paper: '#F8F8F6',
-  orange: '#FFD400',
-  peach: '#FFE45C',
+  ink: '#080808',
+  paper: '#FAFAFA',
+  orange: '#FFF000',
+  peach: '#FFF9A6',
   star: '#F5A524',
   white: '#FFFFFF',
   black: '#000000',
-  splashBg: '#FFFBE6',
+  splashBg: '#FFFDE0',
   leaf: '#6FA83A',
   coffee: '#4A2E1E',
   inputFill: '#F3F3F0',
@@ -115,8 +115,8 @@ export const fixed = {
   whiteA: (a: number) => `rgba(255,255,255,${a})`,
 } as const;
 
-/** `linear-gradient(180deg,#FFE600 0%,#FFC400 100%)` */
-export const accentGradient = ['#FFE600', '#FFC400'] as const;
+/** `linear-gradient(180deg,#FFF000 0%,#FFD900 100%)` */
+export const accentGradient = ['#FFF000', '#FFD900'] as const;
 
 /** Mimics `color-mix(in oklch, <hex> N%, transparent)` for the solid hex tokens. */
 export function alpha(color: string, a: number): string {
