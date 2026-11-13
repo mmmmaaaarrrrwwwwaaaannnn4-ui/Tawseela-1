@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { GlassView } from 'expo-glass-effect';
 import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -63,7 +64,10 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
           <View style={StyleSheet.absoluteFill} onLayout={onLayout} pointerEvents="none">
             {seg ? (
               <Animated.View style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, width: seg }, pill]}>
-                <View style={[styles.pill, { left: pillInset, right: pillInset, backgroundColor: c.navPill, borderTopColor: c.navPillHi }]} />
+                <View style={[styles.pill, { left: pillInset, right: pillInset, borderTopColor: c.navPillHi, overflow: 'hidden' }]}>
+                  <GlassView pointerEvents="none" glassEffectStyle="regular" isInteractive colorScheme={isDark ? 'dark' : 'light'} tintColor={c.accent} style={StyleSheet.absoluteFill} />
+                  <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: c.navPill, opacity: 0.5, borderRadius: 26 }]} />
+                </View>
               </Animated.View>
             ) : null}
           </View>
@@ -122,9 +126,9 @@ const styles = StyleSheet.create({
   shadow: {
     borderRadius: 33,
     shadowColor: '#1A1A1A',
-    shadowOpacity: 0.2,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 22 },
+    shadowOpacity: 0.16,
+    shadowRadius: 26,
+    shadowOffset: { width: 0, height: 14 },
     elevation: 14,
   },
   bar: { height: 66, borderRadius: 33, borderWidth: 1 },
