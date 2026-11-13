@@ -13,7 +13,7 @@ const TAB_RED = '#E50920';
 const MAIN_TABS = [
   { key: 'home', label: 'الرئيسية', route: '/home', icon: 'home' as const, activeIcon: 'home' as const },
   { key: 'payments', label: 'إضافة فيزا', route: '/(tabs)/payments', icon: 'credit_card' as const, activeIcon: 'credit_card' as const },
-  { key: 'saved', label: 'المفضلة', route: '/saved', icon: 'favorite' as const, activeIcon: 'favorite' as const },
+  { key: 'menu', label: 'القائمة', route: '/menu', icon: 'list' as const, activeIcon: 'list' as const },
   { key: 'profile', label: 'حسابي', route: '/profile', icon: 'person' as const, activeIcon: 'person' as const },
 ];
 
