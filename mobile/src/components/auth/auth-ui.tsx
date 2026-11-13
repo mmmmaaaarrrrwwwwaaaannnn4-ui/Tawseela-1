@@ -94,7 +94,7 @@ export function Field({ icon, height = 52, radius = 20, tone = 'soft', error, ri
             borderColor: border,
             borderWidth: tone === 'soft' ? 1.5 : 1,
             color: c.text1,
-            fontFamily: family(500),
+            fontFamily: typeof rest.placeholder === 'string' && /[\u0600-\u06FF]/.test(rest.placeholder) ? undefined : family(500),
             paddingLeft: tone === 'soft' ? 50 : 48,
             paddingRight: right ? 64 : 16,
           },
@@ -155,7 +155,7 @@ export function AuthCta({
     >
       <LinearGradient colors={accentGradient} style={[StyleSheet.absoluteFill, { borderRadius: height / 2 }]} />
       {busy ? <Spinner /> : null}
-      <Txt s={16} w={weight} color="#FFFFFF">
+      <Txt s={16} w={weight} color="#111111">
         {busy ? busyLabel : label}
       </Txt>
     </PressableScale>
