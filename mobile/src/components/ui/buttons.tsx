@@ -231,7 +231,7 @@ export function LinkButton({
 
 const styles = StyleSheet.create({
   content: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  glow: { backgroundColor: '#FF7A1A', shadowColor: '#FF7A1A', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 12 }, elevation: 8 },
+  glow: { backgroundColor: '#FFD400', shadowColor: '#FF7A1A', shadowOpacity: 0.3, shadowRadius: 15, shadowOffset: { width: 0, height: 12 }, elevation: 8 },
   outline: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, borderWidth: 1 },
   ink: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, paddingHorizontal: 18 },
 });
