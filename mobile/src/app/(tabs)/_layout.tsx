@@ -20,10 +20,10 @@ export default function TabsLayout() {
     <View style={styles.root}>
       <NativeTabs tintColor={TAB_RED} iconColor={{ default: TAB_RED, selected: TAB_RED }}
         labelStyle={{ color: TAB_RED }} minimizeBehavior="never">
-        {/* Native order is left-to-right: My account, Favorites, Add card, Main menu. */}
+        {/* Visual order from right to left: Menu, Add card, Favorites, Account. */}
         <NativeTabs.Trigger name="profile">
-          <NativeTabs.Trigger.Label>المفضلة</NativeTabs.Trigger.Label>
-          <NativeTabs.Trigger.Icon sf={{ default: 'heart', selected: 'heart.fill' }} md="favorite" />
+          <NativeTabs.Trigger.Label>حسابي</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} md="account_circle" />
         </NativeTabs.Trigger>
         <NativeTabs.Trigger name="saved">
           <NativeTabs.Trigger.Label>المفضلة</NativeTabs.Trigger.Label>
@@ -39,11 +39,9 @@ export default function TabsLayout() {
         </NativeTabs.Trigger>
       </NativeTabs>
 
-      {/* The cart is an independent Liquid Glass control, aligned to the native tab bar height. */}
       <View pointerEvents="box-none" style={styles.cartDock}>
         <PressableScale onPress={() => router.navigate('/cart')} scaleTo={0.94}
-          accessibilityRole="tab" accessibilityLabel="سلة المشتريات"
-          style={styles.cartHit}>
+          accessibilityRole="tab" accessibilityLabel="سلة المشتريات" style={styles.cartHit}>
           {glassAvailable ? (
             <GlassView glassEffectStyle="clear" isInteractive colorScheme={isDark ? 'dark' : 'light'} style={styles.cartGlass}>
               <CartContent count={cartCount} color={c.accent} text={c.text1} />
