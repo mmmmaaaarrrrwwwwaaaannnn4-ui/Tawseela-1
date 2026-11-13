@@ -1,44 +1,60 @@
-import { Tabs, type BottomTabBarProps } from 'expo-router/js-tabs';
+import { NativeTabs } from 'expo-router/native-tabs';
 
-import { GlassTabBar, type TabItem } from '@/components/glass-tab-bar';
 import { selectCartCount, useApp } from '@/store/app-store';
-import { useTheme } from '@/theme/theme';
 
-const TABS: Omit<TabItem, 'badge'>[] = [
-  { key: 'home', label: 'الرئيسية', icon: 'home' },
-  { key: 'menu', label: 'القائمة', icon: 'restaurant_menu' },
-  { key: 'saved', label: 'المفضلة', icon: 'favorite' },
-  { key: 'cart', label: 'السلة', icon: 'shopping_bag' },
-  { key: 'profile', label: 'حسابي', icon: 'person' },
-];
-
-function CustomerTabBar({ state, navigateToTab }: BottomTabBarProps) {
-  const count = useApp(selectCartCount);
-  const bump = useApp((s) => s.bump);
-  const items = TABS.map((t) => ({ ...t, badge: t.key === 'cart' && count > 0 ? count : undefined }));
-  const active = TABS.findIndex((t) => t.key === state.routes[state.index]?.name);
-  return (
-    <GlassTabBar
-      items={items}
-      index={Math.max(0, active)}
-      bump={bump}
-      onPress={(i) => {
-        const route = state.routes.find((r) => r.name === TABS[i].key);
-        if (route) navigateToTab(route.key);
-      }}
-    />
-  );
-}
-
+/**
+ * System-native tab navigation.
+ *
+ * On iOS 26+, UIKit owns the tab bar material and selection treatment, so the
+ * system renders its real Liquid Glass surface instead of a JS approximation.
+ */
 export default function TabsLayout() {
-  const { c } = useTheme();
+  const cartCount = useApp(selectCartCount);
+
   return (
-    <Tabs tabBar={(props) => <CustomerTabBar {...props} />} screenOptions={{ headerShown: false, animation: 'fade', sceneStyle: { backgroundColor: c.bg } }}>
-      <Tabs.Screen name="home" />
-      <Tabs.Screen name="menu" />
-      <Tabs.Screen name="saved" />
-      <Tabs.Screen name="cart" />
-      <Tabs.Screen name="profile" />
-    </Tabs>
+    <NativeTabs tintColor="#FFF000" minimizeBehavior="never">
+      <NativeTabs.Trigger name="home">
+        <NativeTabs.Trigger.Label>الرئيسية</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'house', selected: 'house.fill' }}
+          md="home"
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="menu">
+        <NativeTabs.Trigger.Label>القائمة</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'book.closed', selected: 'book.closed.fill' }}
+          md="menu_book"
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="saved">
+        <NativeTabs.Trigger.Label>المفضلة</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'heart', selected: 'heart.fill' }}
+          md="favorite"
+        />
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="cart">
+        <NativeTabs.Trigger.Label>السلة</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'bag', selected: 'bag.fill' }}
+          md="shopping_bag"
+        />
+        {cartCount > 0 ? (
+          <NativeTabs.Trigger.Badge>{String(cartCount)}</NativeTabs.Trigger.Badge>
+        ) : null}
+      </NativeTabs.Trigger>
+
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Label>حسابي</NativeTabs.Trigger.Label>
+        <NativeTabs.Trigger.Icon
+          sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }}
+          md="account_circle"
+        />
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }
