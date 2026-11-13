@@ -232,7 +232,7 @@ export interface OnboardingSlide {
 }
 
 export interface Prefs {
-  lang: 'English' | 'Español' | 'Français';
+  lang: 'العربية' | 'English' | 'Español' | 'Français';
   orderNotif: boolean;
   offers: boolean;
   journalNotif: boolean;
