@@ -1199,7 +1199,7 @@ export const useApp = create<AppStore>()(
     },
     {
       name: 'fig-app',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => deviceStorage),
       /**
        * What survives a relaunch: the cached catalog (so the menu opens instantly and offline), the cart,
@@ -1248,8 +1248,9 @@ export const useApp = create<AppStore>()(
         const p = (persisted ?? {}) as Partial<State>;
         if (version < 2) {
           const { cart, saved, addrs, addr, cards, defCard, inbox, prefs, theme, onboarded, orderNotif, mode, speed, payM } = p;
-          return { cart, saved, addrs, addr, cards, defCard, inbox, prefs, theme, onboarded, orderNotif, mode, speed, payM } as AppStore;
+          return { cart, saved, addrs, addr, cards, defCard, inbox, prefs: { ...prefs, lang: 'العربية' }, theme, onboarded, orderNotif, mode, speed, payM } as AppStore;
         }
+        if (version < 3) return { ...p, prefs: { ...p.prefs, lang: 'العربية' } } as AppStore;
         return p as AppStore;
       },
     },
