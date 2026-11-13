@@ -12,7 +12,8 @@
       "bundleIdentifier": "com.tawseela.app",
       "supportsTablet": false,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIDesignRequiresCompatibility": false
       },
       "usesAppleSignIn": true
     },
