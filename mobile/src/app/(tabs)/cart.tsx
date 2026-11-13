@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -57,13 +58,16 @@ export default function CartScreen() {
           keyboardDismissMode="on-drag"
           showsVerticalScrollIndicator={false}
         >
-          <Reveal i={0} style={{ paddingTop: 6, gap: 4 }}>
-            <Txt s={34} w={600} ls={-0.03}>
-              Your cart
-            </Txt>
-            <Txt s={13.5} w={500} color={c.text3}>
-              {cnt(totals.count, 'item')} · توصيلة
-            </Txt>
+          <Reveal i={0} style={styles.cartTopBar}>
+            <View style={{ flex: 1, gap: 3 }}>
+              <Txt s={30} w={700} ls={-0.03}>سلة مشترياتك</Txt>
+              <Txt s={13.5} w={500} color={c.text3}>{cnt(totals.count, 'item')} · توصيلة</Txt>
+            </View>
+            <PressableScale onPress={() => router.push('/saved')} scaleTo={0.92}
+              accessibilityRole="button" accessibilityLabel="المفضلة"
+              style={[styles.favoriteButton, { backgroundColor: c.surface1, borderColor: c.line }]}>
+              <Icon name="favorite" size={23} color={c.accent} fill />
+            </PressableScale>
           </Reveal>
 
           {!s.cart.length ? (
@@ -199,6 +203,8 @@ export default function CartScreen() {
 }
 
 const styles = StyleSheet.create({
+  cartTopBar: { paddingTop: 6, minHeight: 76, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  favoriteButton: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   line: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 22, borderWidth: 1 },
   promo: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 6, paddingLeft: 16, borderRadius: 22, borderWidth: 1 },
   promoInput: { flex: 1, minWidth: 0, fontSize: 14.5, letterSpacing: 0.58, paddingVertical: 0, height: 42 },
