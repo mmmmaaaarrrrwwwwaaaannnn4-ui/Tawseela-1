@@ -171,7 +171,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   selectedGlass: {
-    ...StyleSheet.absoluteFillObject,
+    ...StyleSheet.absoluteFill,
     top: 5,
     bottom: 5,
     left: 3,
