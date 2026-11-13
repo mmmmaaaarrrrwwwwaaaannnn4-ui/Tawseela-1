@@ -62,7 +62,7 @@ export default function CartScreen() {
               Your cart
             </Txt>
             <Txt s={13.5} w={500} color={c.text3}>
-              {cnt(totals.count, 'item')} · Fig & Fennel, SoHo
+              {cnt(totals.count, 'item')} · توصيلة
             </Txt>
           </Reveal>
 
