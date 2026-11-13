@@ -320,14 +320,14 @@ export const CUSTOMER_STEPS: [string, string, IconName][] = [
 ];
 
 export const RESTAURANT = {
-  name: 'Fig & Fennel',
-  branch: 'Fig & Fennel, SoHo',
-  street: '112 Spring St',
-  streetFull: '112 Spring St, SoHo',
-  city: '112 Spring St, New York',
-  phone: '+1 (212) 555‑0100',
-  supportEmail: 'help@figandfennel.example',
+  name: 'Tawseela',
+  branch: 'Tawseela',
+  street: '',
+  streetFull: '',
+  city: '',
+  phone: '',
+  supportEmail: '',
   courier: { name: 'Marco Rossi', initials: 'MR', meta: 'Your courier · ★ 4.9 · e‑scooter' },
-  chef: 'Chef Lena',
+  chef: 'Tawseela Team',
   version: '4.2',
 } as const;
