@@ -48,7 +48,7 @@ export const light: Palette = {
   navGlass: 'rgba(255,255,255,0.46)',
   navHi: 'rgba(255,255,255,0.95)',
   navLo: 'rgba(26,26,26,0.08)',
-  navPill: 'rgba(255,122,26,0.12)',
+  navPill: 'rgba(255,212,0,0.18)',
   navPillHi: 'rgba(255,255,255,0.75)',
   text1: '#1A1A1A',
   text2: '#55575B',
@@ -58,9 +58,9 @@ export const light: Palette = {
   warn: '#A86A12',
   err: '#C93434',
   info: '#2563B8',
-  accent: '#FF7A1A',
-  accentInk: '#FFFFFF',
-  accentText: '#C2540A',
+  accent: '#FFD400',
+  accentInk: '#111111',
+  accentText: '#8A6B00',
   accentSoft: 'rgba(255,122,26,0.12)',
   glassSolid: 'rgba(255,253,250,0.96)',
   navSolid: 'rgba(255,255,255,0.94)',
@@ -90,8 +90,8 @@ export const dark: Palette = {
   info: '#62A8FF',
   accent: '#FF7A1A',
   accentInk: '#FFFFFF',
-  accentText: '#FFB27A',
-  accentSoft: 'rgba(255,122,26,0.14)',
+  accentText: '#FFE45C',
+  accentSoft: 'rgba(255,212,0,0.18)',
   glassSolid: 'rgba(30,27,24,0.97)',
   navSolid: 'rgba(42,38,34,0.95)',
 };
@@ -115,7 +115,7 @@ export const fixed = {
   whiteA: (a: number) => `rgba(255,255,255,${a})`,
 } as const;
 
-/** `linear-gradient(180deg,#FF9C45 0%,#FF6B0B 100%)` */
+/** `linear-gradient(180deg,#FFE600 0%,#FFC400 100%)` */
 export const accentGradient = ['#FF9C45', '#FF6B0B'] as const;
 
 /** Mimics `color-mix(in oklch, <hex> N%, transparent)` for the solid hex tokens. */
