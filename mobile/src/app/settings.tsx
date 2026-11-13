@@ -82,7 +82,7 @@ export default function SettingsScreen() {
               <ListRow
                 bare
                 icon="history"
-                title="Clear search history"
+                title="مسح سجل البحث"
                 minHeight={56}
                 right={null}
                 onPress={() => toast('Search history cleared', 'Your recent searches are gone', 'history')}
@@ -90,7 +90,7 @@ export default function SettingsScreen() {
               <ListRow
                 bare
                 icon="download"
-                title="Download my data"
+                title="تنزيل بياناتي"
                 minHeight={56}
                 right={null}
                 onPress={() => toast('Data export requested', 'We’ll email a download link within 24h', 'download')}
@@ -99,7 +99,7 @@ export default function SettingsScreen() {
                 bare
                 icon="person_remove"
                 iconColor={c.err}
-                title="Delete account"
+                title="حذف الحساب"
                 titleColor={c.err}
                 minHeight={56}
                 right={null}
@@ -109,7 +109,7 @@ export default function SettingsScreen() {
             </ListCard>
           </Reveal>
           <Txt s={12} w={500} color={c.text3} align="center" style={{ paddingVertical: 8 }}>
-            {RESTAURANT.name} {RESTAURANT.version} · Terms · Privacy
+            {RESTAURANT.name} {RESTAURANT.version} · الشروط · الخصوصية
           </Txt>
         </ScrollView>
         <ScreenHeader title="الإعدادات" />
