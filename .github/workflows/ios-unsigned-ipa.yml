@@ -94,7 +94,7 @@ jobs:
         working-directory: mobile
         run: |
           xcodebuild -version
-          xcodebuild -version | grep -Eq 'Xcode 27(\\.|$)' || { echo 'Liquid Glass requires the Xcode 27 SDK for this Expo SDK 58 build'; exit 1; }
+          xcodebuild -version | grep -q '^Xcode 27' || { echo 'Liquid Glass requires the Xcode 27 SDK for this Expo SDK 58 build'; exit 1; }
           /usr/libexec/PlistBuddy -c 'Print :UIDesignRequiresCompatibility' ios/Tawseela/Info.plist | grep -qx 'false' || { echo 'UIDesignRequiresCompatibility must be false'; exit 1; }
           xcodebuild -list -workspace ios/Tawseela.xcworkspace
 
