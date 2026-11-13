@@ -6,7 +6,6 @@ import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, w
 
 import { Icon, type IconName } from '@/components/icons/icon';
 import { AccentFill } from '@/components/ui/buttons';
-import { Glass } from '@/components/ui/glass';
 import { useChrome } from '@/components/ui/layout';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
@@ -39,7 +38,7 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
   const nativeGlassAvailable = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
   useEffect(() => {
-    if (seg) x.set(withSpring(index * seg, { damping: 14, stiffness: 170, mass: 0.8 }));
+    if (seg) x.set(withSpring((items.length - 1 - index) * seg, { damping: 14, stiffness: 170, mass: 0.8 }));
   }, [index, seg, x]);
 
   const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
@@ -47,7 +46,7 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
     const nw = e.nativeEvent.layout.width;
     if (Math.abs(nw - w) > 0.5) {
       setW(nw);
-      x.set(index * (nw / items.length));
+      x.set((items.length - 1 - index) * (nw / items.length));
     }
   };
 
@@ -55,39 +54,44 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: floatBottom }]}>
       <View style={styles.shadow}>
         {nativeGlassAvailable ? (
-          <GlassContainer spacing={12}>
-            <Glass variant="nav" intensity={isDark ? 50 : 70} style={[styles.bar, { borderColor: c.glassLine }]}>
-          <LinearGradient
-            pointerEvents="none"
-            colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.04)']}
-            locations={[0, 0.48, 1]}
-            style={[StyleSheet.absoluteFill, { borderRadius: 33 }]}
-          />
-          <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.hi, { borderTopColor: c.navHi, borderBottomColor: c.navLo }]} />
-          <View style={StyleSheet.absoluteFill} onLayout={onLayout} pointerEvents="none">
-            {seg ? (
-              <Animated.View style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, width: seg }, pill]}>
-                <View style={[styles.pill, { left: pillInset, right: pillInset, borderTopColor: c.navPillHi, overflow: 'hidden' }]}>
-                  <GlassView pointerEvents="none" glassEffectStyle="regular" isInteractive colorScheme={isDark ? 'dark' : 'light'} tintColor={c.accent} style={StyleSheet.absoluteFill} />
-                </View>
-              </Animated.View>
-            ) : null}
-          </View>
-          <View style={styles.row}>
-            {items.map((t, i) => (
-              <TabButton key={t.key} item={t} active={i === index} onPress={() => onPress(i)} bump={bump} />
-            ))}
-          </View>
-            </Glass>
+          <GlassContainer spacing={10} style={styles.container}>
+            <GlassView
+              glassEffectStyle="regular"
+              isInteractive
+              colorScheme={isDark ? 'dark' : 'light'}
+              tintColor={isDark ? 'rgba(28,28,28,0.12)' : 'rgba(255,255,255,0.10)'}
+              style={[styles.bar, { borderColor: c.glassLine }]}
+            >
+              <View style={styles.indicatorLayer} pointerEvents="none" onLayout={onLayout}>
+                {seg ? (
+                  <Animated.View style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, width: seg }, pill]}>
+                    <View style={[styles.pill, { left: pillInset, right: pillInset }]}>
+                      <GlassView
+                        pointerEvents="none"
+                        glassEffectStyle="clear"
+                        colorScheme={isDark ? 'dark' : 'light'}
+                        tintColor={isDark ? 'rgba(255,240,0,0.12)' : 'rgba(255,240,0,0.22)'}
+                        style={StyleSheet.absoluteFill}
+                      />
+                    </View>
+                  </Animated.View>
+                ) : null}
+              </View>
+              <View style={styles.row}>
+                {items.map((t, i) => (
+                  <TabButton key={t.key} item={t} active={i === index} onPress={() => onPress(i)} bump={bump} />
+                ))}
+              </View>
+            </GlassView>
           </GlassContainer>
         ) : (
-          <Glass variant="nav" intensity={isDark ? 50 : 70} style={[styles.bar, { borderColor: c.glassLine }]}>
+          <View style={[styles.bar, styles.fallbackBar, { borderColor: c.glassLine, backgroundColor: isDark ? 'rgba(24,24,24,0.94)' : 'rgba(255,255,255,0.92)' }]}>
             <View style={styles.row}>
               {items.map((item, i) => (
                 <TabButton key={item.key} item={item} active={i === index} onPress={() => onPress(i)} bump={bump} />
               ))}
             </View>
-          </Glass>
+          </View>
         )}
       </View>
     </View>
@@ -143,20 +147,23 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 14 },
     elevation: 14,
   },
-  bar: { height: 66, borderRadius: 33, borderWidth: 1 },
+  container: { borderRadius: 33 },
+  bar: { height: 66, borderRadius: 33, borderWidth: 1, overflow: 'hidden' },
+  fallbackBar: { borderWidth: 1 },
+  indicatorLayer: { ...StyleSheet.absoluteFillObject, zIndex: 0 },
   hi: { borderRadius: 33, borderTopWidth: 1, borderBottomWidth: 1 },
   pill: {
     position: 'absolute',
     top: 7,
     bottom: 7,
     borderRadius: 26,
-    borderTopWidth: 1,
+    overflow: 'hidden',
     shadowColor: '#1A1A1A',
     shadowOpacity: 0.1,
     shadowRadius: 7,
     shadowOffset: { width: 0, height: 6 },
   },
-  row: { flex: 1, flexDirection: 'row' },
+  row: { flex: 1, flexDirection: 'row', direction: 'rtl', zIndex: 1 },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
   badge: {
     position: 'absolute',
