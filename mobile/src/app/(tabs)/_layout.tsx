@@ -5,11 +5,11 @@ import { selectCartCount, useApp } from '@/store/app-store';
 import { useTheme } from '@/theme/theme';
 
 const TABS: Omit<TabItem, 'badge'>[] = [
-  { key: 'home', label: 'Home', icon: 'home' },
-  { key: 'menu', label: 'Menu', icon: 'restaurant_menu' },
-  { key: 'saved', label: 'Saved', icon: 'favorite' },
-  { key: 'cart', label: 'Cart', icon: 'shopping_bag' },
-  { key: 'profile', label: 'Profile', icon: 'person' },
+  { key: 'home', label: 'الرئيسية', icon: 'home' },
+  { key: 'menu', label: 'القائمة', icon: 'restaurant_menu' },
+  { key: 'saved', label: 'المفضلة', icon: 'favorite' },
+  { key: 'cart', label: 'السلة', icon: 'shopping_bag' },
+  { key: 'profile', label: 'حسابي', icon: 'person' },
 ];
 
 function CustomerTabBar({ state, navigateToTab }: BottomTabBarProps) {
