@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { GlassView } from 'expo-glass-effect';
 import type { ReactNode, Ref } from 'react';
 import { StyleSheet, View, type HostInstance, type StyleProp, type ViewStyle } from 'react-native';
 
@@ -115,8 +116,9 @@ export function OutlineButton({ label, icon, onPress, height = 50, color, fontSi
     <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      style={[styles.outline, { height, borderRadius: height / 2, borderColor: borderColor ?? c.lineStrong }, style]}
+      style={[styles.outline, { height, borderRadius: height / 2, borderColor: borderColor ?? c.lineStrong, overflow: 'hidden', backgroundColor: c.glass }, style]}
     >
+      <GlassView pointerEvents="none" glassEffectStyle="regular" colorScheme={c.bg === '#090909' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       {icon ? <Icon name={icon} size={18} color={color ?? c.text1} /> : null}
       <Txt s={fontSize} w={weight} color={color ?? c.text1}>
         {label}
@@ -198,7 +200,7 @@ export function CircleButton({ icon, onPress, size = 44, iconSize = 22, variant 
       hitSlop={6}
       style={[{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' }, v, style]}
     >
-      {variant === 'accent' ? <AccentFill radius={size / 2} /> : null}
+      {variant === 'accent' ? <AccentFill radius={size / 2} /> : variant === 'surface' || variant === 'soft' ? <GlassView pointerEvents="none" glassEffectStyle="regular" colorScheme={c.bg === '#090909' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} /> : null}
       <Icon name={icon} size={iconSize} color={ic} fill={fill} />
       {children}
     </PressableScale>
