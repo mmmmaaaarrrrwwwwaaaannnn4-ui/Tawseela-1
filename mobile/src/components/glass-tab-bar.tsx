@@ -1,4 +1,4 @@
-import { GlassContainer, GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
@@ -53,13 +53,13 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: floatBottom }]}>
       <View style={styles.shadow}>
         {nativeGlassAvailable ? (
-          <GlassContainer spacing={10} style={styles.container}>
-            <GlassView
-              glassEffectStyle="regular"
-              isInteractive
-              colorScheme={isDark ? 'dark' : 'light'}
-              style={[styles.bar, { borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.72)' }]}
-            >
+          <GlassView
+            glassEffectStyle="regular"
+            isInteractive
+            colorScheme={isDark ? 'dark' : 'light'}
+            tintColor={isDark ? 'rgba(24,24,24,0.10)' : 'rgba(255,255,255,0.08)'}
+            style={[styles.bar, { borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.72)' }]}
+          >
               <View style={styles.indicatorLayer} pointerEvents="none" onLayout={onLayout}>
                 {seg ? (
                   <Animated.View style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, width: seg }, pill]}>
@@ -74,8 +74,7 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
                   <TabButton key={t.key} item={t} active={i === index} onPress={() => onPress(i)} bump={bump} />
                 ))}
               </View>
-            </GlassView>
-          </GlassContainer>
+          </GlassView>
         ) : (
           <View style={[styles.bar, styles.fallbackBar, { borderColor: c.glassLine, backgroundColor: isDark ? 'rgba(24,24,24,0.48)' : 'rgba(255,255,255,0.42)' }]}>
             <View style={styles.row}>
@@ -139,7 +138,6 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 14 },
     elevation: 14,
   },
-  container: { borderRadius: 33, overflow: 'hidden' },
   bar: { height: 66, borderRadius: 33, borderWidth: 1, overflow: 'hidden', backgroundColor: 'transparent' },
   fallbackBar: { borderWidth: 1 },
   indicatorLayer: { ...StyleSheet.absoluteFill, zIndex: 0 },
