@@ -61,7 +61,7 @@ export const light: Palette = {
   accent: '#FFD400',
   accentInk: '#111111',
   accentText: '#8A6B00',
-  accentSoft: 'rgba(255,122,26,0.12)',
+  accentSoft: 'rgba(255,212,0,0.18)',
   glassSolid: 'rgba(255,253,250,0.96)',
   navSolid: 'rgba(255,255,255,0.94)',
 };
@@ -88,8 +88,8 @@ export const dark: Palette = {
   warn: '#F5B93A',
   err: '#FF6B6B',
   info: '#62A8FF',
-  accent: '#FF7A1A',
-  accentInk: '#FFFFFF',
+  accent: '#FFD400',
+  accentInk: '#111111',
   accentText: '#FFE45C',
   accentSoft: 'rgba(255,212,0,0.18)',
   glassSolid: 'rgba(30,27,24,0.97)',
@@ -100,12 +100,12 @@ export const dark: Palette = {
 export const fixed = {
   ink: '#1C1C1C',
   paper: '#F8F8F6',
-  orange: '#FF7A1A',
-  peach: '#FFB27A',
+  orange: '#FFD400',
+  peach: '#FFE45C',
   star: '#F5A524',
   white: '#FFFFFF',
   black: '#000000',
-  splashBg: '#FBFAF7',
+  splashBg: '#FFFBE6',
   leaf: '#6FA83A',
   coffee: '#4A2E1E',
   inputFill: '#F3F3F0',
@@ -116,7 +116,7 @@ export const fixed = {
 } as const;
 
 /** `linear-gradient(180deg,#FFE600 0%,#FFC400 100%)` */
-export const accentGradient = ['#FF9C45', '#FF6B0B'] as const;
+export const accentGradient = ['#FFE600', '#FFC400'] as const;
 
 /** Mimics `color-mix(in oklch, <hex> N%, transparent)` for the solid hex tokens. */
 export function alpha(color: string, a: number): string {
