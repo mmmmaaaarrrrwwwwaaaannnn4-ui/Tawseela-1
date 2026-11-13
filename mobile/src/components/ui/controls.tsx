@@ -424,6 +424,6 @@ function Dot({
 }
 
 const styles = StyleSheet.create({
-  track: { width: 48, height: 28, borderRadius: 14, padding: 3 },
+  track: { width: 48, height: 28, borderRadius: 14, padding: 3, direction: 'ltr' },
   knob: { width: 22, height: 22, borderRadius: 11 },
 });
