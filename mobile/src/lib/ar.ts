@@ -256,7 +256,6 @@ const AR: Record<string, string> = {
   "Tawseela admin": "إدارة توصيلة",
   "Delicious food,": "أكل تحبه",
   "delivered to you": "يوصلك لحد بابك",
-  "Your favourite dishes from our kitchen, fresh at your doorstep.": "كل اللي بتحبه من الأكل، يوصلك طازة لحد بابك.",
   "Fresh, top‑rated dishes": "أكل طازة وتقييمات عالية",
   "Pizzas, burgers and bowls cooked to order.": "بيتزا وبرجر ووجبات بتتحضر مخصوص ليك.",
   "Hot and fast,": "سريع وسخن",
@@ -319,7 +318,6 @@ const AR: Record<string, string> = {
   "Order food": "اطلب طعامك",
   "10 pts per $1": "١٠ نقاط لكل دولار",
   "Rate an order": "قيّم طلبك",
-  "Book a table": "احجز طلبك",
   "Refer a friend": "ادعُ صديقاً",
   "Bronze": "برونزي",
   "Silver": "فضي",
@@ -330,12 +328,8 @@ const AR: Record<string, string> = {
   "Marco is riding to you": "المندوب في طريقه إليك",
   "Enjoy your meal": "بالهنا والشفا",
   "Your courier · ★ 4.9 · e‑scooter": "مندوبك · ★ ٤٫٩ · دراجة كهربائية",
-  "Tawseela Rewards": "مكافآت توصيلة",
-  "Fig admin": "إدارة توصيلة",
-  "Fig team": "فريق توصيلة",
   "Fig credit": "رصيد توصيلة",
   "Fig Club points": "نقاط مكافآت توصيلة",
-  "The Fig Journal": "مجلة توصيلة",
   "Tawseela needs access to your photos to add profile pictures and order images.": "يحتاج تطبيق توصيلة إلى الوصول لصورك لإضافة صورة الملف الشخصي وصور الطلبات.",
 };
 
