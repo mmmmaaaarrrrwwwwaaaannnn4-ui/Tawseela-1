@@ -1,4 +1,5 @@
 import { Slot, router, usePathname } from 'expo-router';
+import type { ReactNode } from 'react';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Platform, StyleSheet, View } from 'react-native';
 
@@ -22,7 +23,7 @@ export default function TabsLayout() {
   const { c, isDark } = useTheme();
   const glassAvailable = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
-  const surface = (children: React.ReactNode, style: object) => glassAvailable ? (
+  const surface = (children: ReactNode, style: object) => glassAvailable ? (
     <GlassView glassEffectStyle="clear" isInteractive colorScheme={isDark ? 'dark' : 'light'} style={style}>{children}</GlassView>
   ) : (
     <View style={[style, styles.fallback, { backgroundColor: c.surface1, borderColor: c.line }]}>{children}</View>
@@ -73,7 +74,7 @@ export default function TabsLayout() {
 
 const styles = StyleSheet.create({
   root: { flex: 1 },
-  navigation: { position: 'absolute', left: 14, right: 14, bottom: 7, height: 72, flexDirection: 'row', alignItems: 'stretch', gap: 10, zIndex: 50 },
+  navigation: { position: 'absolute', left: 14, right: 14, bottom: 7, height: 72, flexDirection: 'row-reverse', alignItems: 'stretch', gap: 10, zIndex: 50 },
   mainDock: { flex: 1, minWidth: 0 },
   mainGlass: { flex: 1, minHeight: 72, borderRadius: 36, overflow: 'hidden' },
   fallback: { borderWidth: StyleSheet.hairlineWidth },
