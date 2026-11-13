@@ -41,9 +41,21 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     const body: any = await response.json().catch(() => ({}));
     if (response.status === 400 && /no cards/i.test(JSON.stringify(body))) return { cards: [] };
     if (!response.ok) throw new AppError(502, 'card_list_failed', 'Could not retrieve saved cards from Kashier.');
-    const card = body?.response?.paymentMethod?.card;
-    const cards = Array.isArray(card) ? card : card ? [card] : [];
-    return { cards: cards.filter((x: any) => x.cardToken).map((x: any) => ({ id: String(x.cardToken), token: String(x.cardToken), number: String(x.number || ''), name: String(x.nameOnCard || ''), expiry: x.expiry ? { month: String(x.expiry.month || ''), year: String(x.expiry.year || '') } : null, brand: String(x.brand || x.scheme || 'CARD') })) };
+    // Kashier returns a list under response.paymentMethods[] (not paymentMethod.card).
+    const methods = body?.response?.paymentMethods;
+    const cards = Array.isArray(methods)
+      ? methods.filter((x: any) => String(x?.type || '').toUpperCase() === 'CARD').map((x: any) => x.card).filter(Boolean)
+      : [];
+    return {
+      cards: cards.filter((x: any) => x.cardToken).map((x: any) => ({
+        id: String(x.cardToken),
+        token: String(x.cardToken),
+        number: String(x.number || ''),
+        name: String(x.nameOnCard || ''),
+        expiry: x.expiry ? { month: String(x.expiry.month || ''), year: String(x.expiry.year || '') } : null,
+        brand: String(x.brand || x.scheme || 'CARD'),
+      })),
+    };
   });
 
   app.post('/me/cards', { schema: { tags: ['payments'], summary: 'Verify and register a Kashier card token for this customer', ...secured, body: z.object({ cardToken: z.string().min(8).max(200) }) } }, async (req) => {
