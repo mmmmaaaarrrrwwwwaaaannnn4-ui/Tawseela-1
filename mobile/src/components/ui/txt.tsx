@@ -24,7 +24,7 @@ export interface TxtProps extends TextProps {
 export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, strike, style, children, ...rest }: TxtProps) {
   const { c } = useTheme();
   const t: TextStyle = {
-    fontFamily: family(w),
+    fontFamily: typeof children === 'string' && /[\u0600-\u06FF]/.test(children) ? undefined : family(w),
     fontSize: s,
     color: color ?? c.text1,
     ...(lh ? { lineHeight: Math.round(s * Math.max(lh, 1.08)) } : null),
