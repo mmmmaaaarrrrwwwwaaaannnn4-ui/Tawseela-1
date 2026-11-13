@@ -23,14 +23,15 @@ export interface TxtProps extends TextProps {
 /** Outfit text with the design's `font: <w> <s>px/<lh>` shorthand semantics. */
 export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, strike, style, children, ...rest }: TxtProps) {
   const { c } = useTheme();
+  const isArabic = typeof children === 'string' && /[\u0600-\u06FF]/.test(children);
   const t: TextStyle = {
-    fontFamily: typeof children === 'string' && /[\u0600-\u06FF]/.test(children) ? undefined : family(w),
+    fontFamily: isArabic ? undefined : family(w),
     fontSize: s,
     color: color ?? c.text1,
     ...(lh ? { lineHeight: Math.round(s * Math.max(lh, 1.08)) } : null),
     ...(ls ? { letterSpacing: ls * s } : null),
-    textAlign: align ?? 'right',
-    writingDirection: 'rtl',
+    textAlign: align ?? (isArabic ? 'right' : 'left'),
+    writingDirection: isArabic ? 'rtl' : 'ltr',
     ...(upper ? { textTransform: 'uppercase' as const } : null),
     ...(tabular ? { fontVariant: ['tabular-nums' as const] } : null),
     ...(strike ? { textDecorationLine: 'line-through' as const } : null),
