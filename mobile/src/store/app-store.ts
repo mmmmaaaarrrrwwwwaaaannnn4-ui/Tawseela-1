@@ -395,7 +395,7 @@ const initialState = (): State => ({
   ...emptyAccount(),
 
   inbox: SEED_INBOX.map((n) => ({ ...n })),
-  prefs: { lang: 'English', orderNotif: true, offers: true, journalNotif: false, sms: false, location: true, personal: true },
+  prefs: { lang: 'العربية', orderNotif: true, offers: true, journalNotif: false, sms: false, location: true, personal: true },
   orderNotif: true,
   filters: { sort: 0, veg: false, hot: false, under: false },
   menuCat: 'All',
