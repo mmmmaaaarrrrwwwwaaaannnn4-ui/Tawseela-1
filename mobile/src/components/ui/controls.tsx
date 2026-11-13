@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { GlassView } from 'expo-glass-effect';
 import { useEffect, type ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Animated, {
@@ -147,7 +148,8 @@ export function Chip({ label, on, onPress, icon, height = 40, fontSize = 14, pad
           borderRadius: height / 2,
           borderWidth: 1,
           borderColor: col.bd,
-          backgroundColor: col.bg,
+          backgroundColor: on ? col.bg : c.glass,
+          overflow: 'hidden',
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'center',
@@ -156,6 +158,7 @@ export function Chip({ label, on, onPress, icon, height = 40, fontSize = 14, pad
         style,
       ]}
     >
+      <GlassView pointerEvents="none" glassEffectStyle="regular" colorScheme={c.bg === '#090909' ? 'dark' : 'light'} tintColor={on ? c.accent : undefined} style={StyleSheet.absoluteFill} />
       {icon ? <Icon name={icon} size={17} color={col.fg} /> : null}
       <Txt s={fontSize} w={600} color={col.fg} numberOfLines={1}>
         {label}
