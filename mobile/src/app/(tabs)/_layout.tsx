@@ -20,7 +20,11 @@ export default function TabsLayout() {
     <View style={styles.root}>
       <NativeTabs tintColor={TAB_RED} iconColor={{ default: TAB_RED, selected: TAB_RED }}
         labelStyle={{ color: TAB_RED }} minimizeBehavior="never">
-        {/* From right to left: Main menu, Add card, Favorites, My account. */}
+        {/* Native order is left-to-right: My account, Favorites, Add card, Main menu. */}
+        <NativeTabs.Trigger name="profile">
+          <NativeTabs.Trigger.Label>المفضلة</NativeTabs.Trigger.Label>
+          <NativeTabs.Trigger.Icon sf={{ default: 'heart', selected: 'heart.fill' }} md="favorite" />
+        </NativeTabs.Trigger>
         <NativeTabs.Trigger name="saved">
           <NativeTabs.Trigger.Label>المفضلة</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon sf={{ default: 'heart', selected: 'heart.fill' }} md="favorite" />
@@ -32,10 +36,6 @@ export default function TabsLayout() {
         <NativeTabs.Trigger name="menu">
           <NativeTabs.Trigger.Label>القائمة الرئيسية</NativeTabs.Trigger.Label>
           <NativeTabs.Trigger.Icon sf={{ default: 'list.bullet', selected: 'list.bullet' }} md="menu_book" />
-        </NativeTabs.Trigger>
-        <NativeTabs.Trigger name="profile" prominent>
-          <NativeTabs.Trigger.Label>حسابي</NativeTabs.Trigger.Label>
-          <NativeTabs.Trigger.Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} md="account_circle" />
         </NativeTabs.Trigger>
       </NativeTabs>
 
