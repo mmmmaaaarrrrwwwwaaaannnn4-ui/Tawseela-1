@@ -1,0 +1,38 @@
+/** Arabic UI labels used by the shared text component. Unknown/server-provided content is preserved. */
+const AR: Record<string, string> = {
+  'Home':'الرئيسية','Menu':'القائمة','Saved':'المفضلة','Cart':'السلة','Profile':'حسابي',
+  'Dashboard':'لوحة التحكم','Orders':'الطلبات','Kitchen':'المطبخ','More':'المزيد',
+  'Sign in':'تسجيل الدخول','Sign in to Tawseela':'تسجيل الدخول إلى توصيلة','Sign in to place your order':'سجّل الدخول لإتمام طلبك',
+  'Welcome back':'أهلاً بعودتك','Good evening':'مساء الخير','Skip':'تخطي','Back':'رجوع','Create account':'إنشاء حساب',
+  'Forgot password?':'نسيت كلمة المرور؟','Reset your password':'إعادة تعيين كلمة المرور','Send reset link':'إرسال رابط إعادة التعيين',
+  'Email':'البريد الإلكتروني','Password':'كلمة المرور','Full name':'الاسم بالكامل','Show':'إظهار','Hide':'إخفاء',
+  'Your cart':'سلة مشترياتك','Your cart is empty':'سلتك فارغة','Browse the menu':'تصفح القائمة','Promo code':'كود الخصم',
+  'Apply':'تطبيق','Remove':'إزالة','Subtotal':'المجموع الفرعي','Delivery':'التوصيل','Free':'مجاني','Discount':'الخصم',
+  'Checkout':'إتمام الطلب','Go to checkout':'إتمام الطلب','Sign in to checkout':'سجّل الدخول لإتمام الطلب','Kitchen closed':'المتجر مغلق',
+  'Saved':'المفضلة','Nothing saved yet':'لا توجد عناصر محفوظة بعد','Settings':'الإعدادات','Language':'اللغة',
+  'Notifications':'الإشعارات','Privacy':'الخصوصية','Appearance':'المظهر','Dark mode':'الوضع الداكن',
+  'Order updates':'تحديثات الطلب','Offers & deals':'العروض والخصومات','SMS updates':'تحديثات الرسائل النصية',
+  'Precise location':'الموقع الدقيق','Personalised picks':'اقتراحات مخصصة','Your data':'بياناتك',
+  'Clear search history':'مسح سجل البحث','Download my data':'تنزيل بياناتي','Delete account':'حذف الحساب',
+  'Search the menu':'ابحث في القائمة','Filters':'التصفية','Reset':'إعادة ضبط','Sort by':'ترتيب حسب',
+  'Vegetarian':'نباتي','Spicy':'حار','Show full menu':'عرض القائمة كاملة','Notifications':'الإشعارات',
+  'My orders':'طلباتي','My reservations':'حجوزاتي','Edit profile':'تعديل الملف الشخصي','Addresses':'العناوين',
+  'Payment methods':'طرق الدفع','Help & FAQ':'المساعدة والأسئلة الشائعة','Sign out':'تسجيل الخروج',
+  'Guest':'زائر','Name, email, phone':'الاسم والبريد الإلكتروني والهاتف','Account':'الحساب',
+  'Almost there':'باقي خطوة واحدة','Create account':'إنشاء حساب','Creating…':'جارٍ الإنشاء…',
+  'Choose a password with at least 8 characters':'اختر كلمة مرور من 8 أحرف على الأقل',
+  'Please accept the terms to continue':'يرجى الموافقة على الشروط للمتابعة',
+  'First order':'الطلب الأول','Welcome':'مرحباً','Every order':'كل طلب',
+  'Weak':'ضعيفة','Good':'جيدة','Strong':'قوية','100% Fresh':'طازج 100٪',
+  'Rating':'التقييم','Your favourite dishes from our kitchen, fresh at your doorstep.':'أطباقك المفضلة تصلك طازجة حتى باب البيت.',
+  'Your cart is saved. Sign in or create an account to continue.':'احتفظنا بسلتك. سجّل الدخول أو أنشئ حساباً للمتابعة.',
+  'Order placed':'تم استلام الطلب','Preparing':'جارٍ التجهيز','On the way':'في الطريق','Delivered':'تم التوصيل',
+  'Change':'تغيير','Deliver':'توصيل','Pickup':'استلام من الفرع','Free delivery unlocked':'حصلت على توصيل مجاني',
+  'Regular':'عادي','Reward':'مكافأة','Search':'بحث','Clear':'مسح','All':'الكل',
+  'No extra fee':'بدون رسوم إضافية','Pay':'ادفع','Cash':'نقداً','Wallet':'محفظة إلكترونية',
+  'Visa or Mastercard':'فيزا أو ماستركارد','Order again':'اطلب مرة أخرى','See all':'عرض الكل',
+  'No results':'لا توجد نتائج','Try again':'حاول مرة أخرى','Cancel':'إلغاء','Confirm':'تأكيد',
+};
+export function arText(value: string): string {
+  return AR[value] ?? value;
+}
