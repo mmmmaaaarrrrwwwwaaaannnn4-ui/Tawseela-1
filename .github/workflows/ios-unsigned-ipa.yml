@@ -8,7 +8,7 @@ permissions:
 
 jobs:
   build-ios:
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 60
     env:
       EXPO_PUBLIC_API_URL: https://tawseela-ap-pzip-1--marwankomanda0.replit.app
@@ -94,6 +94,8 @@ jobs:
         working-directory: mobile
         run: |
           xcodebuild -version
+          xcodebuild -version | grep -Eq 'Xcode 27(\\.|$)' || { echo 'Liquid Glass requires the Xcode 27 SDK for this Expo SDK 58 build'; exit 1; }
+          /usr/libexec/PlistBuddy -c 'Print :UIDesignRequiresCompatibility' ios/Tawseela/Info.plist | grep -qx 'false' || { echo 'UIDesignRequiresCompatibility must be false'; exit 1; }
           xcodebuild -list -workspace ios/Tawseela.xcworkspace
 
       - name: Build unsigned iOS archive
