@@ -30,9 +30,9 @@ interface Props {
 /**
  * Floating native iOS Liquid Glass tab bar.
  *
- * There is intentionally one native GlassView surface only: no fake blur layer,
- * no yellow selection capsule, and no opaque panel underneath it. Selection is
- * communicated with the system-like accent icon/label treatment.
+ * Native Liquid Glass bar with a separate tinted native glass surface for the
+ * selected tab. The non-iOS fallback stays translucent and never pretends to
+ * be the native iOS material.
  */
 export function GlassTabBar({ items, index, onPress, bump = 0 }: Props) {
   const { c, isDark } = useTheme();
@@ -59,7 +59,7 @@ export function GlassTabBar({ items, index, onPress, bump = 0 }: Props) {
       <View style={styles.shadow}>
         {liquidGlassAvailable ? (
           <GlassView
-            glassEffectStyle="regular"
+            glassEffectStyle="clear"
             isInteractive
             colorScheme={isDark ? 'dark' : 'light'}
             style={styles.nativeBar}
@@ -73,7 +73,7 @@ export function GlassTabBar({ items, index, onPress, bump = 0 }: Props) {
               styles.fallbackBar,
               {
                 borderColor: c.glassLine,
-                backgroundColor: isDark ? 'rgba(24,24,24,0.78)' : 'rgba(255,255,255,0.78)',
+                backgroundColor: isDark ? 'rgba(24,24,24,0.34)' : 'rgba(32,32,32,0.12)',
               },
             ]}
           >
@@ -109,6 +109,15 @@ function TabButton({ item, active, onPress, bump }: { item: TabItem; active: boo
       accessibilityState={{ selected: active }}
       accessibilityLabel={item.label}
     >
+      {active ? (
+        <GlassView
+          pointerEvents="none"
+          glassEffectStyle="regular"
+          tintColor="#FFF000"
+          colorScheme="light"
+          style={styles.selectedGlass}
+        />
+      ) : null}
       <View style={styles.iconWrap}>
         <Icon name={item.icon} size={25} fill={active} color={color} />
         {item.badge ? (
@@ -159,6 +168,15 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: 3,
     paddingVertical: 8,
+    position: 'relative',
+  },
+  selectedGlass: {
+    ...StyleSheet.absoluteFillObject,
+    top: 5,
+    bottom: 5,
+    left: 3,
+    right: 3,
+    borderRadius: 24,
   },
   iconWrap: {
     minWidth: 28,
