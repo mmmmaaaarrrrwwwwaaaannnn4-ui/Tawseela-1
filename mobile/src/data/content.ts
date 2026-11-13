@@ -141,8 +141,8 @@ export const ONBOARDING: OnboardingSlide[] = [
     icon: 'restaurant_menu',
     t: 'Fresh, top‑rated dishes',
     d: 'Pizzas, burgers and bowls cooked to order.',
-    bg: ['#FFE7D2', '#FFD2AE'],
-    fg: '#C2540A',
+    bg: ['#FFF000', '#FFE94A'],
+    fg: '#080808',
   },
   {
     img: unsplash('1569718212165-3a8278d5f624', 700),
@@ -152,8 +152,8 @@ export const ONBOARDING: OnboardingSlide[] = [
     icon: 'two_wheeler',
     t: 'Fast & reliable delivery',
     d: 'Real‑time tracking, on time.',
-    bg: ['#FFF6CF', '#FFE9A3'],
-    fg: '#8A6200',
+    bg: ['#FFF000', '#FFE94A'],
+    fg: '#080808',
   },
   {
     img: unsplash('1574071318508-1cdbab80d002', 700),
@@ -163,8 +163,8 @@ export const ONBOARDING: OnboardingSlide[] = [
     icon: 'credit_card',
     t: 'Secure & easy payments',
     d: 'Multiple options, 100% secure.',
-    bg: ['#FFE3EC', '#FFCCDD'],
-    fg: '#B23A6B',
+    bg: ['#FFF7A8', '#FFE94A'],
+    fg: '#E50920',
   },
 ];
 
