@@ -68,7 +68,7 @@ export function CardSheet({
       visible={visible}
       onClose={onClose}
       title="Add a card"
-      subtitle="Debit or credit · encrypted end‑to‑end"
+      subtitle="أضف بطاقة الدفع الخاصة بك"
       footer={<AccentButton label="Save card" icon="lock" iconFill iconSize={19} onPress={onSave} />}
     >
       <View style={{ height: 196 }}>
@@ -190,7 +190,7 @@ export function CardSheet({
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
         <Icon name="shield_lock" size={18} fill color={c.ok} />
         <Txt s={12} w={500} lh={1.5} color={c.text3} style={{ flex: 1 }}>
-          We verify the card with a $0 hold. Details are tokenised and never stored on this device.
+          لا تشارك بيانات بطاقتك مع أي شخص. لا يتم حفظ رقم البطاقة أو رمز الأمان داخل التطبيق.
         </Txt>
       </View>
     </Sheet>
