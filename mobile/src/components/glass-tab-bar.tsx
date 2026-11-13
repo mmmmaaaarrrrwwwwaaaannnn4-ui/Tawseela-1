@@ -70,7 +70,9 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
               {/* Native system material behind the complete tab bar. */}
               <GlassView
                 glassEffectStyle="regular"
+                isInteractive
                 colorScheme={isDark ? 'dark' : 'light'}
+                tintColor={isDark ? 'rgba(24,24,24,0.10)' : 'rgba(255,255,255,0.12)'}
                 style={[StyleSheet.absoluteFill, styles.baseGlass]}
               />
 
