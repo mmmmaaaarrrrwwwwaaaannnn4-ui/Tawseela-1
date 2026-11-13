@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -61,6 +62,9 @@ export default function PaymentsScreen() {
     setErr(false);
     setFlip(false);
     setOpen(false);
+    useApp.getState().setCheckout({ payM: 1 });
+    useApp.getState().showToast('تمت إضافة البطاقة', 'يمكنك الآن إكمال طلبك واختيار البطاقة.', 'check_circle');
+    router.replace('/checkout');
   };
 
   return (
