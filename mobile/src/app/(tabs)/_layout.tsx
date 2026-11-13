@@ -2,7 +2,7 @@ import { NativeTabs } from 'expo-router/native-tabs';
 
 import { selectCartCount, useApp } from '@/store/app-store';
 
-const TAB_GOLD = '#C5A500';
+const TAB_GOLD = '#E50920';
 
 /**
  * Native iOS tab navigation.
