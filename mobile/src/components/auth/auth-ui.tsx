@@ -68,7 +68,7 @@ export function Field({ icon, height = 52, radius = 20, tone = 'soft', error, ri
   const [focus, setFocus] = useState(false);
   const softBg = isDark ? c.surface2 : '#F3F3F0';
   const bg = tone === 'soft' ? (focus ? c.surface1 : softBg) : c.surface1;
-  const border = error ? c.err : focus ? (tone === 'soft' ? 'rgba(255,122,26,0.55)' : c.accent) : tone === 'soft' ? 'transparent' : c.line;
+  const border = error ? c.err : focus ? (tone === 'soft' ? 'rgba(255,212,0,0.65)' : c.accent) : tone === 'soft' ? 'transparent' : c.line;
   return (
     <View style={[{ justifyContent: 'center' }, style]}>
       <TextInput
@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#FF7A1A',
-    shadowColor: '#FF6B0B',
+    backgroundColor: '#FFD400',
+    shadowColor: '#FFC400',
     shadowOpacity: 0.34,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 14 },
