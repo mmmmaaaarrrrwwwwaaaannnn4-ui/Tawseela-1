@@ -72,7 +72,7 @@ export default function HomeScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Icon name="eco" size={26} fill color={c.accent} />
                 <Txt s={26} w={600} ls={-0.03}>
-                  Fig & Fennel
+                  Tawseela
                 </Txt>
               </View>
             </View>
