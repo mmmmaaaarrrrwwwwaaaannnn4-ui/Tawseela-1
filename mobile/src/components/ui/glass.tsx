@@ -1,4 +1,4 @@
-import { BlurView } from 'expo-blur';
+import { GlassView } from 'expo-glass-effect';
 import type { ReactNode } from 'react';
 import { Platform, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
@@ -10,17 +10,16 @@ interface Props {
   variant?: Variant;
   style?: StyleProp<ViewStyle>;
   children?: ReactNode;
-  /** Override blur intensity (iOS). */
+  /** Retained for call-site compatibility; native iOS glass uses the system material. */
   intensity?: number;
   pointerEvents?: 'auto' | 'none' | 'box-none' | 'box-only';
 }
 
 /**
- * Frosted-glass surface (`backdrop-filter: blur(22px) saturate(1.6)` in the design).
- * iOS renders a native blur with the design's tint on top; Android uses the
- * equivalent near-opaque tint so the UI stays crisp and fast without a blur target.
+ * Native Liquid Glass surface on supported iOS versions, with a translucent
+ * theme-matched fallback on Android and platforms without the native effect.
  */
-export function Glass({ variant = 'strong', style, children, intensity, pointerEvents }: Props) {
+export function Glass({ variant = 'strong', style, children, pointerEvents }: Props) {
   const { c, isDark } = useTheme();
   const tint = variant === 'nav' ? c.navGlass : variant === 'strong' ? c.glassStrong : c.glass;
   const flat = StyleSheet.flatten(style) ?? {};
@@ -32,18 +31,25 @@ export function Glass({ variant = 'strong', style, children, intensity, pointerE
     borderBottomRightRadius: flat.borderBottomRightRadius,
   };
 
-  if (Platform.OS !== 'ios') {
+  if (Platform.OS === 'ios') {
     return (
-      <View pointerEvents={pointerEvents} style={[{ backgroundColor: variant === 'nav' ? c.navSolid : c.glassSolid }, style]}>
+      <View pointerEvents={pointerEvents} style={[{ overflow: 'hidden' }, style]}>
+        <GlassView
+          pointerEvents="none"
+          glassEffectStyle={variant === 'normal' ? 'clear' : 'regular'}
+          isInteractive={variant === 'nav'}
+          colorScheme={isDark ? 'dark' : 'light'}
+          tintColor={tint}
+          style={[StyleSheet.absoluteFill, radius]}
+        />
+        <View pointerEvents="box-none" style={[StyleSheet.absoluteFill, radius, { backgroundColor: tint, opacity: 0.22 }]} />
         {children}
       </View>
     );
   }
 
   return (
-    <View pointerEvents={pointerEvents} style={[{ overflow: 'hidden' }, style]}>
-      <BlurView tint={isDark ? 'dark' : 'light'} intensity={intensity ?? (variant === 'nav' ? 60 : 50)} style={[StyleSheet.absoluteFill, radius]} />
-      <View style={[StyleSheet.absoluteFill, radius, { backgroundColor: tint }]} />
+    <View pointerEvents={pointerEvents} style={[{ overflow: 'hidden', backgroundColor: variant === 'nav' ? c.navSolid : c.glassSolid }, style]}>
       {children}
     </View>
   );
