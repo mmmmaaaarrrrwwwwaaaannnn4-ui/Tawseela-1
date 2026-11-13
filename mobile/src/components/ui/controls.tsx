@@ -148,6 +148,7 @@ export function Chip({ label, on, onPress, icon, height = 40, fontSize = 14, pad
           borderRadius: height / 2,
           borderWidth: 1,
           borderColor: col.bd,
+          // Selected chips keep their solid accent fill; inactive chips use glass.
           backgroundColor: on ? col.bg : c.glass,
           overflow: 'hidden',
           flexDirection: 'row',
@@ -158,7 +159,7 @@ export function Chip({ label, on, onPress, icon, height = 40, fontSize = 14, pad
         style,
       ]}
     >
-      <GlassView pointerEvents="none" glassEffectStyle="regular" colorScheme={c.bg === '#090909' ? 'dark' : 'light'} tintColor={on ? c.accent : undefined} style={StyleSheet.absoluteFill} />
+      {!on ? <GlassView pointerEvents="none" glassEffectStyle="clear" colorScheme={c.bg === '#090909' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} /> : null}
       {icon ? <Icon name={icon} size={17} color={col.fg} /> : null}
       <Txt s={fontSize} w={600} color={col.fg} numberOfLines={1}>
         {label}
