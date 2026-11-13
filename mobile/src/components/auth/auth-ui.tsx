@@ -10,6 +10,7 @@ import { Txt } from '@/components/ui/txt';
 import { accentGradient } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme';
 import { family } from '@/theme/typography';
+import { arText } from '@/lib/ar';
 
 /* ------------------------------------------------------------------ form state */
 
@@ -73,6 +74,8 @@ export function Field({ icon, height = 52, radius = 20, tone = 'soft', error, ri
       <TextInput
         ref={ref}
         placeholderTextColor={c.text3}
+        placeholder={typeof rest.placeholder === 'string' ? arText(rest.placeholder) : rest.placeholder}
+        textAlign="right"
         {...rest}
         onFocus={(e) => {
           setFocus(true);
