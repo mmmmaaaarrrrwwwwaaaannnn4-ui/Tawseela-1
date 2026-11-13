@@ -58,20 +58,13 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
               glassEffectStyle="regular"
               isInteractive
               colorScheme={isDark ? 'dark' : 'light'}
-              tintColor={isDark ? 'rgba(28,28,28,0.12)' : 'rgba(255,255,255,0.10)'}
-              style={[styles.bar, { borderColor: c.glassLine }]}
+              style={[styles.bar, { borderColor: isDark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.72)' }]}
             >
               <View style={styles.indicatorLayer} pointerEvents="none" onLayout={onLayout}>
                 {seg ? (
                   <Animated.View style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, width: seg }, pill]}>
                     <View style={[styles.pill, { left: pillInset, right: pillInset }]}>
-                      <GlassView
-                        pointerEvents="none"
-                        glassEffectStyle="clear"
-                        colorScheme={isDark ? 'dark' : 'light'}
-                        tintColor={isDark ? 'rgba(255,240,0,0.12)' : 'rgba(255,240,0,0.22)'}
-                        style={StyleSheet.absoluteFill}
-                      />
+                      <View style={[StyleSheet.absoluteFill, { backgroundColor: isDark ? 'rgba(255,240,0,0.14)' : 'rgba(255,240,0,0.34)' }]} />
                     </View>
                   </Animated.View>
                 ) : null}
@@ -84,7 +77,7 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
             </GlassView>
           </GlassContainer>
         ) : (
-          <View style={[styles.bar, styles.fallbackBar, { borderColor: c.glassLine, backgroundColor: isDark ? 'rgba(24,24,24,0.94)' : 'rgba(255,255,255,0.92)' }]}>
+          <View style={[styles.bar, styles.fallbackBar, { borderColor: c.glassLine, backgroundColor: isDark ? 'rgba(24,24,24,0.48)' : 'rgba(255,255,255,0.42)' }]}>
             <View style={styles.row}>
               {items.map((item, i) => (
                 <TabButton key={item.key} item={item} active={i === index} onPress={() => onPress(i)} bump={bump} />
@@ -146,8 +139,8 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 14 },
     elevation: 14,
   },
-  container: { borderRadius: 33 },
-  bar: { height: 66, borderRadius: 33, borderWidth: 1, overflow: 'hidden' },
+  container: { borderRadius: 33, overflow: 'hidden' },
+  bar: { height: 66, borderRadius: 33, borderWidth: 1, overflow: 'hidden', backgroundColor: 'transparent' },
   fallbackBar: { borderWidth: 1 },
   indicatorLayer: { ...StyleSheet.absoluteFill, zIndex: 0 },
   pill: {
@@ -156,10 +149,6 @@ const styles = StyleSheet.create({
     bottom: 7,
     borderRadius: 26,
     overflow: 'hidden',
-    shadowColor: '#1A1A1A',
-    shadowOpacity: 0.1,
-    shadowRadius: 7,
-    shadowOffset: { width: 0, height: 6 },
   },
   row: { flex: 1, flexDirection: 'row', direction: 'rtl', zIndex: 1 },
   tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
