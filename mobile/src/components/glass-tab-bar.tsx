@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   container: { borderRadius: 33 },
   bar: { height: 66, borderRadius: 33, borderWidth: 1, overflow: 'hidden' },
   fallbackBar: { borderWidth: 1 },
-  indicatorLayer: { ...StyleSheet.absoluteFillObject, zIndex: 0 },
+  indicatorLayer: { ...StyleSheet.absoluteFill, zIndex: 0 },
   pill: {
     position: 'absolute',
     top: 7,
