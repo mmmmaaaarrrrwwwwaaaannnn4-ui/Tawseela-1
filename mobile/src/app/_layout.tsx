@@ -16,8 +16,10 @@ import { selectIsAdmin, selectIsStaff, selectSignedIn, useSession, useSessionHyd
 import { AppThemeProvider, useTheme } from '@/theme/theme';
 import { fontAssets } from '@/theme/typography';
 
+// Keep the app's component geometry stable (the screens use explicit RTL text).
+// Global forceRTL mirrors every row and animated selection track, reversing visual states.
 I18nManager.allowRTL(true);
-I18nManager.forceRTL(true);
+I18nManager.forceRTL(false);
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 SplashScreen.setOptions({ duration: 300, fade: true });
