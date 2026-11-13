@@ -54,9 +54,9 @@ export default function ProfileScreen() {
 
   const profRows: { icon: IconName; l: string; s: string; go: () => void }[] = [
     { icon: 'receipt_long', l: 'My orders', s: st.active ? '1 on the way' : cnt(st.myCount, 'past order'), go: go('/orders', true) },
-    { icon: 'loyalty', l: 'Fig Club', s: `${st.points.toLocaleString('en-US')} points · ${tier}`, go: go('/rewards') },
+    { icon: 'loyalty', l: 'نقاط توصيلة', s: `${st.points.toLocaleString('en-US')} points · ${tier}`, go: go('/rewards') },
     { icon: 'event_seat', l: 'My reservations', s: st.upcoming ? `${st.upcoming} upcoming` : 'Book a table for tonight', go: go('/my-bookings') },
-    { icon: 'auto_stories', l: 'The Fig Journal', s: `${st.stories} stories from our kitchen`, go: go('/journal') },
+    { icon: 'auto_stories', l: 'مجلة توصيلة', s: `${st.stories} stories from our kitchen`, go: go('/journal') },
     { icon: 'notifications', l: 'Notifications', s: st.unread ? `${st.unread} unread` : 'All caught up', go: go('/inbox') },
   ];
   const acctRows: { icon: IconName; l: string; s: string; go: () => void }[] = [
