@@ -25,7 +25,7 @@ const PRIVACY: [BoolPref, string, string][] = [
   ['personal', 'Personalised picks', 'Recommendations based on your orders'],
 ];
 
-const LANGS: Prefs['lang'][] = ['English', 'Español', 'Français'];
+const LANGS: Prefs['lang'][] = ['العربية'];
 
 export default function SettingsScreen() {
   const { c, isDark } = useTheme();
@@ -49,7 +49,7 @@ export default function SettingsScreen() {
           contentContainerStyle={{ paddingTop: chrome.underHeader, paddingHorizontal: 20, paddingBottom: 40, gap: 12 }}
         >
           <Reveal i={0} style={{ gap: 8 }}>
-            <Eyebrow>Language</Eyebrow>
+            <Eyebrow>اللغة</Eyebrow>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               {LANGS.map((l) => (
                 <Chip key={l} label={l} on={prefs.lang === l} height={44} fontSize={13.5} onPress={() => setPrefs({ lang: l })} style={{ flex: 1 }} />
@@ -57,19 +57,19 @@ export default function SettingsScreen() {
             </View>
           </Reveal>
           <Reveal i={1} style={{ gap: 8 }}>
-            <Eyebrow>Notifications</Eyebrow>
+            <Eyebrow>الإشعارات</Eyebrow>
             <ListCard radius={20}>{rows(NOTIF)}</ListCard>
           </Reveal>
           <Reveal i={2} style={{ gap: 8 }}>
-            <Eyebrow>Privacy</Eyebrow>
+            <Eyebrow>الخصوصية</Eyebrow>
             <ListCard radius={20}>{rows(PRIVACY)}</ListCard>
           </Reveal>
           <Reveal i={3} style={{ gap: 8 }}>
-            <Eyebrow>Appearance</Eyebrow>
+            <Eyebrow>المظهر</Eyebrow>
             <ListCard radius={20}>
               <ToggleRow
-                title="Dark mode"
-                sub="Warm dark theme, easier on the eyes at night"
+                title="الوضع الداكن"
+                sub="مظهر داكن مريح للعين أثناء الليل"
                 on={isDark}
                 last
                 onPress={() => setTheme(isDark ? 'light' : 'dark')}
@@ -77,7 +77,7 @@ export default function SettingsScreen() {
             </ListCard>
           </Reveal>
           <Reveal i={4} style={{ gap: 8 }}>
-            <Eyebrow>Your data</Eyebrow>
+            <Eyebrow>بياناتك</Eyebrow>
             <ListCard radius={20}>
               <ListRow
                 bare
@@ -112,7 +112,7 @@ export default function SettingsScreen() {
             {RESTAURANT.name} {RESTAURANT.version} · Terms · Privacy
           </Txt>
         </ScrollView>
-        <ScreenHeader title="Settings" />
+        <ScreenHeader title="الإعدادات" />
       </View>
     </RevealScope>
   );
