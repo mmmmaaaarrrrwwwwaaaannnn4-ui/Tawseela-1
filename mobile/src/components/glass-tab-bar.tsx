@@ -1,4 +1,3 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { GlassContainer, GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { useEffect, useRef, useState } from 'react';
 import { Platform, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
@@ -151,7 +150,6 @@ const styles = StyleSheet.create({
   bar: { height: 66, borderRadius: 33, borderWidth: 1, overflow: 'hidden' },
   fallbackBar: { borderWidth: 1 },
   indicatorLayer: { ...StyleSheet.absoluteFillObject, zIndex: 0 },
-  hi: { borderRadius: 33, borderTopWidth: 1, borderBottomWidth: 1 },
   pill: {
     position: 'absolute',
     top: 7,
