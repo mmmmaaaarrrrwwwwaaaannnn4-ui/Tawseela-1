@@ -75,13 +75,13 @@ export default function ProfileScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Reveal i={0} style={{ paddingTop: 6 }}>
-            <Txt s={34} w={600} ls={-0.03}>
-              Profile
+            <Txt s={34} w={600} ls={-0.03} style={{ textAlign: 'right' }}>
+              {user ? user.name : 'المزيد'}
             </Txt>
           </Reveal>
 
           <Reveal i={1}>
-            <View style={[styles.userCard, { backgroundColor: c.surface1, borderColor: c.line }]}>
+            <View style={[styles.userCard, { backgroundColor: c.surface1, borderColor: c.line, direction: 'rtl' }]}>
               <View style={[styles.avatar, { backgroundColor: c.accentSoft }]}>
                 {user ? (
                   <Txt s={22} w={600} color={c.accentText}>
@@ -151,7 +151,7 @@ export default function ProfileScreen() {
           <Reveal i={2}>
             <ListCard>
               {profRows.map((r, i) => (
-                <ListRow key={r.l} icon={r.icon} title={r.l} sub={r.s} onPress={r.go} last={i === profRows.length - 1} />
+                <ListRow key={r.l} icon={r.icon} title={r.l} sub={r.s} onPress={r.go} last={i === profRows.length - 1} bare minHeight={72} />
               ))}
             </ListCard>
           </Reveal>
@@ -162,7 +162,7 @@ export default function ProfileScreen() {
           <Reveal i={3}>
             <ListCard>
               {acctRows.map((r, i) => (
-                <ListRow key={r.l} icon={r.icon} title={r.l} sub={r.s} onPress={r.go} last={i === acctRows.length - 1} />
+                <ListRow key={r.l} icon={r.icon} title={r.l} sub={r.s} onPress={r.go} last={i === acctRows.length - 1} bare minHeight={72} />
               ))}
             </ListCard>
           </Reveal>
