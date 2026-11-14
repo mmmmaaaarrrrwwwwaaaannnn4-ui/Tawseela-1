@@ -147,7 +147,7 @@ async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInpu
   }
 
   const kitchenIds = [...new Set([...dishes.values()].filter((dish) => settled.some((line) => line.id === dish.id)).map((dish) => dish.brand))];
-  const brandFees = new Map(brandSnap.docs.map((doc) => [doc.id, typeof doc.get('deliveryFee') === 'number' ? Number(doc.get('deliveryFee')) : null]));
+  const brandFees = new Map<string, number | null>(brandSnap.docs.map((doc) => [doc.id, typeof doc.get('deliveryFee') === 'number' ? Number(doc.get('deliveryFee')) : null] as const));
   const hasKitchenFees = kitchenIds.some((id) => brandFees.get(id) != null);
   const deliveryFee = hasKitchenFees ? kitchenIds.reduce((sum, id) => sum + (brandFees.get(id) ?? store.fee), 0) : store.fee;
 
