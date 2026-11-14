@@ -5,13 +5,9 @@ import { arText } from '@/lib/ar';
 import { arabicFamily, family, type Weight } from '@/theme/typography';
 
 export interface TxtProps extends TextProps {
-  /** font-size in px */
   s?: number;
-  /** font-weight */
   w?: Weight;
-  /** line-height as a multiple of the font size (CSS unitless line-height) */
   lh?: number;
-  /** letter-spacing in em (CSS `letter-spacing: -0.02em` → -0.02) */
   ls?: number;
   color?: string;
   align?: TextStyle['textAlign'];
@@ -20,7 +16,7 @@ export interface TxtProps extends TextProps {
   strike?: boolean;
 }
 
-/** IBM Plex Sans Arabic for Arabic; Outfit for Latin text. */
+/** Readex Pro for Arabic; Outfit for Latin text. Font weight is selected by fontFamily. */
 export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, strike, style, children, ...rest }: TxtProps) {
   const { c } = useTheme();
   const isArabic = typeof children === 'string' && /[\u0600-\u06FF]/.test(children);
