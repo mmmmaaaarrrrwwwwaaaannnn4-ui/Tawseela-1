@@ -103,8 +103,10 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string, openT
         { method: 'POST', body: { walletPhone: phone }, timeoutMs: 25_000 },
       );
 
-      for (let i = 0; i < 45; i++) {
-        await new Promise((resolve) => setTimeout(resolve, 2000));
+      // Kashier wallet approvals are out-of-band and can take up to five minutes.
+      // Poll at a sensible interval instead of stopping after only 90 seconds.
+      for (let i = 0; i < 30; i++) {
+        await new Promise((resolve) => setTimeout(resolve, 10_000));
         const current = await api.post<Order>(
           `/v1/orders/${encodeURIComponent(order.id)}/payment/sync`,
         ).catch(() => null);
