@@ -42,29 +42,29 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     return { endpoint: `${tokenBase()}/v3/cards/tokens`, merchantId: config.KASHIER_MERCHANT_ID, customerReference: user.uid, hash: tokenHash(user.uid) };
   });
 
-  app.get('/me/cards', { schema: { tags: ['payments'], summary: 'List this customer’s Kashier saved cards', ...secured } }, async (req) => {
+  app.get('/me/cards', { schema: { tags: ['payments'], summary: 'List this customer’s verified Kashier saved cards', ...secured } }, async (req) => {
     const user = requireUser(req);
-    if (!config.KASHIER_MERCHANT_ID || !config.KASHIER_PAYMENT_API_KEY || !config.KASHIER_SECRET_KEY) throw new AppError(503, 'payments_unavailable', 'Kashier is not configured.');
-    const url = `${tokenBase()}/v3/cards/customer?customerReference=${encodeURIComponent(user.uid)}&merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}`;
-    const response = await fetch(url, { headers: { Authorization: config.KASHIER_SECRET_KEY, 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
-    const body: any = await response.json().catch(() => ({}));
-    if (response.status === 400 && /no cards/i.test(JSON.stringify(body))) return { cards: [] };
-    if (!response.ok) throw new AppError(502, 'card_list_failed', 'Could not retrieve saved cards from Kashier.');
-    // Kashier returns a list under response.paymentMethods[] (not paymentMethod.card).
-    const methods = body?.response?.paymentMethods;
-    const cards = Array.isArray(methods)
-      ? methods.filter((x: any) => String(x?.type || '').toUpperCase() === 'CARD').map((x: any) => x.card).filter(Boolean)
-      : [];
-    return {
-      cards: cards.filter((x: any) => x.cardToken).map((x: any) => ({
-        id: String(x.cardToken),
-        token: String(x.cardToken),
-        number: String(x.number || ''),
-        name: String(x.nameOnCard || ''),
-        expiry: x.expiry ? { month: String(x.expiry.month || ''), year: String(x.expiry.year || '') } : null,
-        brand: String(x.brand || x.scheme || 'CARD'),
-      })),
-    };
+    // The POST route verifies each token with Kashier before persisting its masked metadata here.
+    // Read from this canonical per-user record so a successful save is visible immediately and
+    // checkout does not depend on a second, differently-shaped card-vault response from Kashier.
+    const snap = await userRef(db, user.uid).get();
+    const stored = snap.get('paymentMethods.cards');
+    if (!stored || typeof stored !== 'object' || Array.isArray(stored)) return { cards: [] };
+
+    const cards = Object.entries(stored as Record<string, any>)
+      .filter(([token, value]) => token.length > 0 && value && typeof value === 'object' && value.token === token)
+      .map(([token, value]) => ({
+        id: token,
+        token,
+        number: String(value.number || ''),
+        name: String(value.name || ''),
+        expiry: value.expiry
+          ? { month: String(value.expiry.month || ''), year: String(value.expiry.year || '') }
+          : null,
+        brand: String(value.brand || 'CARD'),
+      }));
+
+    return { cards };
   });
 
   app.post('/me/cards', { schema: { tags: ['payments'], summary: 'Verify and register a Kashier card token for this customer', ...secured, body: z.object({ cardToken: z.string().min(8).max(200) }) } }, async (req) => {
