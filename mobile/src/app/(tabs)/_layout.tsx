@@ -1,6 +1,4 @@
 import { Tabs, router } from 'expo-router';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
-
 type TabRouteName = 'home' | 'menu' | 'payments' | 'profile';
 type TabHref = Parameters<typeof router.navigate>[0];
 import { GlassView } from 'expo-glass-effect';
@@ -18,7 +16,7 @@ const TAB_ITEMS: { name: TabRouteName; label: string; icon: IconName }[] = [
   { name: 'profile', label: 'المزيد', icon: 'menu' },
 ];
 
-function BottomBar({ state }: Pick<BottomTabBarProps, 'state'>) {
+function BottomBar({ state }: { state: { index: number; routes: readonly { name: string }[] } }) {
   const { c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const activeName = state.routes[state.index]?.name;
@@ -39,8 +37,7 @@ function BottomBar({ state }: Pick<BottomTabBarProps, 'state'>) {
           >
             <View style={styles.tabsRow}>
               {TAB_ITEMS.map((item) => {
-                const route = state.routes.find((candidate) => candidate.name === item.name);
-                if (!route) return null;
+                if (!state.routes.some((route) => route.name === item.name)) return null;
                 const focused = activeName === item.name;
                 const color = focused ? c.accent : c.text2;
                 return (
