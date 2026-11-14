@@ -1,13 +1,19 @@
 import { Tabs, router } from 'expo-router';
-type TabRouteName = 'home' | 'menu' | 'payments' | 'profile';
-type TabHref = Parameters<typeof router.navigate>[0];
-import { GlassView } from 'expo-glass-effect';
+import {
+  GlassContainer,
+  GlassView,
+  isGlassEffectAPIAvailable,
+  isLiquidGlassAvailable,
+} from 'expo-glass-effect';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/icons/icon';
 import { Txt } from '@/components/ui/txt';
 import { useTheme } from '@/theme/theme';
+
+type TabRouteName = 'home' | 'menu' | 'payments' | 'profile';
+type TabHref = Parameters<typeof router.navigate>[0];
 
 const TAB_ITEMS: { name: TabRouteName; label: string; icon: IconName }[] = [
   { name: 'home', label: 'الرئيسية', icon: 'home' },
@@ -20,74 +26,72 @@ function BottomBar({ state }: { state: { index: number; routes: readonly { name:
   const { c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const activeName = state.routes[state.index]?.name;
-
+  const nativeLiquidGlass = isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
   const glassColorScheme = isDark ? 'dark' : 'light';
+  const glassStyle = nativeLiquidGlass ? 'regular' : 'none';
 
   return (
-    <View pointerEvents="box-none" style={[styles.dock, { bottom: Math.max(insets.bottom, 8) + 8 }]}>
-      <View style={styles.dockRow}>
-        <View style={styles.mainBarShadow}>
+    <View
+      pointerEvents="box-none"
+      style={[styles.dock, { bottom: Math.max(insets.bottom, 8) + 8 }]}
+    >
+      <GlassContainer spacing={12} style={styles.dockRow}>
+        <GlassView
+          glassEffectStyle={glassStyle}
+          colorScheme={glassColorScheme}
+          style={styles.mainBar}
+        >
+          <View style={styles.tabsRow}>
+            {TAB_ITEMS.map((item) => {
+              if (!state.routes.some((route) => route.name === item.name)) return null;
+              const focused = activeName === item.name;
+              const color = focused ? c.accent : c.text2;
+
+              return (
+                <Pressable
+                  key={item.name}
+                  accessibilityRole="tab"
+                  accessibilityLabel={item.label}
+                  accessibilityState={{ selected: focused }}
+                  onPress={() => {
+                    if (!focused) router.navigate(`/(tabs)/${item.name}` as TabHref);
+                  }}
+                  style={styles.tab}
+                >
+                  {focused ? (
+                    <GlassView
+                      pointerEvents="none"
+                      glassEffectStyle={glassStyle === 'none' ? 'none' : 'clear'}
+                      colorScheme={glassColorScheme}
+                      style={styles.selectedGlass}
+                    />
+                  ) : null}
+                  <Icon name={item.icon} size={25} color={color} fill={focused} />
+                  <Txt s={11} w={focused ? 700 : 500} color={color}>
+                    {item.label}
+                  </Txt>
+                </Pressable>
+              );
+            })}
+          </View>
+        </GlassView>
+
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="السلة"
+          onPress={() => router.navigate('/cart')}
+          style={styles.cartPressable}
+        >
           <GlassView
-            glassEffectStyle="regular"
+            glassEffectStyle={glassStyle}
             isInteractive
             colorScheme={glassColorScheme}
-            style={[
-              styles.mainBar,
-            ]}
+            style={styles.cartGlass}
           >
-            <View style={styles.tabsRow}>
-              {TAB_ITEMS.map((item) => {
-                if (!state.routes.some((route) => route.name === item.name)) return null;
-                const focused = activeName === item.name;
-                const color = focused ? c.accent : c.text2;
-                return (
-                  <Pressable
-                    key={item.name}
-                    accessibilityRole="tab"
-                    accessibilityLabel={item.label}
-                    accessibilityState={{ selected: focused }}
-                    onPress={() => {
-                      if (!focused) router.navigate(`/(tabs)/${item.name}` as TabHref);
-                    }}
-                    style={styles.tab}
-                  >
-                    {focused ? (
-                      <GlassView
-                        pointerEvents="none"
-                        glassEffectStyle="regular"
-                        colorScheme={glassColorScheme}
-                        style={styles.selectedGlass}
-                      />
-                    ) : null}
-                    <Icon name={item.icon} size={25} color={color} fill={focused} />
-                    <Txt s={11} w={focused ? 700 : 500} color={color}>{item.label}</Txt>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <Icon name="add_shopping_cart" size={29} color={c.accent} />
           </GlassView>
-        </View>
-
-        <View style={styles.cartShadow}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel="السلة"
-            onPress={() => router.navigate('/cart')}
-            style={styles.cartPressable}
-          >
-            <GlassView
-              glassEffectStyle="regular"
-              isInteractive
-              colorScheme={glassColorScheme}
-              style={[
-                styles.cartGlass,
-              ]}
-            >
-              <Icon name="add_shopping_cart" size={29} color={c.accent} />
-            </GlassView>
-          </Pressable>
-        </View>
-      </View>
+        </Pressable>
+      </GlassContainer>
     </View>
   );
 }
@@ -113,26 +117,17 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 14,
     right: 14,
-    bottom: 8,
     zIndex: 50,
   },
   dockRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 10,
-  },
-  mainBarShadow: {
-    flex: 1,
-    borderRadius: 36,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    gap: 12,
   },
   mainBar: {
+    flex: 1,
     minHeight: 76,
-    borderRadius: 36,
+    borderRadius: 38,
     overflow: 'hidden',
     backgroundColor: 'transparent',
   },
@@ -157,17 +152,7 @@ const styles = StyleSheet.create({
     bottom: 5,
     left: 3,
     right: 3,
-    borderRadius: 28,
-  },
-  cartShadow: {
-    width: 76,
-    height: 76,
-    borderRadius: 38,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 10,
+    borderRadius: 30,
   },
   cartPressable: {
     width: 76,
