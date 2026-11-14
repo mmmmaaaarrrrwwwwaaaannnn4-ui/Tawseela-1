@@ -2,7 +2,7 @@ import { Platform, Text, type TextProps, type TextStyle } from 'react-native';
 
 import { useTheme } from '@/theme/theme';
 import { arText } from '@/lib/ar';
-import { family, type Weight } from '@/theme/typography';
+import { arabicFamily, family, type Weight } from '@/theme/typography';
 
 export interface TxtProps extends TextProps {
   /** font-size in px */
@@ -20,12 +20,12 @@ export interface TxtProps extends TextProps {
   strike?: boolean;
 }
 
-/** Outfit text with the design's `font: <w> <s>px/<lh>` shorthand semantics. */
+/** Cairo for Arabic; Outfit for Latin text, with the same weight scale. */
 export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, strike, style, children, ...rest }: TxtProps) {
   const { c } = useTheme();
   const isArabic = typeof children === 'string' && /[\u0600-\u06FF]/.test(children);
   const t: TextStyle = {
-    fontFamily: isArabic ? undefined : family(w),
+    fontFamily: isArabic ? arabicFamily(w) : family(w),
     fontSize: s,
     color: color ?? c.text1,
     ...(lh ? { lineHeight: Math.round(s * Math.max(lh, 1.08)) } : null),
