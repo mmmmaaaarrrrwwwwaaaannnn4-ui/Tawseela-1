@@ -62,12 +62,12 @@ const ICON_ALIASES: Partial<Record<IconName, keyof typeof Lucide>> = {
   wine_bar: 'Wine', work: 'Briefcase', workspace_premium: 'Trophy',
 };
 
-function resolveIcon(name: IconName): NativeIcon {
+function resolveIcon(name: IconName): NativeIcon | null {
   const key = ICON_ALIASES[name] ?? name.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('');
   const Glyph = (Lucide as unknown as Record<string, unknown>)[key];
-  if (typeof Glyph !== 'function') {
-    throw new Error(`Unknown Lucide icon: ${name} (resolved to ${String(key)})`);
-  }
+  // Never crash the whole app because one legacy icon name has no Lucide export.
+  // Missing icons render nothing until their exact Lucide export is mapped.
+  if (typeof Glyph !== 'function') return null;
   return Glyph as NativeIcon;
 }
 
@@ -75,6 +75,7 @@ function IconBase({ name, size = 24, color, fill = false, style }: Props) {
   const { c } = useTheme();
   const Glyph = resolveIcon(name);
   const tint = color ?? c.text1;
+  if (!Glyph) return null;
   return (
     <Glyph
       size={size}
