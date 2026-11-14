@@ -199,7 +199,8 @@ const adminCatalogRoutes: FastifyPluginAsyncZod = async (app) => {
   });
 
   app.patch('/brands/:id', { schema: { summary: 'Edit or toggle a kitchen (saveBrand, toggleBrand)', params: idParam, body: BrandPatch, response: { 200: Brand, ...errors } } }, async (req) => {
-    if (req.body.lat == null || req.body.lng == null) throw badRequest('Choose a valid kitchen location on the map.');
+    if ((req.body.lat === undefined) !== (req.body.lng === undefined)) throw badRequest('Latitude and longitude must be provided together.');
+    if (req.body.lat === null || req.body.lng === null) throw badRequest('Choose a valid kitchen location on the map.');
     return patch(col(COL.brands).doc(req.params.id), 'That kitchen', req.body, Brand);
   });
 
