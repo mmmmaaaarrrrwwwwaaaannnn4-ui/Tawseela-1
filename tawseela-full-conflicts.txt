@@ -1,0 +1,2724 @@
+
+========== mobile/src/app/admin/brand/[id].tsx ==========
+import { useLocalSearchParams } from 'expo-router';
+import { useState } from 'react';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { WebView } from 'react-native-webview';
+
+import { AdminHeader, AdminInput, FieldLabel, openItemEditor, ToggleCardRow, useAdminPadding } from '@/components/admin/admin-ui';
+import { PhotoButton } from '@/components/admin/photo-button';
+import { Icon } from '@/components/icons/icon';
+import { AccentButton } from '@/components/ui/buttons';
+import { FloatingBar, goBack } from '@/components/ui/layout';
+import { DishImage, Photo } from '@/components/ui/media';
+import { PressableScale } from '@/components/ui/pressable-scale';
+import { Reveal, RevealScope } from '@/components/ui/reveal';
+import { Txt } from '@/components/ui/txt';
+import type { Brand } from '@/data/types';
+import { useStatusBar } from '@/hooks/use-status-bar';
+import { money } from '@/lib/format';
+import { useApp } from '@/store/app-store';
+import { fixed } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme';
+
+export default function AdminEditBrand() {
+  return (
+    <RevealScope>
+      <EditBrand />
+    </RevealScope>
+  );
+}
+
+function EditBrand() {
+  const { c } = useTheme();
+  useStatusBar();
+  const pad = useAdminPadding('cta');
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const isNew = id === 'new';
+  const menu = useApp((s) => s.menu);
+  const [draft, setDraft] = useState<Brand>(() => {
+<<<<<<< HEAD
+    const brands = useApp.getState().brands;
+    const existing = brands.find((x) => x.id === id);
+    if (existing) return { ...existing };
+    return {
+      id: 'new',
+      name: '',
+      tag: '',
+      icon: 'local_pizza',
+      img: brands[0]?.img ?? '',
+      on: true,
+    };
+  });
+=======
+    const b = useApp.getState().brands;
+    const found = b.find((x) => x.id === id);
+    return found ? { ...found } : { id: 'new', name: '', tag: '', icon: b[0]?.icon ?? 'storefront', img: b[0]?.img ?? '', on: true, lat: null, lng: null, address: '', phone: '', description: '', workDays: ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'], openTime: '09:00', closeTime: '23:00', deliveryFee: 0, prepTime: 30 };
+  });
+  const dishes = menu.filter((m) => m.brand === draft.id);
+  const mapHtml = `<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>html,body,#map{height:100%;margin:0}.search{position:absolute;z-index:999;top:10px;left:10px;right:10px;display:flex;gap:6px;flex-wrap:wrap}.search input{flex:1;min-width:0;padding:10px;border:1px solid #bbb;border-radius:10px;background:white}.search button{padding:10px;border:0;border-radius:10px;background:#173d2a;color:white}.suggestions{display:none;flex-basis:100%;max-height:120px;overflow:auto;background:white;border-radius:10px;box-shadow:0 2px 12px #0003}.suggestions button{display:block;width:100%;text-align:right;background:white;color:#222;border-radius:0;border-bottom:1px solid #eee}</style></head><body><div class="search"><input id="q" placeholder="ابحث عن عنوان المطبخ" oninput="suggestPlaces()"><button onclick="searchPlace()">بحث</button><button onclick="locate()">موقعي</button><div id="suggestions" class="suggestions"></div></div><div id="map"></div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>const map=L.map('map').setView([${draft.lat ?? 30.0444},${draft.lng ?? 31.2357}],${draft.lat == null ? 6 : 15});L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'© OpenStreetMap contributors',maxZoom:19}).addTo(map);let marker=null;function pin(lat,lng,address=''){if(marker)map.removeLayer(marker);marker=L.marker([lat,lng]).addTo(map);window.ReactNativeWebView.postMessage(JSON.stringify({lat,lng,address}));}let searchTimer=null,lastQuery='';async function lookup(q){const r=await fetch('https://nominatim.openstreetmap.org/search?format=jsonv2&limit=5&countrycodes=eg&accept-language=ar&q='+encodeURIComponent(q));return await r.json();}function choosePlace(p){document.getElementById('q').value=p.display_name||'';document.getElementById('suggestions').style.display='none';map.setView([+p.lat,+p.lon],16);pin(+p.lat,+p.lon,p.display_name||'');}function suggestPlaces(){clearTimeout(searchTimer);const q=document.getElementById('q').value.trim();const box=document.getElementById('suggestions');if(q.length<3){box.style.display='none';return;}searchTimer=setTimeout(async()=>{if(q===lastQuery)return;lastQuery=q;try{const rows=await lookup(q);box.innerHTML='';rows.forEach(p=>{const b=document.createElement('button');b.textContent=p.display_name;b.onclick=()=>choosePlace(p);box.appendChild(b);});box.style.display=rows.length?'block':'none';}catch(e){box.style.display='none';}},900);}async function searchPlace(){const q=document.getElementById('q').value.trim();if(!q)return;try{const rows=await lookup(q);if(rows.length)choosePlace(rows[0]);else window.ReactNativeWebView.postMessage(JSON.stringify({error:'not_found'}));}catch(e){window.ReactNativeWebView.postMessage(JSON.stringify({error:'search_failed'}));}}function locate(){if(!navigator.geolocation){window.ReactNativeWebView.postMessage(JSON.stringify({error:'location_unavailable'}));return;}navigator.geolocation.getCurrentPosition(p=>{map.setView([p.coords.latitude,p.coords.longitude],16);pin(p.coords.latitude,p.coords.longitude);},()=>window.ReactNativeWebView.postMessage(JSON.stringify({error:'location_denied'})),{enableHighAccuracy:true,timeout:12000});}if(${draft.lat != null && draft.lng != null})pin(${draft.lat ?? 0},${draft.lng ?? 0});map.on('click',e=>pin(e.latlng.lat,e.latlng.lng));</script></body></html>`;
+>>>>>>> origin/build/tawseela-ios-ipa-v10
+
+  const dishes = isNew ? [] : menu.filter((m) => m.brand === draft.id);
+  const [saving, setSaving] = useState(false);
+
+  const save = async () => {
+    if (saving) return;
+    const name = draft.name.trim();
+    const tag = draft.tag.trim();
+    if (!name || !tag || !draft.img) {
+      useApp.getState().showToast('Missing details', 'Enter a name, tagline and kitchen photo.', 'error');
+      return;
+    }
+
+    setSaving(true);
+<<<<<<< HEAD
+    const ok = isNew
+      ? await useApp.getState().addBrand({ name, tag, icon: draft.icon, img: draft.img, on: draft.on })
+      : await useApp.getState().saveBrand({ ...draft, name, tag });
+=======
+    const name = draft.name.trim();
+    if (draft.workDays.length === 0) { setSaving(false); useApp.getState().showToast('حدد أيام العمل', 'اختر يومًا واحدًا على الأقل لفتح المطبخ.', 'error'); return; }
+    if (draft.lat == null || draft.lng == null || !Number.isFinite(draft.lat) || !Number.isFinite(draft.lng) || draft.lat < -90 || draft.lat > 90 || draft.lng < -180 || draft.lng > 180) { setSaving(false); useApp.getState().showToast('حدد موقع المطبخ', 'اضغط على الخريطة لاختيار موقع صحيح قبل الحفظ.', 'error'); return; }
+    if (!name) { setSaving(false); useApp.getState().showToast('اسم المطبخ مطلوب', 'اكتب اسم المطبخ أولًا.', 'error'); return; }
+    const ok = id === 'new'
+      ? await useApp.getState().createBrand({ name, tag: draft.tag.trim(), icon: draft.icon, img: draft.img, on: draft.on, lat: draft.lat, lng: draft.lng, address: draft.address, phone: draft.phone, description: draft.description, workDays: draft.workDays, openTime: draft.openTime, closeTime: draft.closeTime, deliveryFee: draft.deliveryFee, prepTime: draft.prepTime })
+      : await useApp.getState().saveBrand({ ...draft, name, tag: draft.tag.trim() });
+>>>>>>> origin/build/tawseela-ios-ipa-v10
+    setSaving(false);
+    if (ok) goBack();
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <ScrollView
+        contentContainerStyle={[pad, { gap: 10 }]}
+        showsVerticalScrollIndicator={false}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        automaticallyAdjustKeyboardInsets
+      >
+        <Reveal i={0}>
+          <Photo uri={draft.img} radius={22} style={{ height: 150 }} overlay={[fixed.roast(0), fixed.roast(0.75)]}>
+            <View style={styles.heroLabel}>
+              <Icon name={draft.icon} size={22} fill color={fixed.paper} />
+              <Txt s={20} w={600} color={fixed.paper} numberOfLines={1} style={{ flexShrink: 1 }}>
+                {draft.name || 'New kitchen'}
+              </Txt>
+            </View>
+            <PhotoButton
+              aspect={[16, 9]}
+              folder="kitchens"
+              label={draft.img ? 'Replace photo' : 'Upload photo'}
+              onUploaded={(img) => setDraft((d) => ({ ...d, img }))}
+              style={styles.photoBtn}
+            />
+          </Photo>
+        </Reveal>
+
+        <Reveal i={1} style={{ gap: 8 }}>
+          <FieldLabel>Kitchen name</FieldLabel>
+          <AdminInput value={draft.name} onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))} placeholder="Kitchen name" />
+          <FieldLabel>Tagline</FieldLabel>
+          <AdminInput value={draft.tag} onChangeText={(v) => setDraft((d) => ({ ...d, tag: v }))} placeholder="Short description" />
+          <FieldLabel>Phone</FieldLabel><AdminInput value={draft.phone} onChangeText={(v) => setDraft((d) => ({ ...d, phone: v }))} placeholder="Kitchen phone" keyboardType="phone-pad" />
+          <FieldLabel>Address</FieldLabel><AdminInput value={draft.address} onChangeText={(v) => setDraft((d) => ({ ...d, address: v }))} placeholder="Full kitchen address" />
+          <FieldLabel>Description</FieldLabel><AdminInput value={draft.description} onChangeText={(v) => setDraft((d) => ({ ...d, description: v }))} placeholder="Kitchen description" multiline />
+          <FieldLabel>Working days (sat,sun,mon,tue,wed,thu,fri)</FieldLabel><AdminInput value={draft.workDays.join(',')} onChangeText={(v) => setDraft((d) => ({ ...d, workDays: v.split(',').map(x => x.trim()).filter((x): x is 'sat'|'sun'|'mon'|'tue'|'wed'|'thu'|'fri' => ['sat','sun','mon','tue','wed','thu','fri'].includes(x)) }))} placeholder="sat,sun,mon,tue,wed" />
+          <View style={{ flexDirection: 'row', gap: 8 }}><View style={{ flex: 1 }}><FieldLabel>Opening time</FieldLabel><AdminInput value={draft.openTime} onChangeText={(v) => setDraft((d) => ({ ...d, openTime: v }))} placeholder="09:00" /></View><View style={{ flex: 1 }}><FieldLabel>Closing time</FieldLabel><AdminInput value={draft.closeTime} onChangeText={(v) => setDraft((d) => ({ ...d, closeTime: v }))} placeholder="23:00" /></View></View>
+          <View style={{ flexDirection: 'row', gap: 8 }}><View style={{ flex: 1 }}><FieldLabel>Delivery fee (EGP)</FieldLabel><AdminInput value={String(draft.deliveryFee ?? 0)} onChangeText={(v) => setDraft((d) => ({ ...d, deliveryFee: Number(v) || 0 }))} keyboardType="decimal-pad" /></View><View style={{ flex: 1 }}><FieldLabel>Preparation time (minutes)</FieldLabel><AdminInput value={String(draft.prepTime)} onChangeText={(v) => setDraft((d) => ({ ...d, prepTime: Number(v) || 1 }))} keyboardType="number-pad" /></View></View>
+        </Reveal>
+        <Reveal i={2} style={{ gap: 8 }}>
+          <FieldLabel>Kitchen location — tap the map to place the pin</FieldLabel>
+          <View style={{ height: 260, overflow: 'hidden', borderRadius: 18, borderWidth: 1, borderColor: c.line }}><WebView originWhitelist={['*']} source={{ html: mapHtml }} onMessage={(event) => { try { const p = JSON.parse(event.nativeEvent.data); if (!Number.isFinite(Number(p.lat)) || !Number.isFinite(Number(p.lng))) { useApp.getState().showToast('تعذر تحديد الموقع', 'جرّب البحث عن عنوان أو اضغط على الخريطة مباشرة.', 'error'); return; } setDraft((d) => ({ ...d, lat: Number(p.lat), lng: Number(p.lng), ...(typeof p.address === 'string' && p.address ? { address: p.address } : {}) })); } catch {} }} javaScriptEnabled geolocationEnabled /></View>
+          <View style={{ flexDirection: 'row', gap: 8 }}><View style={{ flex: 1 }}><FieldLabel>Latitude</FieldLabel><AdminInput value={draft.lat == null ? '' : String(draft.lat)} onChangeText={(v) => setDraft((d) => ({ ...d, lat: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="30.0444" /></View><View style={{ flex: 1 }}><FieldLabel>Longitude</FieldLabel><AdminInput value={draft.lng == null ? '' : String(draft.lng)} onChangeText={(v) => setDraft((d) => ({ ...d, lng: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="31.2357" /></View></View>
+          <Txt s={12} color={c.text3}>{draft.lat != null && draft.lng != null ? `Coordinates: ${draft.lat.toFixed(6)}, ${draft.lng.toFixed(6)}` : 'لم يتم تحديد موقع بعد'}</Txt>
+        </Reveal>
+
+        <ToggleCardRow
+          title="Live on the app"
+          sub="Shows on Home and in the menu"
+          on={draft.on}
+          onPress={() => setDraft((d) => ({ ...d, on: !d.on }))}
+        />
+
+        {!isNew && (
+          <>
+            <Reveal i={2} from={{ y: 0, scale: 1 }}>
+              <Txt s={17} w={600} style={{ marginTop: 6 }}>
+                Dishes in this kitchen
+              </Txt>
+            </Reveal>
+            {dishes.map((m) => (
+              <PressableScale
+                key={m.id}
+                onPress={() => openItemEditor(m.id)}
+                scaleTo={0.985}
+                style={[styles.row, { borderColor: c.line, backgroundColor: c.surface1 }]}
+              >
+                <DishImage uri={m.img} size={44} />
+                <Txt s={14} w={600} style={{ flex: 1 }} numberOfLines={1}>
+                  {m.name}
+                </Txt>
+                <Txt s={13.5} w={700}>
+                  {money(m.price)}
+                </Txt>
+                <Icon name="chevron_right" size={20} color={c.text3} />
+              </PressableScale>
+            ))}
+          </>
+        )}
+      </ScrollView>
+<<<<<<< HEAD
+
+      <AdminHeader title={isNew ? 'Add kitchen' : 'Edit kitchen'} back />
+      <FloatingBar>
+        <AccentButton
+          label={isNew ? 'Create kitchen' : 'Save kitchen'}
+          loading={saving}
+          loadingLabel={isNew ? 'Creating…' : 'Saving…'}
+          onPress={() => void save()}
+        />
+=======
+      <AdminHeader title={id === 'new' ? 'Add kitchen' : 'Edit kitchen'} back />
+      <FloatingBar>
+        <AccentButton label={id === 'new' ? 'Add kitchen' : 'Save kitchen'} loading={saving} loadingLabel="Saving…" onPress={() => void save()} />
+>>>>>>> origin/build/tawseela-ios-ipa-v10
+      </FloatingBar>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  heroLabel: { position: 'absolute', left: 14, right: 14, bottom: 14, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  photoBtn: { top: 10, bottom: undefined },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingLeft: 10, paddingRight: 12, borderRadius: 18, borderWidth: 1 },
+});
+
+========== mobile/src/app/admin/brands.tsx ==========
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
+
+import { AdminHeader, openBrandEditor, useAdminPadding } from '@/components/admin/admin-ui';
+import { Icon } from '@/components/icons/icon';
+import { ToggleButton } from '@/components/ui/controls';
+import { Photo } from '@/components/ui/media';
+import { PressableScale } from '@/components/ui/pressable-scale';
+import { Reveal, RevealScope } from '@/components/ui/reveal';
+import { Txt } from '@/components/ui/txt';
+import { useStatusBar } from '@/hooks/use-status-bar';
+import { cnt } from '@/lib/format';
+import { useApp } from '@/store/app-store';
+import { fixed } from '@/theme/tokens';
+import { useTheme } from '@/theme/theme';
+
+export default function AdminBrands() {
+  return (
+    <RevealScope>
+      <Brands />
+    </RevealScope>
+  );
+}
+
+function Brands() {
+  const { c } = useTheme();
+  useStatusBar();
+  const pad = useAdminPadding('push');
+  const brands = useApp((s) => s.brands);
+  const menu = useApp((s) => s.menu);
+
+  return (
+    <View style={{ flex: 1, backgroundColor: c.bg }}>
+      <ScrollView contentContainerStyle={[pad, { gap: 10 }]} showsVerticalScrollIndicator={false}>
+        <Reveal i={0} from={{ y: 0, scale: 1 }}>
+          <Txt s={12.5} w={500} color={c.text3} style={{ paddingHorizontal: 4, paddingVertical: 2 }}>
+            Each kitchen is a brand on the Home screen. Turning one off hides all its dishes.
+          </Txt>
+        </Reveal>
+<<<<<<< HEAD
+        <Reveal i={1}>
+          <PressableScale
+            onPress={() => openBrandEditor('new')}
+            scaleTo={0.98}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 9,
+              paddingVertical: 15,
+              borderRadius: 18,
+              borderWidth: 1,
+              borderStyle: 'dashed',
+              borderColor: c.line,
+              backgroundColor: c.surface1,
+            }}
+          >
+            <Icon name="add" size={20} color={c.text1} />
+            <Txt s={14} w={700}>Add new kitchen</Txt>
+          </PressableScale>
+        </Reveal>
+=======
+        <PressableScale onPress={() => openBrandEditor('new')} scaleTo={0.97} style={[styles.add, { backgroundColor: c.accent, borderColor: c.accent }]}>
+          <Icon name="add" size={20} color={c.accentInk} />
+          <Txt s={14} w={700} color={c.accentInk}>إضافة مطبخ جديد</Txt>
+        </PressableScale>
+>>>>>>> origin/build/tawseela-ios-ipa-v10
+        {brands.map((b, i) => (
+          <Reveal key={b.id} i={Math.min(i, 8)}>
+            <PressableScale onPress={() => openBrandEditor(b.id)} scaleTo={0.985} style={[styles.row, { borderColor: c.line, backgroundColor: c.surface1 }]}>
+              <Photo uri={b.img} radius={16} style={[styles.tile, { opacity: b.on ? 1 : 0.4 }]}>
+                <View style={styles.badge}>
+                  <Icon name={b.icon} size={15} fill color="#FFFFFF" />
+                </View>
+              </Photo>
+              <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+                <Txt s={14.5} w={700}>
+                  {b.name}
+                </Txt>
+                <Txt s={12} color={c.text3} numberOfLines={1}>
+                  {b.tag} · {cnt(menu.filter((m) => m.brand === b.id).length, 'dish')}
+                </Txt>
+              </View>
+              <View style={styles.actions}>
+                <PressableScale onPress={() => openBrandEditor(b.id)} style={styles.iconBtn} accessibilityLabel="Edit kitchen"><Icon name="edit" size={19} color={c.text1} /></PressableScale>
+                <PressableScale onPress={() => Alert.alert('حذف المطبخ', `هل أنت متأكد من حذف ${b.name}؟`, [{ text: 'إلغاء', style: 'cancel' }, { text: 'حذف', style: 'destructive', onPress: () => void useApp.getState().deleteBrand(b.id) }])} style={styles.iconBtn} accessibilityLabel="Delete kitchen"><Icon name="delete" size={19} color={c.err} /></PressableScale>
+                <ToggleButton on={b.on} onPress={() => useApp.getState().toggleBrand(b.id)} label="Toggle" />
+              </View>
+            </PressableScale>
+          </Reveal>
+        ))}
+      </ScrollView>
+      <AdminHeader title="Kitchens & brands" back />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  add: { minHeight: 50, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  iconBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
+  row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingLeft: 10, paddingRight: 12, borderRadius: 18, borderWidth: 1 },
+  tile: { width: 60, height: 60 },
+  badge: {
+    position: 'absolute',
+    left: 5,
+    bottom: 5,
+    width: 24,
+    height: 24,
+    borderRadius: 8,
+    backgroundColor: fixed.roast(0.6),
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+});
+
+========== mobile/src/store/app-store.ts ==========
+import type {
+  AdminCatalog,
+  Booking as ApiBooking,
+  Brand as ApiBrand,
+  Catalog,
+  Category as ApiCategory,
+  CreateBooking,
+  Dish as ApiDish,
+  DishInput,
+  DishPatch,
+  IssueResult,
+  LikeResult,
+  Me,
+  Post as ApiPost,
+  Promo as ApiPromo,
+  RateOrder,
+  StoreSettings,
+  Voucher,
+} from '@fig/shared';
+import { useSyncExternalStore } from 'react';
+import { create } from 'zustand';
+import { createJSONStorage, persist } from 'zustand/middleware';
+
+import { HERO, ISSUES, POSTS, SECTIONS } from '@/data/content';
+import { BRANDS, CATS, CAT_IMG, MENU } from '@/data/menu';
+import { addressIconFor, cardBrandOf, SEED_ADDRESSES, SEED_CARDS, SEED_INBOX } from '@/data/seed';
+import type {
+  Address,
+  AppliedPromo,
+  Banner,
+  Booking,
+  BookingStatus,
+  Brand,
+  Card,
+  CartLine,
+  Category,
+  Customer,
+  Deal,
+  Dish,
+  FulfilmentMode,
+  HomeSection,
+  HomeSectionKey,
+  IconName,
+  InboxItem,
+  MenuFilters,
+  Order,
+  Post,
+  Prefs,
+  Promo,
+  Review,
+  Reward,
+} from '@/data/types';
+import { cnt, money } from '@/lib/format';
+import { computeTotals, round2, settleLine, type Totals } from '@/lib/pricing';
+
+import { useSession } from './session';
+import { deviceStorage } from './storage';
+
+/* ------------------------------------------------------------------ types */
+
+export type ThemePref = 'light' | 'dark' | 'system';
+
+export interface ToastData {
+  id: number;
+  title: string;
+  sub: string;
+  icon: IconName;
+  /** Optional action button: label + route to open. */
+  action?: { label: string; href: string };
+}
+
+export interface FlyData {
+  key: number;
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+}
+
+export interface ItemDraft {
+  id: string | null;
+  name: string;
+  price: number;
+  cat: string;
+  brand: string;
+  tag: 'None' | 'Bestseller' | 'New' | 'Spicy';
+  avail: boolean;
+  img: string;
+}
+
+export interface NewAddress {
+  tag: 'Home' | 'Work' | 'Other';
+  custom: string;
+  l1: string;
+  apt: string;
+  city: string;
+  zip: string;
+  note: string;
+  door: boolean;
+  phone: string;
+  def: boolean;
+}
+
+export interface NewCard {
+  num: string;
+  name: string;
+  exp: string;
+  cvv: string;
+  nick: string;
+  def: boolean;
+}
+
+/** The server calls the store makes (lib/remote.ts registers them, so the store never imports the API). */
+export interface Remote {
+  validatePromo: (code: string) => Promise<{ code: string; pct: number }>;
+  redeem: (id: string) => Promise<Me>;
+  rate: (orderId: string, input: RateOrder) => Promise<Order>;
+  reportIssue: (orderId: string | null, type: number, text: string) => Promise<IssueResult>;
+  book: (b: CreateBooking) => Promise<ApiBooking>;
+  cancelBooking: (id: string) => Promise<ApiBooking>;
+  like: (postId: string) => Promise<LikeResult>;
+
+  createDish: (d: DishInput) => Promise<ApiDish>;
+  patchDish: (id: string, p: DishPatch) => Promise<ApiDish>;
+  deleteDish: (id: string) => Promise<void>;
+  createCategory: (name: string) => Promise<ApiCategory>;
+  patchCategory: (id: string, p: { on?: boolean; img?: string }) => Promise<ApiCategory>;
+  reorder: (kind: 'categories' | 'banners' | 'sections', ids: string[]) => Promise<void>;
+<<<<<<< HEAD
+  createBrand: (b: Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img'>) => Promise<ApiBrand>;
+  patchBrand: (id: string, p: Partial<Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img' | 'on'>>) => Promise<ApiBrand>;
+=======
+  createBrand: (b: Omit<ApiBrand, 'id' | 'order'>) => Promise<ApiBrand>;
+  patchBrand: (id: string, p: Partial<Omit<ApiBrand, 'id' | 'order'>>) => Promise<ApiBrand>;
+  deleteBrand: (id: string) => Promise<void>;
+>>>>>>> origin/build/tawseela-ios-ipa-v10
+  patchBanner: (id: string, p: { on?: boolean }) => Promise<unknown>;
+  patchSection: (k: HomeSectionKey, p: { on?: boolean }) => Promise<unknown>;
+  patchDeal: (p: Partial<Deal>) => Promise<Deal>;
+  patchStore: (p: Partial<StoreSettings>) => Promise<StoreSettings>;
+  createPromo: (code: string, pct: number) => Promise<ApiPromo>;
+  patchPromo: (code: string, on: boolean) => Promise<ApiPromo>;
+  createPost: (p: Omit<Post, 'id' | 'date' | 'mins' | 'likes'>) => Promise<ApiPost>;
+  patchPost: (id: string, p: Partial<Omit<Post, 'id' | 'date' | 'mins' | 'likes'>>) => Promise<ApiPost>;
+  deletePost: (id: string) => Promise<void>;
+
+  advanceOrder: (id: string) => Promise<Order>;
+  cancelOrder: (id: string) => Promise<Order>;
+  fireTicket: (id: string) => Promise<Order>;
+  itemDone: (id: string, index: number, done: boolean) => Promise<Order>;
+  setBookingStatus: (id: string, status: BookingStatus) => Promise<ApiBooking>;
+  replyReview: (id: string) => Promise<Review>;
+
+  /** a console write landed: refresh the catalog (debounced) so its version and server fields catch up */
+  catalogChanged: () => void;
+  errorMessage: (e: unknown) => string;
+}
+
+let remote: Remote | null = null;
+export const registerRemote = (r: Remote) => {
+  remote = r;
+};
+const server = (): Remote => {
+  if (!remote) throw new Error('lib/remote.ts is not loaded');
+  return remote;
+};
+
+interface State {
+  /* session (who is signed in lives in store/session.ts) */
+  onboarded: boolean;
+  /** Set when a guest tries to check out; after auth we jump to checkout. */
+  pendingCheckout: boolean;
+  theme: ThemePref;
+
+  /* catalog — from the API, cached on the device (version 0 = the copy bundled with the app) */
+  catalogVersion: number;
+  catalogEtag: string | null;
+  menu: Dish[];
+  cats: Category[];
+  brands: Brand[];
+  banners: Banner[];
+  secs: HomeSection[];
+  deal: Deal;
+  posts: Post[];
+  /** the console's promo codes (admins only) */
+  promos: Promo[];
+
+  /* store settings */
+  storeOpen: boolean;
+  prep: number;
+  fee: number;
+  freeAt: number;
+  sound: boolean;
+
+  /* customer */
+  saved: string[];
+  cart: CartLine[];
+  mode: FulfilmentMode;
+  promo: AppliedPromo | null;
+  /** Promo field prefill (e.g. from a notification’s “Apply in cart”). */
+  promoDraft: string;
+  addrs: Address[];
+  addr: number;
+  speed: number;
+  /** 0 direct card form · 1 previously selected card option · 2 cash */
+  payM: number;
+  note: string;
+  /** Locally displayed saved-card placeholders; raw card data is never stored here. */
+  cards: Card[];
+  defCard: string;
+
+  /* the account, from GET /v1/me */
+  credit: number;
+  points: number;
+  redeemed: string[];
+  vouchers: Voucher[];
+  liked: string[];
+
+  /** the signed-in customer's orders (and, in the console, everyone's) */
+  orders: Order[];
+  lastNo: string | null;
+  inbox: InboxItem[];
+  reviews: Review[];
+  bookings: Booking[];
+  customers: Customer[];
+  prefs: Prefs;
+  orderNotif: boolean;
+  filters: MenuFilters;
+  /** Selected menu category + brand filter (shared by Home → Menu jumps). */
+  menuCat: string;
+  menuBrand: string | null;
+
+  /* transient ui */
+  toast: ToastData | null;
+  fly: FlyData | null;
+  bump: number;
+}
+
+interface Actions {
+  dishOf: (id: string) => Dish;
+  totals: () => Totals;
+  showToast: (title: string, sub: string, icon?: IconName, action?: ToastData['action']) => void;
+  hideToast: () => void;
+  flyToCart: (from: { x: number; y: number }, to: { x: number; y: number }) => void;
+  endFly: () => void;
+
+  setTheme: (t: ThemePref) => void;
+  finishOnboarding: () => void;
+  setPendingCheckout: (v: boolean) => void;
+
+  setMenuCat: (cat: string, brand?: string | null) => void;
+  setMenuBrand: (brand: string | null) => void;
+  setFilters: (f: MenuFilters) => void;
+
+  /* server → store */
+  applyCatalog: (c: Catalog | AdminCatalog, etag: string | null) => void;
+  applyMe: (me: Me) => void;
+  /** merges orders from the server; returns the ones whose step, payment or rider changed */
+  mergeOrders: (orders: Order[]) => Order[];
+  /** forgets what belongs to the signed-out account (orders, points, vouchers); the cart and settings stay */
+  clearAccount: () => void;
+
+  toggleSave: (id: string) => boolean;
+  addToCart: (line: CartLine, opts?: { silent?: boolean }) => boolean;
+  setQty: (index: number, delta: number) => void;
+  reorder: (no: string) => void;
+  setMode: (m: FulfilmentMode) => void;
+  applyPromo: (code: string) => Promise<string | null>;
+  removePromo: () => void;
+  setPromoDraft: (code: string) => void;
+  setCheckout: (p: Partial<Pick<State, 'speed' | 'payM' | 'note' | 'addr'>>) => void;
+  /** a placed order: into the history, the cart emptied */
+  orderPlaced: (order: Order) => void;
+  canCheckout: () => 'closed' | 'auth' | 'ok';
+
+  addAddress: (a: NewAddress) => string | null;
+  removeAddress: (i: number) => void;
+  addCard: (c: NewCard) => string | null;
+  removeCard: (id: string) => boolean;
+  makeDefaultCard: (id: string) => void;
+  addGiftCard: () => void;
+  redeem: (r: Reward) => Promise<void>;
+
+  pushInbox: (icon: IconName, title: string, sub: string) => void;
+  readNotif: (id: string) => void;
+  readAllNotifs: () => void;
+  deleteNotif: (id: string) => void;
+
+  submitRating: (no: string, stars: number, tags: string[], text: string, tip?: number) => Promise<boolean>;
+  submitIssue: (no: string | null, type: number) => Promise<void>;
+  addBooking: (b: CreateBooking) => Promise<Booking | null>;
+  setBookingStatus: (id: string, status: BookingStatus) => Promise<void>;
+  toggleLike: (postId: string) => void;
+  setPrefs: (p: Partial<Prefs>) => void;
+  setOrderNotif: (v: boolean) => void;
+
+  /* admin — each shows at once and rolls back with the server's reason if it's refused */
+  setStore: (p: Partial<Pick<State, 'storeOpen' | 'prep' | 'fee' | 'freeAt' | 'sound'>>) => void;
+  toggleStoreOpen: () => void;
+  advanceOrder: (no: string) => void;
+  cancelOrder: (no: string) => void;
+  fireTicket: (no: string) => void;
+  toggleKDone: (no: string, index: number) => void;
+  toggleAvail: (id: string) => void;
+  saveItem: (d: ItemDraft) => Promise<boolean>;
+  deleteItem: (id: string) => void;
+  toggleCat: (name: string) => void;
+  moveCat: (i: number, d: number) => void;
+  addCat: (name: string) => Promise<boolean>;
+  toggleBrand: (id: string) => void;
+<<<<<<< HEAD
+  addBrand: (b: Omit<Brand, 'id'>) => Promise<boolean>;
+=======
+  createBrand: (b: Omit<Brand, 'id'>) => Promise<boolean>;
+>>>>>>> origin/build/tawseela-ios-ipa-v10
+  saveBrand: (b: Brand) => Promise<boolean>;
+  deleteBrand: (id: string) => Promise<boolean>;
+  toggleSection: (k: HomeSectionKey) => void;
+  moveSection: (i: number, d: number) => void;
+  toggleBanner: (id: string) => void;
+  moveBanner: (i: number, d: number) => void;
+  setDeal: (d: Partial<Deal>) => void;
+  savePost: (p: Post) => Promise<boolean>;
+  deletePost: (id: string) => void;
+  togglePost: (id: string) => void;
+  addPromo: (code: string, pct: number) => Promise<boolean>;
+  togglePromo: (code: string) => void;
+  replyReview: (id: string) => void;
+
+  resetDemo: () => void;
+}
+
+export type AppStore = State & Actions;
+
+/* ------------------------------------------------------------------ helpers */
+
+const move = <T>(arr: T[], i: number, d: number): T[] | null => {
+  const j = i + d;
+  if (j < 0 || j >= arr.length) return null;
+  const a = [...arr];
+  [a[i], a[j]] = [a[j], a[i]];
+  return a;
+};
+
+const lineKey = (c: CartLine) => `${c.id}-${c.s}-${[...c.ex].sort().join('.')}${c.deal ? '-d' : ''}${c.voucher ? `-v${c.voucher}` : ''}`;
+
+/** Order step labels; a pickup order's step 2 is "Ready for pickup". */
+export const STEP_NAMES = ['Order placed', 'Preparing', 'On the way', 'Delivered', 'Cancelled'] as const;
+export const stepLabel = (o: Pick<Order, 'mode'> | undefined, i: number): string =>
+  o && o.mode === 'pickup' && i === 2 ? 'Ready for pickup' : (STEP_NAMES[i] ?? '');
+
+/** A placed order's item back as a cart line (for reorder). */
+const toCartLine = ({ id, s, ex, q }: CartLine): CartLine => ({ id, s, ex: [...ex], q });
+
+let toastTimer: ReturnType<typeof setTimeout> | undefined;
+let uid = 0;
+
+/** The catalog bundled with the app: what a first launch shows before (or without) the server. */
+const bundledCatalog = () => ({
+  catalogVersion: 0,
+  catalogEtag: null as string | null,
+  menu: MENU.map((m) => ({ ...m })),
+  cats: CATS.map((name) => ({ id: name.toLowerCase(), name, on: true, img: CAT_IMG[name] })),
+  brands: BRANDS.map((b) => ({ ...b })),
+  banners: HERO.map((b) => ({ ...b })),
+  secs: SECTIONS.map((s) => ({ ...s })),
+  deal: { id: 'smash', pct: 25, on: true },
+  posts: POSTS.filter((p) => p.on).map((p) => ({ ...p })),
+  promos: [] as Promo[],
+  storeOpen: true,
+  prep: 18,
+  fee: 2.99,
+  freeAt: 40,
+  sound: true,
+});
+
+const emptyAccount = () => ({
+  credit: 0,
+  points: 0,
+  redeemed: [] as string[],
+  vouchers: [] as Voucher[],
+  liked: [] as string[],
+  orders: [] as Order[],
+  lastNo: null as string | null,
+  bookings: [] as Booking[],
+  reviews: [] as Review[],
+  customers: [] as Customer[],
+});
+
+const initialState = (): State => ({
+  onboarded: false,
+  pendingCheckout: false,
+  theme: 'light',
+
+  ...bundledCatalog(),
+
+  saved: ['brisket', 'carb', 'cheesecake'],
+  cart: [],
+  mode: 'delivery',
+  promo: null,
+  promoDraft: '',
+  addrs: SEED_ADDRESSES.map((a) => ({ ...a })),
+  addr: 0,
+  speed: 0,
+  payM: 0,
+  note: '',
+  cards: SEED_CARDS.map((c) => ({ ...c })),
+  defCard: 'k1',
+
+  ...emptyAccount(),
+
+  inbox: SEED_INBOX.map((n) => ({ ...n })),
+  prefs: { lang: 'العربية', orderNotif: true, offers: true, journalNotif: false, sms: false, location: true, personal: true },
+  orderNotif: true,
+  filters: { sort: 0, veg: false, hot: false, under: false },
+  menuCat: 'All',
+  menuBrand: null,
+
+  toast: null,
+  fly: null,
+  bump: 0,
+});
+
+const byOrder = <T extends { order: number }>(a: T[]) => [...a].sort((x, y) => x.order - y.order);
+const sortBookings = (a: Booking[]) => [...a].sort((x, y) => x.date.localeCompare(y.date) || x.time.localeCompare(y.time, undefined, { numeric: true }));
+
+/* ------------------------------------------------------------------ store */
+
+export const useApp = create<AppStore>()(
+  persist(
+    (set, get) => {
+      const toast: Actions['showToast'] = (title, sub, icon = 'check', action) => {
+        uid += 1;
+        set({ toast: { id: uid, title, sub, icon, action } });
+        clearTimeout(toastTimer);
+        // longer messages (sign-in problems, server errors) stay up long enough to read
+        toastTimer = setTimeout(() => set({ toast: null }), Math.min(6000, Math.max(2600, 1000 + sub.length * 45)));
+      };
+
+      /**
+       * A server-backed change: show it at once, send it, and put the touched state back with the server's
+       * reason if it's refused. Catalog writes then refresh the catalog so its version catches up.
+       */
+      const write = async <T, K extends keyof State>(opts: {
+        keys: K[];
+        apply?: (s: State) => Partial<State>;
+        call: (r: Remote) => Promise<T>;
+        done?: (res: T, s: State) => Partial<State> | void;
+        fail: string;
+        catalog?: boolean;
+      }): Promise<T | null> => {
+        const before = get();
+        const snapshot = Object.fromEntries(opts.keys.map((k) => [k, before[k]])) as Partial<State>;
+        if (opts.apply) set(opts.apply(before));
+        try {
+          const res = await opts.call(server());
+          const patch = opts.done?.(res, get());
+          if (patch) set(patch);
+          if (opts.catalog) server().catalogChanged();
+          return res;
+        } catch (e) {
+          set(snapshot);
+          toast(opts.fail, remote?.errorMessage(e) ?? 'Try again in a moment.', 'error');
+          return null;
+        }
+      };
+
+      const replaceOrder = (o: Order) =>
+        set((s) => ({ orders: s.orders.some((x) => x.id === o.id) ? s.orders.map((x) => (x.id === o.id ? o : x)) : [o, ...s.orders] }));
+      const orderByNo = (no: string) => get().orders.find((o) => o.no === no);
+
+      return {
+        ...initialState(),
+
+        dishOf: (id) => get().menu.find((m) => m.id === id) ?? MENU.find((m) => m.id === id) ?? get().menu[0],
+
+        totals: () => {
+          const s = get();
+          const kitchenIds = [...new Set(s.cart.map((line) => s.dishOf(line.id).brand))];
+          const hasKitchenFees = kitchenIds.some((id) => s.brands.find((brand) => brand.id === id)?.deliveryFee != null);
+          const deliveryFee = hasKitchenFees ? kitchenIds.reduce((sum, id) => sum + (s.brands.find((brand) => brand.id === id)?.deliveryFee ?? s.fee), 0) : s.fee;
+          return computeTotals({ cart: s.cart, dishOf: s.dishOf, mode: s.mode, speed: s.speed, fee: deliveryFee, freeAt: s.freeAt, promo: s.promo });
+        },
+
+        showToast: toast,
+        hideToast: () => set({ toast: null }),
+        flyToCart: (from, to) => set((s) => ({ fly: { key: (s.fly?.key ?? 0) + 1, from, to } })),
+        endFly: () => set((s) => ({ fly: null, bump: s.bump + 1 })),
+
+        /* session */
+        setTheme: (theme) => set({ theme }),
+        finishOnboarding: () => set({ onboarded: true }),
+        setPendingCheckout: (pendingCheckout) => set({ pendingCheckout }),
+
+        setMenuCat: (menuCat, brand) => set((s) => ({ menuCat, menuBrand: brand === undefined ? s.menuBrand : brand })),
+        setMenuBrand: (menuBrand) => set({ menuBrand }),
+        setFilters: (filters) => set({ filters }),
+
+        /* server → store */
+        applyCatalog: (c, etag) =>
+          set((s) => {
+            const ids = new Set(c.dishes.map((d) => d.id));
+            return {
+              catalogVersion: c.version,
+              catalogEtag: etag,
+              menu: byOrder(c.dishes).map(({ order: _o, ...d }) => d),
+              cats: byOrder(c.categories).map(({ id, name, on, img }) => ({ id, name, on, img })),
+              brands: byOrder(c.brands).map(({ order: _o, ...b }) => ({ ...b, icon: b.icon as IconName })),
+              banners: byOrder(c.banners).map(({ order: _o, ...b }) => b),
+              secs: c.sections.map((x) => ({ ...x, icon: x.icon as IconName })),
+              deal: c.deal,
+              posts: c.posts,
+              ...('promos' in c ? { promos: c.promos } : {}),
+              storeOpen: c.store.open,
+              prep: c.store.prep,
+              fee: c.store.fee,
+              freeAt: c.store.freeAt,
+              sound: c.store.sound,
+              // dishes that left the menu drop out of the cart; deal lines are priced at today's percentage
+              cart: s.cart.filter((l) => ids.has(l.id)).map((l) => settleLine(l, c.deal)),
+              saved: s.saved.filter((id) => ids.has(id)),
+            };
+          }),
+
+        applyMe: (me) =>
+          set((s) => ({
+            points: me.points,
+            credit: me.credit,
+            redeemed: me.redeemed,
+            vouchers: me.vouchers,
+            liked: me.liked,
+            // a voucher that's been used (or given back) leaves the cart
+            cart: s.cart.filter((l) => !l.voucher || me.vouchers.some((v) => v.id === l.voucher)),
+          })),
+
+        mergeOrders: (incoming) => {
+          const before = new Map(get().orders.map((o) => [o.id, o]));
+          const changed = incoming.filter((o) => {
+            const prev = before.get(o.id);
+            return !prev || prev.step !== o.step || prev.payment.status !== o.payment.status || prev.rider?.uid !== o.rider?.uid;
+          });
+          const ids = new Set(incoming.map((o) => o.id));
+          set((s) => ({ orders: [...incoming, ...s.orders.filter((o) => !ids.has(o.id))].sort((a, b) => b.placedAt - a.placedAt) }));
+          return changed;
+        },
+
+        clearAccount: () => set((s) => ({ ...emptyAccount(), promo: null, pendingCheckout: false, cart: s.cart.filter((l) => !l.voucher) })),
+
+        /* cart */
+        toggleSave: (id) => {
+          const on = get().saved.includes(id);
+          set((s) => ({ saved: on ? s.saved.filter((x) => x !== id) : [...s.saved, id] }));
+          if (!on) toast('Saved', get().dishOf(id).name, 'favorite');
+          return !on;
+        },
+
+        addToCart: (line, opts) => {
+          const s = get();
+          const dish = s.dishOf(line.id);
+          if (!s.storeOpen) {
+            toast('Kitchen is closed', 'Ordering reopens at 11:00 AM', 'schedule');
+            return false;
+          }
+          if (!dish.avail) {
+            toast('Sold out tonight', `${dish.name} is unavailable`, 'block');
+            return false;
+          }
+          const key = lineKey(line);
+          set((st) => {
+            const cart = [...st.cart];
+            const i = cart.findIndex((c) => lineKey(c) === key);
+            if (i >= 0) cart[i] = { ...cart[i], q: line.voucher ? 1 : cart[i].q + line.q };
+            else cart.push(settleLine({ ...line, ex: [...line.ex] }, st.deal));
+            return { cart };
+          });
+          if (!opts?.silent) toast('Added to cart', `${line.q > 1 ? line.q + ' × ' : ''}${dish.name}`, 'shopping_bag', { label: 'View', href: '/cart' });
+          return true;
+        },
+
+        // a reward line stays at one
+        setQty: (index, delta) =>
+          set((s) => ({
+            cart: s.cart.map((c, k) => (k === index ? { ...c, q: c.voucher ? Math.min(1, c.q + delta) : c.q + delta } : c)).filter((c) => c.q > 0),
+          })),
+
+        reorder: (no) => {
+          const o = orderByNo(no);
+          if (!o) return;
+          const lines = o.items.filter((it) => !it.voucher).map(toCartLine);
+          const added = lines.filter((l) => get().addToCart(l, { silent: true }));
+          if (!added.length) return;
+          toast(
+            'Added to cart',
+            `${cnt(
+              added.reduce((a, b) => a + b.q, 0),
+              'item',
+            )} from ${o.no}`,
+            'replay',
+            { label: 'View', href: '/cart' },
+          );
+        },
+
+        setMode: (mode) => set({ mode }),
+
+        applyPromo: async (code) => {
+          const c = code.trim().toUpperCase();
+          if (!c) return 'Type a code first.';
+          try {
+            const p = await server().validatePromo(c);
+            set({ promo: { code: p.code, pct: p.pct } });
+            toast('Promo applied', `${p.code} · ${p.pct}% off`, 'sell');
+            return null;
+          } catch (e) {
+            return remote?.errorMessage(e) ?? 'That code isn’t active. Try FIG10.';
+          }
+        },
+        removePromo: () => set({ promo: null, promoDraft: '' }),
+        setPromoDraft: (promoDraft) => set({ promoDraft }),
+        setCheckout: (p) => set(p),
+
+        canCheckout: () => {
+          const s = get();
+          if (!s.storeOpen) {
+            toast('Kitchen is closed', 'Ordering reopens at 11:00 AM', 'schedule');
+            return 'closed';
+          }
+          if (!useSession.getState().user) {
+            set({ pendingCheckout: true });
+            return 'auth';
+          }
+          return 'ok';
+        },
+
+        orderPlaced: (order) => {
+          replaceOrder(order);
+          set({ lastNo: order.no, cart: [], promo: null, promoDraft: '', note: '' });
+        },
+
+        /* account */
+        addAddress: (n) => {
+          const miss: string[] = [];
+          if (!n.l1.trim()) miss.push('a street');
+          if (!/^\d{5}$/.test(n.zip.trim())) miss.push('a 5‑digit ZIP');
+          if (miss.length) {
+            toast('Almost there', 'Add ' + miss.join(' and '), 'error');
+            return miss.join(' and ');
+          }
+          const tag = n.tag === 'Other' ? n.custom.trim() || 'Other' : n.tag;
+          const a: Address = {
+            tag,
+            icon: addressIconFor(n.tag),
+            l1: n.l1.trim() + (n.apt.trim() ? ', ' + n.apt.trim() : ''),
+            l2: (n.city.trim() + ' ' + n.zip.trim()).trim(),
+            note: n.note.trim(),
+            door: n.door,
+            phone: n.phone,
+          };
+          set((s) => ({ addrs: [...s.addrs, a], addr: n.def ? s.addrs.length : s.addr }));
+          toast('Address saved', a.l1, 'location_on');
+          return null;
+        },
+        removeAddress: (i) => {
+          const a = get().addrs[i];
+          if (!a || get().addrs.length <= 1) return;
+          set((s) => ({ addrs: s.addrs.filter((_, k) => k !== i), addr: 0 }));
+          toast('Address removed', a.l1, 'delete');
+        },
+
+        addCard: (c) => {
+          const d = c.num.replace(/\D/g, '');
+          const okNum = d.length >= 15;
+          const okExp = /^(0[1-9]|1[0-2])\/\d{2}$/.test(c.exp);
+          const okCvv = /^\d{3,4}$/.test(c.cvv);
+          if (!okNum || !okExp || !okCvv || !c.name.trim()) {
+            const msg = !okNum
+              ? 'Card number looks too short'
+              : !okExp
+                ? 'Use MM/YY for the expiry date'
+                : !okCvv
+                  ? 'CVV is 3 or 4 digits'
+                  : 'Add the name on the card';
+            toast('Check card details', msg, 'error');
+            return msg;
+          }
+          const b = cardBrandOf(d);
+          const id = 'k' + Date.now();
+          set((s) => ({
+            cards: [
+              ...s.cards,
+              { id, brand: b.name, num: '•••• ' + d.slice(-4), exp: c.exp, bg: b.bg, name: c.name.trim().toUpperCase(), nick: c.nick.trim() },
+            ],
+            defCard: c.def ? id : s.defCard,
+            payM: c.def ? 1 : s.payM,
+          }));
+          toast('Card added', `${b.name} •••• ${d.slice(-4)}`, 'credit_card');
+          return null;
+        },
+        removeCard: (id) => {
+          const s = get();
+          const c = s.cards.find((x) => x.id === id);
+          if (!c) return false;
+          if (s.cards.length <= 1) {
+            toast('Keep at least one card', 'Add another card before removing this one', 'info');
+            return false;
+          }
+          const rest = s.cards.filter((x) => x.id !== id);
+          set({ cards: rest, defCard: s.defCard === id ? rest[0].id : s.defCard });
+          toast('Card removed', `${c.brand} ${c.num}`, 'delete');
+          return true;
+        },
+        makeDefaultCard: (id) => {
+          const c = get().cards.find((x) => x.id === id);
+          set({ defCard: id, payM: 1 });
+          if (c) toast('Default updated', `${c.brand} ${c.num}`, 'check_circle');
+        },
+        // Fig credit is kept by the server now, and gift cards aren't sold yet
+        addGiftCard: () => toast('Gift cards are coming soon', 'Fig credit comes from Fig Club rewards and from help with an order', 'redeem'),
+
+        redeem: async (r) => {
+          const s = get();
+          if (s.redeemed.includes(r.id)) return;
+          if (s.points < r.pts) {
+            toast('Not enough points', `You need ${r.pts - s.points} more`, 'info');
+            return;
+          }
+          const known = new Set(s.vouchers.map((v) => v.id));
+          const me = await write({
+            keys: ['points', 'redeemed'],
+            apply: (st) => ({ points: st.points - r.pts, redeemed: [...st.redeemed, r.id] }),
+            call: (api) => api.redeem(r.id),
+            fail: 'Reward not redeemed',
+          });
+          if (!me) return;
+          get().applyMe(me);
+          if (r.credit) {
+            toast('Reward redeemed', `${money(r.credit)} added to Fig credit`, 'redeem');
+            return;
+          }
+          // a dish reward becomes a voucher: a free line in the cart
+          const v = me.vouchers.find((x) => !known.has(x.id) && x.reward === r.id) ?? me.vouchers.find((x) => x.reward === r.id);
+          if (v && !get().cart.some((l) => l.voucher === v.id))
+            set((st) => ({ cart: [...st.cart, { id: v.dish, s: v.s, ex: [], q: 1, deal: true, dealPct: 100, voucher: v.id }] }));
+          toast('Reward redeemed', `${r.l} added to your cart free`, 'redeem', { label: 'View', href: '/cart' });
+        },
+
+        /* inbox (on this device) */
+        pushInbox: (icon, title, sub) => {
+          uid += 1;
+          set((s) => ({ inbox: [{ id: `n${Date.now()}-${uid}`, icon, title, sub, time: 'Now', unread: true }, ...s.inbox].slice(0, 50) }));
+        },
+        readNotif: (id) => set((s) => ({ inbox: s.inbox.map((x) => (x.id === id ? { ...x, unread: false } : x)) })),
+        readAllNotifs: () => set((s) => ({ inbox: s.inbox.map((x) => ({ ...x, unread: false })) })),
+        deleteNotif: (id) => {
+          const n = get().inbox.find((x) => x.id === id);
+          set((s) => ({ inbox: s.inbox.filter((x) => x.id !== id) }));
+          if (n) toast('Notification deleted', n.title, 'delete');
+        },
+
+        submitRating: async (no, stars, tags, text, tip = 0) => {
+          const o = orderByNo(no);
+          if (!o) return false;
+          const res = await write({
+            keys: ['orders'],
+            apply: (s) => ({ orders: s.orders.map((x) => (x.id === o.id ? { ...x, rated: stars } : x)) }),
+            call: (api) => api.rate(o.id, { stars, tags, text: text.trim(), tip }),
+            done: (order) => {
+              replaceOrder(order);
+            },
+            fail: 'Rating not sent',
+          });
+          return !!res;
+        },
+
+        submitIssue: async (no, type) => {
+          const t = ISSUES[type]?.[0] ?? 'Issue';
+          const o = no ? orderByNo(no) : undefined;
+          try {
+            const res = await server().reportIssue(o?.id ?? null, type, '');
+            set({ credit: res.credit });
+            const sub = res.credited
+              ? `${t} reported. We added ${money(5)} Fig credit while the team looks into it.`
+              : `${t} reported. The team will look into it.`;
+            get().pushInbox('support_agent', `We’re on it · ${no ?? 'your order'}`, sub);
+            toast('Issue reported', res.credited ? `${money(5)} credit added to your account` : 'The team will be in touch', 'support_agent');
+          } catch (e) {
+            toast('Issue not sent', remote?.errorMessage(e) ?? 'Try again in a moment.', 'error');
+          }
+        },
+
+        addBooking: async (b) => {
+          if (!useSession.getState().user) return null;
+          const booking = await write({
+            keys: [],
+            call: (api) => api.book(b),
+            done: (res, s) => ({ bookings: sortBookings([...s.bookings.filter((x) => x.id !== res.id), { ...res, mine: true }]) }),
+            fail: 'Table not booked',
+          });
+          return booking ? { ...booking, mine: true } : null;
+        },
+        setBookingStatus: async (id, status) => {
+          const b = get().bookings.find((x) => x.id === id);
+          if (!b) return;
+          // customers cancel their own; the console sets any status
+          const asCustomer = useSession.getState().role !== 'admin';
+          await write({
+            keys: ['bookings'],
+            apply: (s) => ({ bookings: s.bookings.map((x) => (x.id === id ? { ...x, status } : x)) }),
+            call: (api) => (asCustomer ? api.cancelBooking(id) : api.setBookingStatus(id, status)),
+            done: (res, s) => ({ bookings: s.bookings.map((x) => (x.id === id ? { ...res, mine: x.mine } : x)) }),
+            fail: 'Booking not updated',
+          });
+        },
+        toggleLike: (postId) => {
+          if (!useSession.getState().user) {
+            toast('Sign in to like stories', 'Your likes follow your account', 'favorite');
+            return;
+          }
+          const on = !get().liked.includes(postId);
+          void write({
+            keys: ['liked', 'posts'],
+            apply: (s) => ({
+              liked: on ? [...s.liked, postId] : s.liked.filter((x) => x !== postId),
+              posts: s.posts.map((p) => (p.id === postId ? { ...p, likes: Math.max(0, p.likes + (on ? 1 : -1)) } : p)),
+            }),
+            call: (api) => api.like(postId),
+            done: (res, s) => ({
+              liked: res.liked ? [...new Set([...s.liked, res.id])] : s.liked.filter((x) => x !== res.id),
+              posts: s.posts.map((p) => (p.id === res.id ? { ...p, likes: res.likes } : p)),
+            }),
+            fail: 'Like not saved',
+          });
+        },
+        setPrefs: (p) => set((s) => ({ prefs: { ...s.prefs, ...p } })),
+        setOrderNotif: (orderNotif) => set({ orderNotif }),
+
+        /* admin */
+        setStore: (p) => {
+          const body: Partial<StoreSettings> = {
+            ...(p.storeOpen !== undefined ? { open: p.storeOpen } : {}),
+            ...(p.prep !== undefined ? { prep: p.prep } : {}),
+            ...(p.fee !== undefined ? { fee: round2(p.fee) } : {}),
+            ...(p.freeAt !== undefined ? { freeAt: p.freeAt } : {}),
+            ...(p.sound !== undefined ? { sound: p.sound } : {}),
+          };
+          void write({
+            keys: ['storeOpen', 'prep', 'fee', 'freeAt', 'sound'],
+            apply: () => p,
+            call: (api) => api.patchStore(body),
+            fail: 'Settings not saved',
+            catalog: true,
+          });
+        },
+        toggleStoreOpen: () => {
+          const open = get().storeOpen;
+          get().setStore({ storeOpen: !open });
+          toast(open ? 'Kitchen closed' : 'Kitchen open', open ? 'Customers can’t place new orders' : 'Taking orders again', open ? 'block' : 'storefront');
+        },
+        advanceOrder: (no) => {
+          const o = orderByNo(no);
+          if (!o || o.step >= 3) return;
+          void write({
+            keys: [],
+            call: (api) => api.advanceOrder(o.id),
+            done: (next) => {
+              replaceOrder(next);
+              const rider = next.stage === 'assigned' && next.rider ? ` · ${next.rider.name}` : '';
+              toast('Status updated', `${no} → ${stepLabel(next, next.step)}${rider}`, 'sync');
+            },
+            fail: 'Order not updated',
+          });
+        },
+        cancelOrder: (no) => {
+          const o = orderByNo(no);
+          if (!o) return;
+          const paid = o.payment.status === 'paid' && o.payment.method !== 'cash';
+          void write({
+            keys: ['orders'],
+            apply: (s) => ({ orders: s.orders.map((x) => (x.id === o.id ? { ...x, step: 4, stage: 'cancelled' } : x)) }),
+            call: (api) => api.cancelOrder(o.id),
+            done: (next) => {
+              replaceOrder(next);
+              toast('Order cancelled', paid ? `${no} · refund issued` : no, 'cancel');
+            },
+            fail: 'Order not cancelled',
+          });
+        },
+        fireTicket: (no) => {
+          const o = orderByNo(no);
+          if (!o || o.step > 1) return;
+          void write({
+            keys: [],
+            call: (api) => api.fireTicket(o.id),
+            done: (next) => {
+              replaceOrder(next);
+              const ready = next.stage === 'packed';
+              toast(ready ? 'Order ready' : 'Ticket fired', `${no} · ${o.customer.name}`, ready ? 'room_service' : 'eco');
+            },
+            fail: 'Ticket not updated',
+          });
+        },
+        toggleKDone: (no, k) => {
+          const o = orderByNo(no);
+          if (!o) return;
+          const done = !o.kitchen.done.includes(k);
+          void write({
+            keys: ['orders'],
+            apply: (s) => ({
+              orders: s.orders.map((x) =>
+                x.id === o.id ? { ...x, kitchen: { ...x.kitchen, done: done ? [...x.kitchen.done, k] : x.kitchen.done.filter((i) => i !== k) } } : x,
+              ),
+            }),
+            call: (api) => api.itemDone(o.id, k, done),
+            done: (next) => {
+              replaceOrder(next);
+            },
+            fail: 'Ticket not updated',
+          });
+        },
+        toggleAvail: (id) => {
+          const d = get().menu.find((m) => m.id === id);
+          if (!d) return;
+          void write({
+            keys: ['menu'],
+            apply: (s) => ({ menu: s.menu.map((p) => (p.id === id ? { ...p, avail: !p.avail } : p)) }),
+            call: (api) => api.patchDish(id, { avail: !d.avail }),
+            fail: 'Dish not updated',
+            catalog: true,
+          });
+        },
+        saveItem: async (e) => {
+          if (!e.name.trim()) {
+            toast('Name required', 'Give the dish a name first', 'error');
+            return false;
+          }
+          const tag: Dish['tag'] = e.tag === 'None' ? '' : e.tag;
+          const body = { name: e.name.trim(), price: round2(e.price), cat: e.cat, brand: e.brand || 'fire', tag, avail: e.avail, img: e.img };
+          const id = e.id;
+          const res = await write({
+            keys: ['menu'],
+            apply: id ? (s) => ({ menu: s.menu.map((p) => (p.id === id ? { ...p, ...body } : p)) }) : undefined,
+            call: (api) => (id ? api.patchDish(id, body) : api.createDish({ ...body, desc: 'Freshly added to the Fig menu.', time: get().prep })),
+            done: (dish, s) => {
+              const { order: _o, ...d } = dish;
+              return { menu: s.menu.some((p) => p.id === d.id) ? s.menu.map((p) => (p.id === d.id ? d : p)) : [...s.menu, d] };
+            },
+            fail: id ? 'Item not saved' : 'Item not added',
+            catalog: true,
+          });
+          if (res) toast(id ? 'Item saved' : 'Item added', body.name, 'check');
+          return !!res;
+        },
+        deleteItem: (id) => {
+          const d = get().menu.find((m) => m.id === id);
+          void write({
+            keys: ['menu', 'cart', 'saved'],
+            apply: (s) => ({ menu: s.menu.filter((p) => p.id !== id), cart: s.cart.filter((c) => c.id !== id), saved: s.saved.filter((x) => x !== id) }),
+            call: (api) => api.deleteDish(id),
+            done: () => {
+              if (d) toast('Item deleted', d.name, 'delete');
+            },
+            fail: 'Item not deleted',
+            catalog: true,
+          });
+        },
+        toggleCat: (name) => {
+          const cat = get().cats.find((x) => x.name === name);
+          if (!cat) return;
+          void write({
+            keys: ['cats'],
+            apply: (s) => ({ cats: s.cats.map((x) => (x.name === name ? { ...x, on: !x.on } : x)) }),
+            call: (api) => api.patchCategory(cat.id, { on: !cat.on }),
+            fail: 'Category not updated',
+            catalog: true,
+          });
+        },
+        moveCat: (i, d) => {
+          const a = move(get().cats, i, d);
+          if (!a) return;
+          void write({
+            keys: ['cats'],
+            apply: () => ({ cats: a }),
+            call: (api) =>
+              api.reorder(
+                'categories',
+                a.map((x) => x.id),
+              ),
+            fail: 'Order not saved',
+            catalog: true,
+          });
+        },
+        addCat: async (name) => {
+          const n = name.trim();
+          if (!n) return false;
+          if (get().cats.some((c) => c.name.toLowerCase() === n.toLowerCase())) {
+            toast('Already exists', n, 'error');
+            return false;
+          }
+          const res = await write({
+            keys: [],
+            call: (api) => api.createCategory(n),
+            done: (c, s) => ({ cats: [...s.cats, { id: c.id, name: c.name, on: c.on, img: c.img }] }),
+            fail: 'Category not added',
+            catalog: true,
+          });
+          if (res) toast('Category added', `${n} · assign dishes from Menu items`, 'category');
+          return !!res;
+        },
+        toggleBrand: (id) => {
+          const b = get().brands.find((x) => x.id === id);
+          if (!b) return;
+          void write({
+            keys: ['brands'],
+            apply: (s) => ({ brands: s.brands.map((x) => (x.id === id ? { ...x, on: !x.on } : x)) }),
+            call: (api) => api.patchBrand(id, { on: !b.on }),
+            fail: 'Kitchen not updated',
+            catalog: true,
+          });
+        },
+<<<<<<< HEAD
+        addBrand: async (b) => {
+          const name = b.name.trim();
+          const tag = b.tag.trim();
+          if (!name || !tag || !b.img) {
+            toast('Missing details', 'Enter a name, tagline and kitchen photo.', 'error');
+            return false;
+          }
+          const res = await write({
+            keys: ['brands'],
+            call: (api) => api.createBrand({ name, tag, icon: b.icon, img: b.img }),
+            done: (created, s) => ({
+              brands: [...s.brands, { ...created, icon: created.icon as Brand['icon'] }],
+            }),
+            fail: 'Kitchen not added',
+            catalog: true,
+          });
+          if (res) toast('Kitchen added', name, 'storefront');
+          return !!res;
+=======
+        createBrand: async (b) => {
+          try {
+            const created = await server().createBrand(b);
+            set((s) => ({ brands: [...s.brands, { ...created, icon: created.icon as IconName }] }));
+            server().catalogChanged();
+            toast('Kitchen added', created.name, 'storefront');
+            return true;
+          } catch (e) {
+            toast('Kitchen not added', server().errorMessage(e), 'error');
+            return false;
+          }
+        },
+        deleteBrand: async (id) => {
+          const brand = get().brands.find((x) => x.id === id);
+          if (!brand) return false;
+          try {
+            await server().deleteBrand(id);
+            set((s) => ({ brands: s.brands.filter((x) => x.id !== id) }));
+            server().catalogChanged();
+            toast('Kitchen deleted', brand.name, 'delete');
+            return true;
+          } catch (e) {
+            toast('Kitchen not deleted', server().errorMessage(e), 'error');
+            return false;
+          }
+>>>>>>> origin/build/tawseela-ios-ipa-v10
+        },
+        saveBrand: async (b) => {
+          const res = await write({
+            keys: ['brands'],
+            apply: (s) => ({ brands: s.brands.map((x) => (x.id === b.id ? { ...b } : x)) }),
+            call: (api) => api.patchBrand(b.id, { name: b.name, tag: b.tag, icon: b.icon, img: b.img, on: b.on, lat: b.lat, lng: b.lng, address: b.address, phone: b.phone, description: b.description, workDays: b.workDays, openTime: b.openTime, closeTime: b.closeTime, deliveryFee: b.deliveryFee, prepTime: b.prepTime }),
+            fail: 'Kitchen not saved',
+            catalog: true,
+          });
+          if (res) toast('Kitchen saved', b.name, 'storefront');
+          return !!res;
+        },
+        toggleSection: (k) => {
+          const x = get().secs.find((y) => y.k === k);
+          if (!x) return;
+          void write({
+            keys: ['secs'],
+            apply: (s) => ({ secs: s.secs.map((y) => (y.k === k ? { ...y, on: !y.on } : y)) }),
+            call: (api) => api.patchSection(k, { on: !x.on }),
+            fail: 'Section not updated',
+            catalog: true,
+          });
+        },
+        moveSection: (i, d) => {
+          const a = move(get().secs, i, d);
+          if (!a) return;
+          void write({
+            keys: ['secs'],
+            apply: () => ({ secs: a }),
+            call: (api) =>
+              api.reorder(
+                'sections',
+                a.map((x) => x.k),
+              ),
+            fail: 'Order not saved',
+            catalog: true,
+          });
+        },
+        toggleBanner: (id) => {
+          const b = get().banners.find((y) => y.id === id);
+          if (!b) return;
+          void write({
+            keys: ['banners'],
+            apply: (s) => ({ banners: s.banners.map((y) => (y.id === id ? { ...y, on: !y.on } : y)) }),
+            call: (api) => api.patchBanner(id, { on: !b.on }),
+            fail: 'Banner not updated',
+            catalog: true,
+          });
+        },
+        moveBanner: (i, d) => {
+          const a = move(get().banners, i, d);
+          if (!a) return;
+          void write({
+            keys: ['banners'],
+            apply: () => ({ banners: a }),
+            call: (api) =>
+              api.reorder(
+                'banners',
+                a.map((x) => x.id),
+              ),
+            fail: 'Order not saved',
+            catalog: true,
+          });
+        },
+        setDeal: (d) => {
+          void write({
+            keys: ['deal', 'cart'],
+            apply: (s) => {
+              const deal = { ...s.deal, ...d };
+              return { deal, cart: s.cart.map((l) => settleLine(l, deal)) };
+            },
+            call: (api) => api.patchDeal(d),
+            done: (deal, s) => ({ deal, cart: s.cart.map((l) => settleLine(l, deal)) }),
+            fail: 'Deal not saved',
+            catalog: true,
+          });
+        },
+        savePost: async (e) => {
+          if (!e.title.trim()) {
+            toast('Title required', 'Give the story a headline', 'error');
+            return false;
+          }
+          const exists = !!e.id && get().posts.some((p) => p.id === e.id);
+          const body = {
+            title: e.title.trim(),
+            cat: e.cat,
+            img: e.img,
+            author: e.author,
+            featured: e.featured,
+            on: e.on,
+            dish: e.dish,
+            excerpt: e.excerpt,
+            body: e.body,
+          };
+          const res = await write({
+            keys: ['posts'],
+            apply: exists ? (s) => ({ posts: s.posts.map((p) => (p.id === e.id ? { ...p, ...body } : p)) }) : undefined,
+            call: (api) => (exists ? api.patchPost(e.id, body) : api.createPost(body)),
+            done: (post, s) => {
+              let posts = s.posts.some((p) => p.id === post.id) ? s.posts.map((p) => (p.id === post.id ? post : p)) : [post, ...s.posts];
+              if (post.featured) posts = posts.map((p) => ({ ...p, featured: p.id === post.id }));
+              return { posts };
+            },
+            fail: 'Story not saved',
+            catalog: true,
+          });
+          if (res) toast(e.on ? 'Story published' : 'Draft saved', e.title, e.on ? 'public' : 'edit_note');
+          return !!res;
+        },
+        deletePost: (id) => {
+          const p = get().posts.find((x) => x.id === id);
+          void write({
+            keys: ['posts'],
+            apply: (s) => ({ posts: s.posts.filter((x) => x.id !== id) }),
+            call: (api) => api.deletePost(id),
+            done: () => {
+              if (p) toast('Story deleted', p.title, 'delete');
+            },
+            fail: 'Story not deleted',
+            catalog: true,
+          });
+        },
+        togglePost: (id) => {
+          const p = get().posts.find((x) => x.id === id);
+          if (!p) return;
+          void write({
+            keys: ['posts'],
+            apply: (s) => ({ posts: s.posts.map((x) => (x.id === id ? { ...x, on: !x.on } : x)) }),
+            call: (api) => api.patchPost(id, { on: !p.on }),
+            done: () => toast(p.on ? 'Moved to drafts' : 'Story published', p.title, p.on ? 'edit_note' : 'public'),
+            fail: 'Story not updated',
+            catalog: true,
+          });
+        },
+        addPromo: async (code, pct) => {
+          const c = code.trim().toUpperCase();
+          if (!c) {
+            toast('Code required', 'Type a code first', 'error');
+            return false;
+          }
+          if (get().promos.some((p) => p.code === c)) {
+            toast('Already exists', c, 'error');
+            return false;
+          }
+          const res = await write({
+            keys: ['promos'],
+            apply: (s) => ({ promos: [{ code: c, pct, used: 0, on: true }, ...s.promos] }),
+            call: (api) => api.createPromo(c, pct),
+            done: (p, s) => ({ promos: s.promos.map((x) => (x.code === p.code ? p : x)) }),
+            fail: 'Promo not created',
+            catalog: true,
+          });
+          if (res) toast('Promo created', `${c} · ${pct}% off`, 'sell');
+          return !!res;
+        },
+        togglePromo: (code) => {
+          const p = get().promos.find((x) => x.code === code);
+          if (!p) return;
+          void write({
+            keys: ['promos'],
+            apply: (s) => ({ promos: s.promos.map((y) => (y.code === code ? { ...y, on: !y.on } : y)) }),
+            call: (api) => api.patchPromo(code, !p.on),
+            fail: 'Promo not updated',
+            catalog: true,
+          });
+        },
+        replyReview: (id) => {
+          const r = get().reviews.find((x) => x.id === id);
+          if (!r) return;
+          void write({
+            keys: ['reviews'],
+            apply: (s) => ({ reviews: s.reviews.map((x) => (x.id === id ? { ...x, replied: true } : x)) }),
+            call: (api) => api.replyReview(id),
+            done: (res, s) => {
+              toast('Reply sent', 'To ' + r.name.split(' ')[0], 'reply');
+              return { reviews: s.reviews.map((x) => (x.id === id ? res : x)) };
+            },
+            fail: 'Reply not sent',
+          });
+        },
+
+        /** Settings → Reset demo data: this phone's cart, addresses, wallet and inbox (the account and menu are the server's). */
+        resetDemo: () => {
+          const fresh = initialState();
+          set({
+            saved: fresh.saved,
+            cart: [],
+            promo: null,
+            promoDraft: '',
+            addrs: fresh.addrs,
+            addr: 0,
+            cards: fresh.cards,
+            defCard: fresh.defCard,
+            payM: 0,
+            inbox: fresh.inbox,
+            prefs: fresh.prefs,
+          });
+        },
+      };
+    },
+    {
+      name: 'fig-app',
+      version: 3,
+      storage: createJSONStorage(() => deviceStorage),
+      /**
+       * What survives a relaunch: the cached catalog (so the menu opens instantly and offline), the cart,
+       * saved dishes, addresses, the demo card wallet, notifications, settings and theme, and the account's
+       * last-known orders and points (refreshed as soon as the server answers).
+       */
+      partialize: (s) => ({
+        onboarded: s.onboarded,
+        theme: s.theme,
+        catalogVersion: s.catalogVersion,
+        catalogEtag: s.catalogEtag,
+        menu: s.menu,
+        cats: s.cats,
+        brands: s.brands,
+        banners: s.banners,
+        secs: s.secs,
+        deal: s.deal,
+        posts: s.posts,
+        storeOpen: s.storeOpen,
+        prep: s.prep,
+        fee: s.fee,
+        freeAt: s.freeAt,
+        sound: s.sound,
+        saved: s.saved,
+        cart: s.cart,
+        mode: s.mode,
+        addrs: s.addrs,
+        addr: s.addr,
+        speed: s.speed,
+        payM: s.payM,
+        cards: s.cards,
+        defCard: s.defCard,
+        inbox: s.inbox,
+        prefs: s.prefs,
+        orderNotif: s.orderNotif,
+        points: s.points,
+        credit: s.credit,
+        redeemed: s.redeemed,
+        vouchers: s.vouchers,
+        liked: s.liked,
+        orders: s.orders,
+        bookings: s.bookings.filter((b) => b.mine),
+      }),
+      // version 1 (before the API) cached no catalog or account: keep its cart and settings, the rest comes fresh
+      migrate: (persisted, version) => {
+        const p = (persisted ?? {}) as Partial<State>;
+        if (version < 2) {
+          const { cart, saved, addrs, addr, cards, defCard, inbox, prefs, theme, onboarded, orderNotif, mode, speed, payM } = p;
+          return { cart, saved, addrs, addr, cards, defCard, inbox, prefs: { ...prefs, lang: 'العربية' }, theme, onboarded, orderNotif, mode, speed, payM } as AppStore;
+        }
+        if (version < 3) return { ...p, prefs: { ...p.prefs, lang: 'العربية' } } as AppStore;
+        return p as AppStore;
+      },
+    },
+  ),
+);
+
+const subscribeHydration = (cb: () => void) => useApp.persist.onFinishHydration(cb);
+const getHydrated = () => useApp.persist.hasHydrated();
+/** The saved catalog, cart, wallet and settings have loaded from the device. */
+export const useAppHydrated = () => useSyncExternalStore(subscribeHydration, getHydrated, getHydrated);
+
+/* ------------------------------------------------------------------ selectors */
+
+export const selectLiveMenu = (s: AppStore): Dish[] => {
+  const cats = new Set(s.cats.filter((c) => c.on).map((c) => c.name));
+  const offBrands = new Set(s.brands.filter((b) => !b.on).map((b) => b.id));
+  return s.menu.filter((p) => cats.has(p.cat) && !offBrands.has(p.brand));
+};
+
+/** The console's orders: paid, cash or being paid — never an abandoned card checkout. */
+export const selectBoard = (s: AppStore): Order[] => s.orders.filter((o) => ['due', 'paid'].includes(o.payment.status));
+
+/** The signed-in customer's own orders (the console also loads everyone else's). */
+export const selectMyOrders = (s: AppStore): Order[] => {
+  const me = useSession.getState().user?.uid;
+  return me ? s.orders.filter((o) => o.uid === me) : [];
+};
+export const selectCartCount = (s: AppStore): number => s.cart.reduce((a, c) => a + c.q, 0);
+export const selectUnread = (s: AppStore): number => s.inbox.filter((n) => n.unread).length;
+export const selectBanners = (s: AppStore): Banner[] => s.banners.filter((b) => b.on);
+export const selectDefaultCard = (s: AppStore): Card | undefined => s.cards.find((c) => c.id === s.defCard);
+
+/** Apple Pay on iPhone, Google Pay on Android — the online checkout supports. */
+export const WALLET = process.env.EXPO_OS === 'android' ? 'Google Pay' : 'Apple Pay';
+
+export const payLabel = (s: AppStore, short = false): string => {
+  if (s.payM === 0) return WALLET;
+  if (s.payM === 2) return short ? 'Cash' : 'Cash on delivery';
+  if (s.payM === 3) return short ? 'Wallet' : 'Mobile Wallet';
+  return short ? 'Card' : 'Credit or debit card';
+};
+
+========== server/src/modules/admin/catalog.ts ==========
+import {
+  AdminCatalog,
+  ApiError,
+  Banner,
+  BannerPatch,
+  Brand,
+  BrandInput,
+  BrandPatch,
+  Category,
+  CategoryInput,
+  CategoryPatch,
+  Deal,
+  DealPatch,
+  Dish,
+  DishInput,
+  DishPatch,
+  HomeSection,
+  HomeSectionKey,
+  Post,
+  PostInput,
+  PostPatch,
+  Promo,
+  PromoInput,
+  PromoPatch,
+  RESTAURANT_TZ,
+  Reorder,
+  SectionPatch,
+  StorePatch,
+  StoreSettings,
+} from '@fig/shared';
+import { FieldValue, type DocumentReference, type Transaction, type WriteBatch } from 'firebase-admin/firestore';
+import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
+import { z } from 'zod';
+
+import { COL, bumpCatalog, homeRef, slug, storeRef } from '../../lib/collections';
+import { badRequest, conflict, notFound } from '../../lib/errors';
+import { createCatalogCache, readDeal, readSections, readStore } from '../catalog/service';
+
+const errors = { 400: ApiError, 401: ApiError, 403: ApiError, 404: ApiError, 409: ApiError };
+const idParam = z.object({ id: z.string().min(1).max(64) });
+
+/** "Nov 5" (Fig's shortToday), in the restaurant's time zone. */
+const displayDate = (ms: number) => new Date(ms).toLocaleDateString('en-US', { month: 'short', day: 'numeric', timeZone: RESTAURANT_TZ });
+/** ~200 words a minute, at least one (Fig's savePost). */
+const readingMins = (body: string) => {
+  const words = body.trim() ? body.trim().split(/\s+/).length : 0;
+  return Math.max(1, Math.round(words / 200));
+};
+
+/**
+ * /v1/admin — the console's catalog writes (Fig's saveItem, toggleAvail, deleteItem, addCat, toggleCat,
+ * moveCat, toggleBrand, saveBrand, toggleSection, moveSection, toggleBanner, moveBanner, setDeal,
+ * savePost, togglePost, deletePost, addPromo, togglePromo, setStore). Each write bumps the catalog
+ * version in the same batch, so every app picks it up on its next revalidation.
+ */
+const adminCatalogRoutes: FastifyPluginAsyncZod = async (app) => {
+  const { db, now } = app.deps;
+  const cache = createCatalogCache(db);
+  const col = (name: string) => db.collection(name);
+
+  /** Reads a document that must exist. */
+  async function existing(ref: DocumentReference, what: string) {
+    const snap = await ref.get();
+    if (!snap.exists) throw notFound(what);
+    return snap;
+  }
+
+  /** Applies a patch to one document and bumps the catalog version in the same batch. */
+  async function patch<T extends z.ZodType>(ref: DocumentReference, what: string, data: Record<string, unknown>, schema: T, idField = 'id') {
+    await existing(ref, what);
+    const batch = db.batch();
+    batch.update(ref, { ...data, updatedAt: FieldValue.serverTimestamp() });
+    bumpCatalog(db, batch);
+    await batch.commit();
+    const snap = await ref.get();
+    return schema.parse({ [idField]: snap.id, ...snap.data() }) as z.infer<T>;
+  }
+
+  async function nextOrder(name: string) {
+    const last = await col(name).orderBy('order', 'desc').limit(1).get();
+    return ((last.docs[0]?.get('order') as number | undefined) ?? -1) + 1;
+  }
+
+  async function reorder(name: string, ids: string[]) {
+    if (new Set(ids).size !== ids.length) throw badRequest('Each item can appear once.');
+    const batch = db.batch();
+    ids.forEach((id, order) => batch.update(col(name).doc(id), { order }));
+    bumpCatalog(db, batch);
+    await batch.commit().catch(() => {
+      throw badRequest('One of those items doesn’t exist any more. Refresh and try again.');
+    });
+  }
+
+  /** The dish's category and kitchen must exist. */
+  async function checkRefs(cat: string | undefined, brand: string | undefined) {
+    const [cats, b] = await Promise.all([cat ? col(COL.categories).where('name', '==', cat).limit(1).get() : null, brand ? col(COL.brands).doc(brand).get() : null]);
+    if (cats && cats.empty) throw badRequest(`There’s no ${cat} category. Add it under Categories first.`);
+    if (b && !b.exists) throw badRequest('That kitchen doesn’t exist.');
+  }
+
+  /** Read-modify-write of config/home inside a transaction, with the version bump. */
+  async function updateHome<T>(fn: (home: { sections: HomeSection[]; deal: Deal }, tx: Transaction) => Promise<T> | T): Promise<T> {
+    return db.runTransaction(async (tx) => {
+      const snap = await tx.get(homeRef(db));
+      const home = { sections: readSections(snap.data()), deal: readDeal(snap.data()) };
+      const out = await fn(home, tx);
+      tx.set(homeRef(db), { sections: home.sections, deal: home.deal, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      bumpCatalog(db, tx);
+      return out;
+    });
+  }
+
+  app.get('/catalog', { schema: { summary: 'Everything, including draft stories and promo codes', response: { 200: AdminCatalog, ...errors } } }, async (req) =>
+    cache.get(req.log, true),
+  );
+
+  /* ---------- dishes ---------- */
+
+  app.post('/dishes', { schema: { summary: 'Add a dish (saveItem without an id)', body: DishInput, response: { 201: Dish, ...errors } } }, async (req, reply) => {
+    await checkRefs(req.body.cat, req.body.brand);
+    const store = readStore((await storeRef(db).get()).data());
+    let id = slug(req.body.name);
+    if ((await col(COL.dishes).doc(id).get()).exists) id = `${id}-${now().toString(36).slice(-4)}`;
+    const doc = {
+      ...req.body,
+      time: req.body.time ?? store.prep,
+      kcal: req.body.kcal ?? 600,
+      desc: req.body.desc ?? 'Freshly added to the Fig menu.',
+      rating: 5,
+      reviews: 0,
+      order: await nextOrder(COL.dishes),
+      createdAt: FieldValue.serverTimestamp(),
+    };
+    const batch = db.batch();
+    batch.create(col(COL.dishes).doc(id), doc);
+    bumpCatalog(db, batch);
+    await batch.commit();
+    return reply.code(201).send(Dish.parse({ id, ...doc }));
+  });
+
+  app.patch(
+    '/dishes/:id',
+    { schema: { summary: 'Edit a dish, or mark it sold out / available (saveItem, toggleAvail)', params: idParam, body: DishPatch, response: { 200: Dish, ...errors } } },
+    async (req) => {
+      await checkRefs(req.body.cat, req.body.brand);
+      return patch(col(COL.dishes).doc(req.params.id), 'That dish', req.body, Dish);
+    },
+  );
+
+  app.delete('/dishes/:id', { schema: { summary: 'Remove a dish (deleteItem)', params: idParam, response: { 204: z.null(), ...errors } } }, async (req, reply) => {
+    const ref = col(COL.dishes).doc(req.params.id);
+    await existing(ref, 'That dish');
+    const deal = readDeal((await homeRef(db).get()).data());
+    if (deal.id === req.params.id && deal.on) throw conflict('in_use', 'This dish is today’s deal. Pick another deal first.');
+    const batch = db.batch();
+    batch.delete(ref);
+    bumpCatalog(db, batch);
+    await batch.commit();
+    return reply.code(204).send(null);
+  });
+
+  /* ---------- categories ---------- */
+
+  app.post('/categories', { schema: { summary: 'Add a category (addCat)', body: CategoryInput, response: { 201: Category, ...errors } } }, async (req, reply) => {
+    const name = req.body.name;
+    const all = await col(COL.categories).get();
+    if (all.docs.some((d) => String(d.get('name')).toLowerCase() === name.toLowerCase())) throw conflict('duplicate', `${name} already exists.`);
+    let id = slug(name);
+    if (all.docs.some((d) => d.id === id)) id = `${id}-${now().toString(36).slice(-4)}`;
+    const doc = { name, on: true, order: await nextOrder(COL.categories) };
+    const batch = db.batch();
+    batch.create(col(COL.categories).doc(id), doc);
+    bumpCatalog(db, batch);
+    await batch.commit();
+    return reply.code(201).send(Category.parse({ id, ...doc }));
+  });
+
+  app.put('/categories/order', { schema: { summary: 'Reorder categories (moveCat): ids in their new order', body: Reorder, response: { 204: z.null(), ...errors } } }, async (req, reply) => {
+    await reorder(COL.categories, req.body.ids);
+    return reply.code(204).send(null);
+  });
+
+  app.patch('/categories/:id', { schema: { summary: 'Show or hide a category (toggleCat)', params: idParam, body: CategoryPatch, response: { 200: Category, ...errors } } }, async (req) =>
+    patch(col(COL.categories).doc(req.params.id), 'That category', req.body, Category),
+  );
+
+  /* ---------- kitchens and banners ---------- */
+
+<<<<<<< HEAD
+  app.post('/brands', {
+    schema: {
+      summary: 'Create a kitchen',
+      body: BrandInput,
+      response: { 201: Brand, ...errors },
+    },
+  }, async (req, reply) => {
+    const name = req.body.name.trim();
+    const all = await col(COL.brands).get();
+
+    if (all.docs.some((d) =>
+      String(d.get('name')).toLowerCase() === name.toLowerCase()
+    )) {
+      throw conflict('duplicate', `${name} already exists.`);
+    }
+
+    let id = slug(name);
+    if (all.docs.some((d) => d.id === id)) {
+      id = `${id}-${now().toString(36).slice(-4)}`;
+    }
+
+    const doc = {
+      ...req.body,
+      name,
+      on: true,
+      order: await nextOrder(COL.brands),
+      createdAt: FieldValue.serverTimestamp(),
+    };
+
+=======
+  app.post('/brands', { schema: { summary: 'Create a kitchen', body: z.object({ name: Brand.shape.name, tag: Brand.shape.tag, icon: Brand.shape.icon, img: Brand.shape.img, on: Brand.shape.on.default(true), lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), address: Brand.shape.address, phone: Brand.shape.phone, description: Brand.shape.description, workDays: Brand.shape.workDays, openTime: Brand.shape.openTime, closeTime: Brand.shape.closeTime, deliveryFee: Brand.shape.deliveryFee, prepTime: Brand.shape.prepTime }), response: { 201: Brand, ...errors } } }, async (req, reply) => {
+    const all = await col(COL.brands).get();
+    if (all.docs.some((d) => String(d.get('name')).toLowerCase() === req.body.name.toLowerCase())) throw conflict('duplicate', 'A kitchen with this name already exists.');
+    let id = slug(req.body.name);
+    if (all.docs.some((d) => d.id === id)) id = `${id}-${now().toString(36).slice(-4)}`;
+    const doc = { ...req.body, order: await nextOrder(COL.brands), createdAt: FieldValue.serverTimestamp() };
+>>>>>>> origin/build/tawseela-ios-ipa-v10
+    const batch = db.batch();
+    batch.create(col(COL.brands).doc(id), doc);
+    bumpCatalog(db, batch);
+    await batch.commit();
+<<<<<<< HEAD
+
+    return reply.code(201).send(
+      Brand.parse({ id, ...doc })
+    );
+  });
+
+  app.patch('/brands/:id', { schema: { summary: 'Edit or toggle a kitchen (saveBrand, toggleBrand)', params: idParam, body: BrandPatch, response: { 200: Brand, ...errors } } }, async (req) =>
+    patch(col(COL.brands).doc(req.params.id), 'That kitchen', req.body, Brand),
+  );
+=======
+    return reply.code(201).send(Brand.parse({ id, ...doc }));
+  });
+
+  app.patch('/brands/:id', { schema: { summary: 'Edit or toggle a kitchen (saveBrand, toggleBrand)', params: idParam, body: BrandPatch, response: { 200: Brand, ...errors } } }, async (req) => {
+    if ((req.body.lat === undefined) !== (req.body.lng === undefined)) throw badRequest('Latitude and longitude must be provided together.');
+    if (req.body.lat === null || req.body.lng === null) throw badRequest('Choose a valid kitchen location on the map.');
+    return patch(col(COL.brands).doc(req.params.id), 'That kitchen', req.body, Brand);
+  });
+
+  app.delete('/brands/:id', { schema: { summary: 'Delete a kitchen with no assigned dishes', params: idParam, response: { 204: z.null(), ...errors } } }, async (req, reply) => {
+    const ref = col(COL.brands).doc(req.params.id);
+    await existing(ref, 'That kitchen');
+    const dishes = await col(COL.dishes).where('brand', '==', req.params.id).limit(1).get();
+    if (!dishes.empty) throw conflict('kitchen_has_dishes', 'Move or delete this kitchen’s dishes before deleting it.');
+    const batch = db.batch();
+    batch.delete(ref);
+    bumpCatalog(db, batch);
+    await batch.commit();
+    return reply.code(204).send(null);
+  });
+>>>>>>> origin/build/tawseela-ios-ipa-v10
+
+  app.put('/banners/order', { schema: { summary: 'Reorder banners (moveBanner): ids in their new order', body: Reorder, response: { 204: z.null(), ...errors } } }, async (req, reply) => {
+    await reorder(COL.banners, req.body.ids);
+    return reply.code(204).send(null);
+  });
+
+  app.patch('/banners/:id', { schema: { summary: 'Edit or toggle a banner (toggleBanner)', params: idParam, body: BannerPatch, response: { 200: Banner, ...errors } } }, async (req) =>
+    patch(col(COL.banners).doc(req.params.id), 'That banner', req.body, Banner),
+  );
+
+  /* ---------- Home sections and the deal of the day ---------- */
+
+  app.put(
+    '/sections/order',
+    { schema: { summary: 'Reorder Home sections (moveSection): section keys in their new order', body: Reorder, response: { 200: z.array(HomeSection), ...errors } } },
+    async (req) =>
+      updateHome((home) => {
+        const keys = req.body.ids;
+        if (keys.length !== home.sections.length || !home.sections.every((s) => keys.includes(s.k))) {
+          throw badRequest(`Send every section key once: ${home.sections.map((s) => s.k).join(', ')}.`);
+        }
+        home.sections = keys.map((k) => home.sections.find((s) => s.k === k)!);
+        return home.sections;
+      }),
+  );
+
+  app.patch(
+    '/sections/:k',
+    { schema: { summary: 'Show or hide a Home section (toggleSection)', params: z.object({ k: HomeSectionKey }), body: SectionPatch, response: { 200: HomeSection, ...errors } } },
+    async (req) =>
+      updateHome((home) => {
+        const i = home.sections.findIndex((s) => s.k === req.params.k);
+        if (i < 0) throw notFound('That section');
+        home.sections[i] = { ...home.sections[i], ...req.body };
+        return home.sections[i];
+      }),
+  );
+
+  app.patch('/deal', { schema: { summary: 'Deal of the day: dish, percentage, on/off (setDeal)', body: DealPatch, response: { 200: Deal, ...errors } } }, async (req) => {
+    if (req.body.id && !(await col(COL.dishes).doc(req.body.id).get()).exists) throw badRequest('The deal must be a dish on the menu.');
+    return updateHome((home) => {
+      home.deal = { ...home.deal, ...req.body };
+      if (home.deal.on && !home.deal.id) throw badRequest('Pick a dish for the deal first.');
+      return home.deal;
+    });
+  });
+
+  /* ---------- store settings ---------- */
+
+  app.patch('/store', { schema: { summary: 'Open or close, prep time, delivery fee, free-delivery threshold, kitchen sound (setStore)', body: StorePatch, response: { 200: StoreSettings, ...errors } } }, async (req) => {
+    const batch = db.batch();
+    batch.set(storeRef(db), { ...readStore((await storeRef(db).get()).data()), ...req.body, updatedAt: FieldValue.serverTimestamp() });
+    bumpCatalog(db, batch);
+    await batch.commit();
+    return readStore((await storeRef(db).get()).data());
+  });
+
+  /* ---------- promo codes (not in the public catalog) ---------- */
+
+  app.post('/promos', { schema: { summary: 'Create a promo code (addPromo)', body: PromoInput, response: { 201: Promo, ...errors } } }, async (req, reply) => {
+    const ref = col(COL.promos).doc(req.body.code);
+    const doc = { pct: req.body.pct, used: 0, on: true, createdAt: FieldValue.serverTimestamp() };
+    await ref.create(doc).catch(() => {
+      throw conflict('duplicate', `${req.body.code} already exists.`);
+    });
+    return reply.code(201).send(Promo.parse({ code: req.body.code, ...doc }));
+  });
+
+  app.patch(
+    '/promos/:code',
+    { schema: { summary: 'Turn a promo code on or off (togglePromo)', params: z.object({ code: z.string().min(1).max(20) }), body: PromoPatch, response: { 200: Promo, ...errors } } },
+    async (req) => patch(col(COL.promos).doc(req.params.code.toUpperCase()), 'That code', { on: req.body.on }, Promo, 'code'),
+  );
+
+  /* ---------- journal ---------- */
+
+  async function unfeatureOthers(batch: WriteBatch, keep: string) {
+    const featured = await col(COL.posts).where('featured', '==', true).get();
+    featured.docs.filter((d) => d.id !== keep).forEach((d) => batch.update(d.ref, { featured: false }));
+  }
+
+  app.post('/posts', { schema: { summary: 'Write a story (savePost, new)', body: PostInput, response: { 201: Post, ...errors } } }, async (req, reply) => {
+    const ref = col(COL.posts).doc();
+    const at = now();
+    const doc = { ...req.body, likes: 0, date: displayDate(at), mins: readingMins(req.body.body), publishedAt: at, createdAt: FieldValue.serverTimestamp() };
+    const batch = db.batch();
+    batch.set(ref, doc);
+    if (doc.featured) await unfeatureOthers(batch, ref.id);
+    bumpCatalog(db, batch);
+    await batch.commit();
+    return reply.code(201).send(Post.parse({ id: ref.id, ...doc }));
+  });
+
+  app.patch('/posts/:id', { schema: { summary: 'Edit, publish or unpublish a story (savePost, togglePost)', params: idParam, body: PostPatch, response: { 200: Post, ...errors } } }, async (req) => {
+    const ref = col(COL.posts).doc(req.params.id);
+    await existing(ref, 'That story');
+    const batch = db.batch();
+    batch.update(ref, { ...req.body, ...(req.body.body !== undefined ? { mins: readingMins(req.body.body) } : {}), updatedAt: FieldValue.serverTimestamp() });
+    if (req.body.featured) await unfeatureOthers(batch, ref.id);
+    bumpCatalog(db, batch);
+    await batch.commit();
+    const snap = await ref.get();
+    return Post.parse({ id: snap.id, ...snap.data() });
+  });
+
+  app.delete('/posts/:id', { schema: { summary: 'Delete a story (deletePost)', params: idParam, response: { 204: z.null(), ...errors } } }, async (req, reply) => {
+    const ref = col(COL.posts).doc(req.params.id);
+    await existing(ref, 'That story');
+    const batch = db.batch();
+    batch.delete(ref);
+    bumpCatalog(db, batch);
+    await batch.commit();
+    return reply.code(204).send(null);
+  });
+};
+
+export default adminCatalogRoutes;
+
+========== shared/src/schemas.ts ==========
+import { z } from 'zod';
+
+import { POST_CATS, SEAT_AREAS } from './menu';
+import { OrderStage, Role } from './roles';
+
+/*
+ * The Fig & Fennel domain model and API contract. The server validates requests (and its own responses)
+ * with these schemas; the app types its API calls with them. Field names follow the local edition's
+ * types (src/data/types.ts) so the screens change as little as possible; server-only fields (ids,
+ * timestamps, uid, stage, timeline, payment) are added where an entity needs them.
+ */
+
+const id = z.string().min(1).max(64);
+const url = z.url().max(2048);
+const money = z.number().min(0).max(10_000);
+/** epoch milliseconds */
+const ms = z.number().int();
+
+/* ---------- catalog ---------- */
+
+export const DishTag = z.enum(['', 'Bestseller', 'New', 'Spicy']);
+export type DishTag = z.infer<typeof DishTag>;
+
+export const Dish = z.object({
+  id,
+  name: z.string().min(1).max(80),
+  /** category name */
+  cat: z.string().min(1).max(40),
+  price: money,
+  rating: z.number().min(0).max(5),
+  reviews: z.number().int().min(0),
+  /** prep time in minutes */
+  time: z.number().int().min(1).max(240),
+  kcal: z.number().int().min(0).max(10_000),
+  img: url,
+  tag: DishTag,
+  desc: z.string().max(600),
+  avail: z.boolean(),
+  /** kitchen (brand) id */
+  brand: id,
+  /** position on the menu */
+  order: z.number().int(),
+});
+export type Dish = z.infer<typeof Dish>;
+
+export const Category = z.object({
+  id,
+  name: z.string().min(1).max(40),
+  on: z.boolean(),
+  /** tile photo (the first dish's photo when not set) */
+  img: url.optional(),
+  order: z.number().int(),
+});
+export type Category = z.infer<typeof Category>;
+
+export const Brand = z.object({
+  id,
+  name: z.string().min(1).max(60),
+  tag: z.string().max(80),
+  /** Material Symbols glyph name */
+  icon: z.string().min(1).max(40),
+  img: url,
+  on: z.boolean(),
+  /** Verified kitchen location. Null keeps legacy catalog entries readable until an admin pins them. */
+  lat: z.number().min(-90).max(90).nullable().default(null),
+  lng: z.number().min(-180).max(180).nullable().default(null),
+  address: z.string().max(240).default(''),
+  phone: z.string().max(30).default(''),
+  description: z.string().max(600).default(''),
+  workDays: z.array(z.enum(['sat','sun','mon','tue','wed','thu','fri'])).default([]),
+  openTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('09:00'),
+  closeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('23:00'),
+  deliveryFee: money.nullable().default(null),
+  prepTime: z.number().int().min(1).max(240).default(30),
+  order: z.number().int(),
+});
+export type Brand = z.infer<typeof Brand>;
+export const BrandInput = z.object({
+  name: Brand.shape.name,
+  tag: Brand.shape.tag,
+  icon: Brand.shape.icon,
+  img: Brand.shape.img,
+});
+export type BrandInput = z.infer<typeof BrandInput>;
+
+
+export const Banner = z.object({
+  id,
+  /** eyebrow label */
+  eb: z.string().max(40),
+  title: z.string().min(1).max(80),
+  cta: z.string().max(30),
+  /** opens the menu on this category ('All' for everything) */
+  cat: z.string().max(40).optional(),
+  /** or opens this dish */
+  dish: id.optional(),
+  img: url,
+  on: z.boolean(),
+  order: z.number().int(),
+});
+export type Banner = z.infer<typeof Banner>;
+
+export const HomeSectionKey = z.enum(['hero', 'cats', 'deal', 'brands', 'popular', 'again', 'reserve', 'rated', 'journal']);
+export type HomeSectionKey = z.infer<typeof HomeSectionKey>;
+
+/** One Home screen section; `sections` in the catalog is in display order. */
+export const HomeSection = z.object({ k: HomeSectionKey, l: z.string().max(40), icon: z.string().max(40), on: z.boolean() });
+export type HomeSection = z.infer<typeof HomeSection>;
+
+/** Deal of the day: `pct` off one dish. */
+export const Deal = z.object({ id: z.string().max(64), pct: z.number().int().min(5).max(90), on: z.boolean() });
+export type Deal = z.infer<typeof Deal>;
+
+/** Store settings the console edits (Fig's storeOpen, prep, fee, freeAt, sound). */
+export const StoreSettings = z.object({
+  /** taking orders */
+  open: z.boolean(),
+  /** typical prep time in minutes */
+  prep: z.number().int().min(1).max(120),
+  /** delivery fee */
+  fee: money,
+  /** free delivery from this subtotal */
+  freeAt: money,
+  /** kitchen display chime for new tickets */
+  sound: z.boolean(),
+});
+export type StoreSettings = z.infer<typeof StoreSettings>;
+
+export const PostCategory = z.enum(POST_CATS);
+export type PostCategory = z.infer<typeof PostCategory>;
+
+export const Post = z.object({
+  id,
+  title: z.string().min(1).max(140),
+  cat: PostCategory,
+  img: url,
+  author: z.string().max(60),
+  /** display date, e.g. "Oct 10" */
+  date: z.string().max(20),
+  /** reading time */
+  mins: z.number().int().min(1).max(120),
+  featured: z.boolean(),
+  /** published (false = draft) */
+  on: z.boolean(),
+  /** the dish the story links to */
+  dish: id.nullable(),
+  likes: z.number().int().min(0),
+  excerpt: z.string().max(400),
+  body: z.string().max(20_000),
+});
+export type Post = z.infer<typeof Post>;
+
+export const PromoCode = z
+  .string()
+  .trim()
+  .toUpperCase()
+  .regex(/^[A-Z0-9]{3,20}$/, 'Use 3–20 letters or digits');
+
+export const Promo = z.object({
+  code: z.string(),
+  pct: z.number().int().min(5).max(50),
+  used: z.number().int().min(0),
+  on: z.boolean(),
+});
+export type Promo = z.infer<typeof Promo>;
+
+/** Everything the customer app reads to render the menu and Home, in one cacheable response. */
+export const Catalog = z.object({
+  /** increases with every console change — also the response ETag */
+  version: z.number().int(),
+  dishes: z.array(Dish),
+  categories: z.array(Category),
+  brands: z.array(Brand),
+  banners: z.array(Banner),
+  sections: z.array(HomeSection),
+  deal: Deal,
+  /** published stories only, newest first */
+  posts: z.array(Post),
+  store: StoreSettings,
+});
+export type Catalog = z.infer<typeof Catalog>;
+
+/** The console's catalog: drafts included, plus the promo codes. */
+export const AdminCatalog = Catalog.extend({ promos: z.array(Promo) });
+export type AdminCatalog = z.infer<typeof AdminCatalog>;
+
+/* ---------- cart & orders ---------- */
+
+export const CartLine = z.object({
+  /** dish id */
+  id,
+  /** size index */
+  s: z.number().int().min(0).max(5),
+  /** extra ids */
+  ex: z.array(z.string().max(20)).max(8),
+  q: z.number().int().min(1).max(20),
+  /** bought through the deal of the day or a reward (a discounted line) */
+  deal: z.boolean().optional(),
+  /** the discount on a deal line; 100 for a reward */
+  dealPct: z.number().min(0).max(100).optional(),
+  /** a redeemed reward voucher (Me.vouchers[].id) — the line is free */
+  voucher: z.string().max(64).optional(),
+});
+export type CartLine = z.infer<typeof CartLine>;
+
+export const FulfilmentMode = z.enum(['delivery', 'pickup']);
+export type FulfilmentMode = z.infer<typeof FulfilmentMode>;
+
+/** Cash goes straight to the kitchen; online card orders are paid through Kashier Direct API. */
+export const PayMethod = z.enum(['cash', 'card', 'apple_pay', 'google_pay', 'wallet']);
+export type PayMethod = z.infer<typeof PayMethod>;
+
+export const PayStatus = z.enum(['due', 'awaiting_payment', 'processing', 'paid', 'failed', 'canceled', 'refunded']);
+export type PayStatus = z.infer<typeof PayStatus>;
+
+export const OrderStepSchema = z.union([z.literal(0), z.literal(1), z.literal(2), z.literal(3), z.literal(4)]);
+
+export const AddressSnapshot = z.object({
+  tag: z.string().max(30),
+  l1: z.string().min(1).max(120),
+  l2: z.string().max(120),
+  note: z.string().max(200),
+  /** leave at the door */
+  door: z.boolean().optional(),
+  /** who to call about this delivery */
+  phone: z.string().max(30).optional(),
+});
+export type AddressSnapshot = z.infer<typeof AddressSnapshot>;
+
+/** A priced line, frozen at order time (so history survives menu edits). */
+export const OrderItem = CartLine.extend({
+  name: z.string(),
+  /** size and extras, e.g. '12" · Extra cheese' (lineMeta) */
+  meta: z.string(),
+  /** unit price charged */
+  unit: z.number(),
+});
+export type OrderItem = z.infer<typeof OrderItem>;
+
+/** The delivery rider an order is assigned to. */
+export const Rider = z.object({ uid: z.string(), name: z.string(), phone: z.string().nullable() });
+export type Rider = z.infer<typeof Rider>;
+
+/** One fulfilment step: who moved the order, and when. */
+export const OrderEvent = z.object({
+  stage: OrderStage,
+  at: ms,
+  by: z.object({ uid: z.string(), name: z.string(), role: Role }).nullable(),
+  note: z.string().max(300).optional(),
+});
+export type OrderEvent = z.infer<typeof OrderEvent>;
+
+export const Kitchen = z.object({
+  /** the kitchen started cooking (fireTicket) */
+  fired: z.boolean(),
+  firedAt: ms.nullable(),
+  /** item indexes ticked off on the kitchen display / packer's checklist (toggleKDone) */
+  done: z.array(z.number().int().min(0)),
+});
+export type Kitchen = z.infer<typeof Kitchen>;
+
+export const Order = z.object({
+  /** the same as `no` — orders are addressed by their number */
+  id,
+  /** "EK-4822" */
+  no: z.string(),
+  uid: z.string(),
+  customer: z.object({ name: z.string(), email: z.string(), phone: z.string().nullable() }),
+  placedAt: ms,
+  /** the customer's view of `stage` (stepOfStage) */
+  step: OrderStepSchema,
+  /** where the order is in the restaurant: call center → packer → warehouse → rider */
+  stage: OrderStage,
+  rider: Rider.nullable(),
+  /** each stage reached, oldest first */
+  timeline: z.array(OrderEvent),
+  items: z.array(OrderItem),
+  subtotal: z.number(),
+  fee: z.number(),
+  speedFee: z.number(),
+  /** promo discount */
+  discount: z.number(),
+  /** Fig credit spent on this order */
+  credit: z.number(),
+  total: z.number(),
+  mode: FulfilmentMode,
+  /** 0 Standard · 1 Priority */
+  speed: z.number().int().min(0).max(1),
+  address: AddressSnapshot.nullable(),
+  note: z.string(),
+  promo: z.string().nullable(),
+  /** payment label, e.g. "Apple Pay", "Visa •••• 4242", "Cash" */
+  pay: z.string(),
+  payment: z.object({ method: PayMethod, status: PayStatus }),
+  kitchen: Kitchen,
+  /** stars, once rated */
+  rated: z.number().int().min(1).max(5).optional(),
+  tip: z.number().optional(),
+  /** being moved along by the server's demo kitchen (DEMO_KITCHEN_SECONDS) */
+  live: z.boolean(),
+});
+export type Order = z.infer<typeof Order>;
+
+export const CreateOrder = z.object({
+  items: z.array(CartLine).min(1).max(50),
+  mode: FulfilmentMode,
+  /** 0 Standard · 1 Priority (ignored for pickup) */
+  speed: z.number().int().min(0).max(1),
+  address: AddressSnapshot.nullable(),
+  note: z.string().max(300).default(''),
+  promo: z.string().max(20).nullable().default(null),
+  method: PayMethod,
+  /** display label for the payment, e.g. "Visa •••• 4242" */
+  payLabel: z.string().max(40).optional(),
+  /** spend the account's Fig credit on this order */
+  useCredit: z.boolean().default(false),
+  /** the total the customer saw — the server refuses the order (409 price_changed) if its own differs */
+  expectedTotal: money,
+});
+export type CreateOrder = z.input<typeof CreateOrder>;
+
+/** Kashier hosted checkout session returned by the server. */
+export const KashierCheckout = z.object({ sessionId: z.string(), sessionUrl: z.string().url() });
+export type KashierCheckout = z.infer<typeof KashierCheckout>;
+
+export const CreateOrderResult = z.object({ order: Order, payment: KashierCheckout.nullable() });
+export type CreateOrderResult = z.infer<typeof CreateOrderResult>;
+
+export const RateOrder = z.object({
+  stars: z.number().int().min(1).max(5),
+  tags: z.array(z.string().max(40)).max(10).default([]),
+  text: z.string().max(1000).default(''),
+  tip: z.number().min(0).max(100).default(0),
+});
+export type RateOrder = z.input<typeof RateOrder>;
+
+export const ReportIssue = z.object({
+  /** index into ISSUE_TYPES */
+  type: z.number().int().min(0).max(4),
+  text: z.string().max(1000).default(''),
+});
+export type ReportIssue = z.input<typeof ReportIssue>;
+
+/** A problem not tied to an order (from Help). */
+export const ReportGeneralIssue = ReportIssue.extend({ orderId: z.string().max(64).nullable().default(null) });
+
+export const IssueResult = z.object({
+  /** whether this report added Fig credit (once per order) */
+  credited: z.boolean(),
+  /** the account's Fig credit now */
+  credit: z.number(),
+});
+export type IssueResult = z.infer<typeof IssueResult>;
+
+/* ---------- account ---------- */
+
+/** A redeemed dish reward, waiting to be added to the cart (CartLine.voucher = id). */
+export const Voucher = z.object({ id, reward: id, dish: id, s: z.number().int().min(0) });
+export type Voucher = z.infer<typeof Voucher>;
+
+export const Me = z.object({
+  uid: z.string(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().nullable(),
+  photo: z.string().nullable(),
+  /** sign-in method: password, google.com, apple.com */
+  provider: z.string(),
+  /** what this account can do — `user` for customers */
+  role: Role,
+  /** role === 'admin' */
+  admin: z.boolean(),
+  /** Fig Club */
+  points: z.number().int(),
+  tier: z.enum(['Bronze', 'Silver', 'Gold', 'Platinum']),
+  /** Fig credit, in dollars */
+  credit: z.number(),
+  /** reward ids already redeemed */
+  redeemed: z.array(z.string()),
+  vouchers: z.array(Voucher),
+  /** journal posts this account liked */
+  liked: z.array(z.string()),
+});
+export type Me = z.infer<typeof Me>;
+
+export const UpdateMe = z
+  .object({ name: z.string().trim().min(1).max(80), phone: z.string().trim().max(30).nullable() })
+  .partial();
+export type UpdateMe = z.infer<typeof UpdateMe>;
+
+export const LikeResult = z.object({ id: z.string(), liked: z.boolean(), likes: z.number().int() });
+export type LikeResult = z.infer<typeof LikeResult>;
+
+/* ---------- bookings & reviews ---------- */
+
+/** 0 Booked · 1 Seated · 2 Cancelled */
+export const BookingStatus = z.union([z.literal(0), z.literal(1), z.literal(2)]);
+export type BookingStatus = z.infer<typeof BookingStatus>;
+
+export const Booking = z.object({
+  id,
+  /** "R-2841" */
+  code: z.string(),
+  uid: z.string().nullable(),
+  name: z.string(),
+  party: z.number().int().min(1).max(10),
+  /** '7:30' (evening) */
+  time: z.string().regex(/^\d{1,2}:\d{2}$/),
+  seat: z.string().max(40),
+  status: BookingStatus,
+  /** YYYY-MM-DD in the restaurant's time zone (the app's `day` offset is days from today) */
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  occ: z.string().max(40).nullable(),
+  req: z.string().max(500),
+});
+export type Booking = z.infer<typeof Booking>;
+
+export const CreateBooking = z.object({
+  party: Booking.shape.party,
+  time: Booking.shape.time,
+  seat: z.enum(SEAT_AREAS),
+  date: Booking.shape.date,
+  occ: Booking.shape.occ.default(null),
+  req: Booking.shape.req.default(''),
+});
+export type CreateBooking = z.input<typeof CreateBooking>;
+
+export const Review = z.object({
+  id,
+  name: z.string(),
+  stars: z.number().int().min(1).max(5),
+  text: z.string(),
+  dish: z.string(),
+  /** epoch ms — the app shows "2h ago" */
+  at: ms,
+  replied: z.boolean(),
+  reply: z.string().nullable(),
+});
+export type Review = z.infer<typeof Review>;
+
+export const CustomerTier = z.enum(['Regular', 'VIP', 'New']);
+
+export const Customer = z.object({
+  id: z.string(),
+  name: z.string(),
+  email: z.string(),
+  addr: z.string(),
+  phone: z.string(),
+  tier: CustomerTier,
+  orders: z.number().int(),
+  spent: z.number(),
+});
+export type Customer = z.infer<typeof Customer>;
+
+/* ---------- console writes ---------- */
+
+/** The item editor (Fig's ItemDraft); 'None' is accepted for no badge. */
+export const DishInput = z.object({
+  name: z.string().trim().min(1).max(80),
+  price: z.number().min(0.5).max(1000),
+  cat: z.string().min(1).max(40),
+  brand: id,
+  tag: z
+    .enum(['', 'None', 'Bestseller', 'New', 'Spicy'])
+    .transform((t) => (t === 'None' ? '' : t))
+    .default(''),
+  avail: z.boolean().default(true),
+  img: url,
+  desc: z.string().max(600).optional(),
+  time: z.number().int().min(1).max(240).optional(),
+  kcal: z.number().int().min(0).max(10_000).optional(),
+});
+export type DishInput = z.input<typeof DishInput>;
+export const DishPatch = z.object({
+  name: DishInput.shape.name,
+  price: DishInput.shape.price,
+  cat: DishInput.shape.cat,
+  brand: DishInput.shape.brand,
+  tag: z.enum(['', 'None', 'Bestseller', 'New', 'Spicy']).transform((t) => (t === 'None' ? '' : t)),
+  avail: z.boolean(),
+  img: url,
+  desc: z.string().max(600),
+  time: z.number().int().min(1).max(240),
+  kcal: z.number().int().min(0).max(10_000),
+}).partial();
+export type DishPatch = z.input<typeof DishPatch>;
+
+export const CategoryInput = z.object({ name: z.string().trim().min(1).max(40) });
+export const CategoryPatch = z.object({ on: z.boolean(), img: url }).partial();
+export const BrandPatch = z.object({
+  name: Brand.shape.name,
+  tag: Brand.shape.tag,
+  icon: Brand.shape.icon,
+  img: Brand.shape.img,
+  on: Brand.shape.on,
+  lat: Brand.shape.lat,
+  lng: Brand.shape.lng,
+  address: Brand.shape.address,
+  phone: Brand.shape.phone,
+  description: Brand.shape.description,
+  workDays: Brand.shape.workDays,
+  openTime: Brand.shape.openTime,
+  closeTime: Brand.shape.closeTime,
+  deliveryFee: Brand.shape.deliveryFee,
+  prepTime: Brand.shape.prepTime,
+}).partial();
+export const BannerPatch = z.object({
+  eb: Banner.shape.eb,
+  title: Banner.shape.title,
+  cta: Banner.shape.cta,
+  cat: Banner.shape.cat,
+  dish: Banner.shape.dish,
+  img: Banner.shape.img,
+  on: Banner.shape.on,
+}).partial();
+export const SectionPatch = z.object({ on: z.boolean(), l: z.string().min(1).max(40) }).partial();
+export const DealPatch = Deal.partial();
+export const StorePatch = StoreSettings.partial();
+export const PromoInput = z.object({ code: PromoCode, pct: z.number().int().min(5).max(50) });
+export const PromoPatch = z.object({ on: z.boolean() });
+export const PostInput = z.object({
+  title: z.string().trim().min(1).max(140),
+  cat: PostCategory,
+  img: url,
+  author: z.string().max(60),
+  featured: z.boolean().default(false),
+  on: z.boolean().default(false),
+  dish: id.nullable().default(null),
+  excerpt: z.string().max(400).default(''),
+  body: z.string().max(20_000).default(''),
+});
+export type PostInput = z.input<typeof PostInput>;
+export const PostPatch = z.object({
+  title: PostInput.shape.title,
+  cat: PostCategory,
+  img: url,
+  author: z.string().max(60),
+  featured: z.boolean(),
+  on: z.boolean(),
+  dish: id.nullable(),
+  excerpt: z.string().max(400),
+  body: z.string().max(20_000),
+}).partial();
+/** ids (or section keys) in their new order */
+export const Reorder = z.object({ ids: z.array(z.string().min(1).max(64)).min(1).max(200) });
+
+/** Move an order to another stage (see movesFor in roles.ts for who may). */
+export const AdvanceOrder = z.object({
+  to: OrderStage,
+  /** the rider, when assigning */
+  riderUid: z.string().min(1).max(128).optional(),
+  note: z.string().max(300).optional(),
+});
+export type AdvanceOrder = z.infer<typeof AdvanceOrder>;
+
+/** The console's one-tap advance: `to` defaults to the next stage, a rider is picked if needed. */
+export const AdminAdvanceOrder = AdvanceOrder.partial();
+
+/** The call center corrects the delivery address or contact before the order is packed. */
+export const OrderContactPatch = z
+  .object({ address: AddressSnapshot, phone: z.string().trim().max(30).nullable(), note: z.string().max(300) })
+  .partial();
+export type OrderContactPatch = z.infer<typeof OrderContactPatch>;
+
+/** Tick an item off (or set it explicitly). */
+export const ItemDonePatch = z.object({ done: z.boolean().optional() });
+
+export const BookingStatusPatch = z.object({ status: BookingStatus });
+
+/* ---------- users and roles (admin) ---------- */
+
+/** An account as the console's Users & roles screen shows it. */
+export const UserRow = z.object({
+  uid: z.string(),
+  name: z.string(),
+  email: z.string(),
+  phone: z.string().nullable(),
+  role: Role,
+  disabled: z.boolean(),
+  /** sign-in method: password, google.com, apple.com — `demo` for seeded customers */
+  provider: z.string(),
+  createdAt: ms.nullable(),
+  orders: z.number().int(),
+  spent: z.number(),
+});
+export type UserRow = z.infer<typeof UserRow>;
+
+export const CreateUser = z.object({
+  name: z.string().trim().min(1).max(80),
+  email: z.string().trim().toLowerCase().pipe(z.email().max(120)),
+  /** first password; they can change it with "Forgot password" */
+  password: z.string().min(8).max(128),
+  role: Role,
+  phone: z.string().trim().max(30).nullable().optional(),
+});
+export type CreateUser = z.input<typeof CreateUser>;
+
+export const UserPatch = z
+  .object({ role: Role, disabled: z.boolean(), name: z.string().trim().min(1).max(80), phone: z.string().trim().max(30).nullable() })
+  .partial();
+export type UserPatch = z.infer<typeof UserPatch>;
+
+/* ---------- errors ---------- */
+
+/** Every error response: `{ error: { code, message, details? } }`. */
+export const ApiError = z.object({
+  error: z.object({ code: z.string(), message: z.string(), details: z.unknown().optional() }),
+});
+export type ApiError = z.infer<typeof ApiError>;
+
+========== mobile/src/lib/remote.ts ==========
+import type { AdminCatalog, Booking, Brand, Category, Deal, Dish, IssueResult, LikeResult, Me, Order, Post, Promo, Review, StoreSettings } from '@fig/shared';
+
+import { registerRemote, type Remote } from '@/store/app-store';
+
+import { api, errorMessage } from './api';
+import { catalogChanged } from './sync';
+
+const enc = encodeURIComponent;
+
+/** The store's server calls, over the Fig & Fennel API. */
+export const remote: Remote = {
+  validatePromo: (code) => api.post<{ code: string; pct: number }>('/v1/promos/validate', { code }),
+  redeem: (id) => api.post<Me>(`/v1/me/rewards/${enc(id)}/redeem`),
+  rate: (id, input) => api.post<Order>(`/v1/orders/${enc(id)}/rating`, input),
+  reportIssue: (orderId, type, text) =>
+    orderId ? api.post<IssueResult>(`/v1/orders/${enc(orderId)}/issues`, { type, text }) : api.post<IssueResult>('/v1/issues', { type, text, orderId: null }),
+  book: (b) => api.post<Booking>('/v1/bookings', b),
+  cancelBooking: (id) => api.post<Booking>(`/v1/bookings/${enc(id)}/cancel`),
+  like: (postId) => api.post<LikeResult>(`/v1/posts/${enc(postId)}/like`),
+
+  createDish: (d) => api.post<Dish>('/v1/admin/dishes', d),
+  patchDish: (id, p) => api.patch<Dish>(`/v1/admin/dishes/${enc(id)}`, p),
+  deleteDish: (id) => api.delete(`/v1/admin/dishes/${enc(id)}`),
+  createCategory: (name) => api.post<Category>('/v1/admin/categories', { name }),
+  patchCategory: (id, p) => api.patch<Category>(`/v1/admin/categories/${enc(id)}`, p),
+  reorder: async (kind, ids) => {
+    await api.put(`/v1/admin/${kind}/order`, { ids });
+  },
+  createBrand: (b) => api.post<Brand>('/v1/admin/brands', b),
+  patchBrand: (id, p) => api.patch<Brand>(`/v1/admin/brands/${enc(id)}`, p),
+  deleteBrand: (id) => api.delete(`/v1/admin/brands/${enc(id)}`),
+  patchBanner: (id, p) => api.patch(`/v1/admin/banners/${enc(id)}`, p),
+  patchSection: (k, p) => api.patch(`/v1/admin/sections/${enc(k)}`, p),
+  patchDeal: (p) => api.patch<Deal>('/v1/admin/deal', p),
+  patchStore: (p) => api.patch<StoreSettings>('/v1/admin/store', p),
+  createPromo: (code, pct) => api.post<Promo>('/v1/admin/promos', { code, pct }),
+  patchPromo: (code, on) => api.patch<Promo>(`/v1/admin/promos/${enc(code)}`, { on }),
+  createPost: (p) => api.post<Post>('/v1/admin/posts', p),
+  patchPost: (id, p) => api.patch<Post>(`/v1/admin/posts/${enc(id)}`, p),
+  deletePost: (id) => api.delete(`/v1/admin/posts/${enc(id)}`),
+
+  advanceOrder: (id) => api.post<Order>(`/v1/admin/orders/${enc(id)}/advance`, {}),
+  cancelOrder: (id) => api.post<Order>(`/v1/admin/orders/${enc(id)}/cancel`, {}),
+  fireTicket: (id) => api.post<Order>(`/v1/admin/orders/${enc(id)}/fire`),
+  itemDone: (id, index, done) => api.post<Order>(`/v1/admin/orders/${enc(id)}/items/${index}/done`, { done }),
+  setBookingStatus: (id, status) => api.patch<Booking>(`/v1/admin/bookings/${enc(id)}`, { status }),
+  replyReview: (id) => api.post<Review>(`/v1/admin/reviews/${enc(id)}/reply`, {}),
+
+  catalogChanged,
+  errorMessage: (e) => errorMessage(e),
+};
+
+registerRemote(remote);
+
+export type { AdminCatalog };
+
+========== UNTRACKED FILES ==========
+-rw-r--r-- 1 runner runner 17499 Nov 14 04:33 =\ [
+-rw-r--r-- 1 runner runner 17499 Nov 14 04:42 tatus\ --short
