@@ -51,7 +51,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     // Kashier is the source of truth: this also finds cards saved before this app recorded local metadata.
     const url = `${tokenBase()}/v3/cards/customer?customerReference=${encodeURIComponent(user.uid)}&merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}`;
     const response = await fetch(url, {
-      headers: { Authorization: config.KASHIER_SECRET_KEY, 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' },
+      headers: { 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' },
       signal: AbortSignal.timeout(15000),
     });
     const body: any = await response.json().catch(() => ({}));
@@ -93,7 +93,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     const user = requireUser(req);
     if (!config.KASHIER_MERCHANT_ID || !config.KASHIER_PAYMENT_API_KEY || !config.KASHIER_SECRET_KEY) throw new AppError(503, 'payments_unavailable', 'Kashier is not configured.');
     const url = `${tokenBase()}/v3/cards/tokens/${encodeURIComponent(req.body.cardToken)}?merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}&customerReference=${encodeURIComponent(user.uid)}`;
-    const response = await fetch(url, { headers: { Authorization: config.KASHIER_SECRET_KEY, 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+    const response = await fetch(url, { headers: { 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
     const body: any = await response.json().catch(() => ({}));
     const card = body?.response?.paymentMethod?.card;
     if (!response.ok || !card?.cardToken || card.cardToken !== req.body.cardToken) throw new AppError(400, 'card_token_invalid', 'Kashier could not verify this saved card.');
@@ -105,7 +105,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     const user = requireUser(req);
     if (!config.KASHIER_MERCHANT_ID || !config.KASHIER_PAYMENT_API_KEY || !config.KASHIER_SECRET_KEY) throw new AppError(503, 'payments_unavailable', 'Kashier is not configured.');
     const url = `${tokenBase()}/v3/cards/tokens/${encodeURIComponent(req.params.token)}?customerReference=${encodeURIComponent(user.uid)}&merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}`;
-    const response = await fetch(url, { method: 'DELETE', headers: { Authorization: config.KASHIER_SECRET_KEY, 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+    const response = await fetch(url, { method: 'DELETE', headers: { 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new AppError(502, 'card_delete_failed', 'Kashier could not remove this card.');
     await userRef(db, user.uid).set({ paymentMethods: { cards: { [req.params.token]: FieldValue.delete() } } }, { merge: true });
     return { deleted: true };
