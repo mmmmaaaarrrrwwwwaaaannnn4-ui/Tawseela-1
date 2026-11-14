@@ -1,5 +1,5 @@
 import { router } from 'expo-router';
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { WebView } from 'react-native-webview';
@@ -13,7 +13,8 @@ import { Reveal, RevealScope } from '@/components/ui/reveal';
 import { Txt } from '@/components/ui/txt';
 import { useStatusBar } from '@/hooks/use-status-bar';
 import { placeOrder } from '@/lib/checkout';
-import { API_URL } from '@/lib/api';
+import { API_URL, api } from '@/lib/api';
+import { cardBrandOf } from '@/data/seed';
 import { cnt, money } from '@/lib/format';
 import { SPEEDS } from '@/lib/pricing';
 import { useApp } from '@/store/app-store';
@@ -50,6 +51,8 @@ function Checkout() {
   );
   const t = useApp((st) => st.totals)();
   const [paying, setPaying] = useState(false);
+  const [cardsReady, setCardsReady] = useState(false);
+  useEffect(() => { let active = true; api.get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards').then((result) => { if (!active) return; const next = result.cards.map((x) => { const b = cardBrandOf(x.number.replace(/\D/g, '')); return { id: x.id, brand: x.brand || b.name, num: x.number, exp: x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '', bg: b.bg, nick: '', name: x.name }; }); useApp.setState({ cards: next, defCard: next.some((x) => x.id === useApp.getState().defCard) ? useApp.getState().defCard : (next[0]?.id ?? '') }); }).catch(() => { if (active) useApp.setState({ cards: [], defCard: '' }); }).finally(() => { if (active) setCardsReady(true); }); return () => { active = false; }; }, []);
   const [savedCardCvv, setSavedCardCvv] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [walletPhone, setWalletPhone] = useState('');
@@ -69,13 +72,14 @@ function Checkout() {
   /** The server validates and settles online payments; provider details stay out of customer-facing copy. */
   const pay = async () => {
     if (paying || !s.cart.length) return;
+    if (s.payM !== 2 && s.payM !== 3 && !cardsReady) { useApp.getState().showToast('انتظر قليلًا', 'جارٍ تحميل بطاقات الدفع المحفوظة.', 'info'); return; }
     const toast = useApp.getState().showToast;
     if (s.payM === 3 && !/^01[0125]\d{8}$/.test(walletPhone.replace(/[\s()-]/g, ''))) {
       toast('رقم المحفظة غير صحيح', 'أدخل رقم محفظة مصريًا صحيحًا يبدأ بـ 010 أو 011 أو 012 أو 015.', 'error');
       return;
     }
     const selectedCard = s.cards.find((card) => card.id === s.defCard);
-    if ((s.payM === 0 || s.payM === 1) && (!selectedCard || !/^\\d{3,4}$/.test(savedCardCvv))) {
+    if ((s.payM === 0 || s.payM === 1) && (!selectedCard || !/^\d{3,4}$/.test(savedCardCvv))) {
       toast('اختر بطاقة محفوظة', 'اختر بطاقة محفوظة وأدخل رمز الأمان لإتمام الدفع.', 'error');
       return;
     }
@@ -219,7 +223,8 @@ function Checkout() {
               )) : (
                 <Txt s={13} color={c.text2}>لا توجد بطاقة محفوظة حتى الآن.</Txt>
               )}
-              {s.cards.length ? <TextInput value={savedCardCvv} onChangeText={(v) => setSavedCardCvv(v.replace(/[^0-9]/g, '').slice(0, 4))} placeholder="رمز الأمان CVV" keyboardType="number-pad" secureTextEntry maxLength={4} style={[styles.note, { minHeight: 50, borderColor: c.line, backgroundColor: c.surface1, color: c.text1 }]} /> : null}\n              <AccentButton label={s.cards.length ? 'إدارة البطاقات' : 'إضافة فيزا أو ماستركارد'} onPress={() => router.push('/payments')} icon="add_card" />
+              {s.cards.length ? <TextInput value={savedCardCvv} onChangeText={(v) => setSavedCardCvv(v.replace(/[^0-9]/g, '').slice(0, 4))} placeholder="رمز الأمان CVV" keyboardType="number-pad" secureTextEntry maxLength={4} style={[styles.note, { minHeight: 50, borderColor: c.line, backgroundColor: c.surface1, color: c.text1 }]} /> : null}
+              <AccentButton label={s.cards.length ? 'إدارة البطاقات' : 'إضافة فيزا أو ماستركارد'} onPress={() => router.push('/payments')} icon="add_card" />
             </Card>
           ) : null}
         </Reveal>
