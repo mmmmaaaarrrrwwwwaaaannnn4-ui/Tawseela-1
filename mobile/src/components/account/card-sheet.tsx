@@ -175,7 +175,7 @@ export function CardSheet({
             onBlur={() => onFlip(false)}
             placeholder="123"
             keyboardType="number-pad"
-            secureTextEntry={false}
+            secureTextEntry
             error={showErrors && !okCvv}
           />
         </View>
