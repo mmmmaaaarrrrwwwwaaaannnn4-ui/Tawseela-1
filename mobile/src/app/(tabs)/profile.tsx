@@ -74,9 +74,9 @@ export default function ProfileScreen() {
           contentContainerStyle={{ paddingTop: chrome.contentTop, paddingBottom: chrome.bottomPad, paddingHorizontal: 20, gap: 14, direction: 'rtl' }}
           showsVerticalScrollIndicator={false}
         >
-          <Reveal i={0} style={{ paddingTop: 6 }}>
-            <Txt s={34} w={600} ls={-0.03} style={{ textAlign: 'right' }}>
-              {user ? user.name : 'المزيد'}
+          <Reveal i={0} style={{ paddingTop: 8, paddingHorizontal: 4 }}>
+            <Txt s={32} w={700} ls={-0.03} style={{ textAlign: 'right' }}>
+              توصيلة
             </Txt>
           </Reveal>
 
@@ -149,33 +149,36 @@ export default function ProfileScreen() {
           ) : null}
 
           <Reveal i={2}>
-            <ListCard>
+            <Eyebrow style={{ paddingTop: 6, paddingHorizontal: 4 }}>استكشف</Eyebrow>
+          </Reveal>
+          <Reveal i={2}>
+            <ListCard radius={24}>
               {profRows.map((r, i) => (
-                <ListRow key={r.l} icon={r.icon} title={r.l} sub={r.s} onPress={r.go} last={i === profRows.length - 1} bare minHeight={72} />
+                <ListRow key={r.l} icon={r.icon} title={r.l} sub={r.s} onPress={r.go} last={i === profRows.length - 1} bare minHeight={88} />
               ))}
             </ListCard>
           </Reveal>
 
           <Reveal i={3}>
-            <Eyebrow style={{ paddingTop: 6, paddingHorizontal: 4 }}>الحساب</Eyebrow>
+            <Eyebrow style={{ paddingTop: 18, paddingHorizontal: 4 }} size={12}>الحساب</Eyebrow>
           </Reveal>
           <Reveal i={3}>
-            <ListCard>
+            <ListCard radius={24}>
               {acctRows.map((r, i) => (
-                <ListRow key={r.l} icon={r.icon} title={r.l} sub={r.s} onPress={r.go} last={i === acctRows.length - 1} bare minHeight={72} />
+                <ListRow key={r.l} icon={r.icon} title={r.l} sub={r.s} onPress={r.go} last={i === acctRows.length - 1} bare minHeight={88} />
               ))}
             </ListCard>
           </Reveal>
           <Reveal i={3}>
-            <ListCard>
+            <ListCard radius={24}>
               <PressableScale
                 onPress={() => useApp.getState().setOrderNotif(!st.orderNotif)}
                 scaleTo={0.985}
-                style={styles.toggleRow}
+                style={[styles.toggleRow, { flexDirection: 'row-reverse' }]}
                 accessibilityRole="switch"
                 accessibilityState={{ checked: st.orderNotif }}
               >
-                <Txt s={14.5} w={600}>
+                <Txt s={15.5} w={600} style={{ textAlign: 'right' }}>
                   إشعارات الطلبات
                 </Txt>
                 <Toggle on={st.orderNotif} />
