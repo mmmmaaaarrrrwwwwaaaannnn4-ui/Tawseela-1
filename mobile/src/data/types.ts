@@ -44,6 +44,16 @@ export interface Brand {
   icon: IconName;
   img: string;
   on: boolean;
+  lat: number | null;
+  lng: number | null;
+  address: string;
+  phone: string;
+  description: string;
+  workDays: ('sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri')[];
+  openTime: string;
+  closeTime: string;
+  deliveryFee: number;
+  prepTime: number;
 }
 
 export interface SizeOption {

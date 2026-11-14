@@ -125,7 +125,7 @@ export interface Remote {
   patchCategory: (id: string, p: { on?: boolean; img?: string }) => Promise<ApiCategory>;
   reorder: (kind: 'categories' | 'banners' | 'sections', ids: string[]) => Promise<void>;
   createBrand: (b: Omit<ApiBrand, 'id' | 'order'>) => Promise<ApiBrand>;
-  patchBrand: (id: string, p: Partial<Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img' | 'on'>>) => Promise<ApiBrand>;
+  patchBrand: (id: string, p: Partial<Omit<ApiBrand, 'id' | 'order'>>) => Promise<ApiBrand>;
   deleteBrand: (id: string) => Promise<void>;
   patchBanner: (id: string, p: { on?: boolean }) => Promise<unknown>;
   patchSection: (k: HomeSectionKey, p: { on?: boolean }) => Promise<unknown>;
@@ -1032,7 +1032,7 @@ export const useApp = create<AppStore>()(
           const res = await write({
             keys: ['brands'],
             apply: (s) => ({ brands: s.brands.map((x) => (x.id === b.id ? { ...b } : x)) }),
-            call: (api) => api.patchBrand(b.id, { name: b.name, tag: b.tag, img: b.img, on: b.on }),
+            call: (api) => api.patchBrand(b.id, { name: b.name, tag: b.tag, icon: b.icon, img: b.img, on: b.on, lat: b.lat, lng: b.lng, address: b.address, phone: b.phone, description: b.description, workDays: b.workDays, openTime: b.openTime, closeTime: b.closeTime, deliveryFee: b.deliveryFee, prepTime: b.prepTime }),
             fail: 'Kitchen not saved',
             catalog: true,
           });
