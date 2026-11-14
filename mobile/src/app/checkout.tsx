@@ -50,10 +50,7 @@ function Checkout() {
   );
   const t = useApp((st) => st.totals)();
   const [paying, setPaying] = useState(false);
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [cardMonth, setCardMonth] = useState('');
-  const [cardYear, setCardYear] = useState('');
+  const [savedCardCvv, setSavedCardCvv] = useState('');
   const [cardCvv, setCardCvv] = useState('');
   const [walletPhone, setWalletPhone] = useState('');
   const [paymentSheet, setPaymentSheet] = useState(false);
@@ -77,13 +74,14 @@ function Checkout() {
       toast('رقم المحفظة غير صحيح', 'أدخل رقم محفظة مصريًا صحيحًا يبدأ بـ 010 أو 011 أو 012 أو 015.', 'error');
       return;
     }
-    if ((s.payM === 0 || s.payM === 1) && (!cardNumber.trim() || !cardName.trim() || !cardMonth.trim() || !cardYear.trim() || !cardCvv.trim())) {
-      toast('بيانات البطاقة ناقصة', 'أكمل رقم البطاقة واسم حاملها وتاريخ الانتهاء ورمز الأمان.', 'error');
+    const selectedCard = s.cards.find((card) => card.id === s.defCard);
+    if ((s.payM === 0 || s.payM === 1) && (!selectedCard || !/^\\d{3,4}$/.test(savedCardCvv))) {
+      toast('اختر بطاقة محفوظة', 'اختر بطاقة محفوظة وأدخل رمز الأمان لإتمام الدفع.', 'error');
       return;
     }
     setPaying(true);
     const r = await placeOrder(
-      s.payM === 0 || s.payM === 1 ? { number: cardNumber, name: cardName, month: cardMonth, year: cardYear, cvv: cardCvv } : undefined,
+      s.payM === 0 || s.payM === 1 ? { token: selectedCard!.id, cvv: savedCardCvv } : undefined,
       s.payM === 3 ? walletPhone : undefined,
       (url) => new Promise<void>((resolve) => {
         challengeResolver.current = resolve;
@@ -91,7 +89,7 @@ function Checkout() {
         setThreeDSUrl(url);
       }),
     );
-    setCardNumber(''); setCardName(''); setCardMonth(''); setCardYear(''); setCardCvv(''); setWalletPhone('');
+    setSavedCardCvv(''); setWalletPhone('');
     setPaying(false);
     if (r.ok) router.replace('/success');
     else if (r.priceChanged) toast('Prices changed', `The menu was just updated — your new total is ${money(r.total ?? t.total)}`, 'sync');
@@ -221,7 +219,7 @@ function Checkout() {
               )) : (
                 <Txt s={13} color={c.text2}>لا توجد بطاقة محفوظة حتى الآن.</Txt>
               )}
-              <AccentButton label={s.cards.length ? 'إدارة البطاقات' : 'إضافة فيزا أو ماستركارد'} onPress={() => router.push('/payments')} icon="add_card" />
+              {s.cards.length ? <TextInput value={savedCardCvv} onChangeText={(v) => setSavedCardCvv(v.replace(/[^0-9]/g, '').slice(0, 4))} placeholder="رمز الأمان CVV" keyboardType="number-pad" secureTextEntry maxLength={4} style={[styles.note, { minHeight: 50, borderColor: c.line, backgroundColor: c.surface1, color: c.text1 }]} /> : null}\n              <AccentButton label={s.cards.length ? 'إدارة البطاقات' : 'إضافة فيزا أو ماستركارد'} onPress={() => router.push('/payments')} icon="add_card" />
             </Card>
           ) : null}
         </Reveal>

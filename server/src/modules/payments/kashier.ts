@@ -54,13 +54,13 @@ export async function createKashierSession(config: any, order: Order, user: Auth
 
 
 /** Create a Direct API payment intent. Amount and order reference always come from Firestore. */
-export async function createKashierDirectIntent(config: any, order: Order) {
+export async function createKashierDirectIntent(config: any, order: Order, savedCard = false) {
   requireKashier(config);
   if (!config.PUBLIC_API_URL) throw unavailable('payment_callback_unavailable', 'PUBLIC_API_URL must be configured before online payments are enabled.');
   const mode = config.KASHIER_MODE as 'test' | 'live';
   const amount = Number(order.total).toFixed(2);
   const currency = String(config.CURRENCY || 'EGP').toUpperCase();
-  const path = `/?payment=${config.KASHIER_MERCHANT_ID}.${order.id}.${amount}.${currency}`;
+  const path = `/?payment=${config.KASHIER_MERCHANT_ID}.${order.id}.${amount}.${currency}${savedCard ? `.${order.uid}` : ''}`;
   const hash = createHmac('sha256', config.KASHIER_PAYMENT_API_KEY).update(path).digest('hex');
   const base = config.PUBLIC_API_URL.replace(/\/$/, '');
   return {

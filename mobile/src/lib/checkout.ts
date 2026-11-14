@@ -56,7 +56,7 @@ let last: { sig: string; key: string } | null = null;
  * One checkout attempt: place the order (cash goes straight to the kitchen), or for a card or wallet
  * submit card details to the payment processor, then wait for the signed confirmation.
  */
-export type CardDetails = { number: string; name: string; month: string; year: string; cvv: string };
+export type CardDetails = { number: string; name: string; month: string; year: string; cvv: string } | { token: string; cvv: string };
 
 export async function placeOrder(card?: CardDetails, walletPhone?: string, openThreeDS?: (url: string) => Promise<void>): Promise<CheckoutResult> {
   const req = buildOrderRequest();
@@ -130,7 +130,7 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string, openT
     const intent = await api.post<{
       hash: string; endpoint: string; merchantId: string; reference: string; amount: string; currency: string;
       customerReference: string; webhookUrl: string; merchantRedirect: string;
-    }>(`/v1/orders/${encodeURIComponent(order.id)}/payment/direct-intent`);
+    }>(`/v1/orders/${encodeURIComponent(order.id)}/payment/direct-intent`, { savedCard: 'token' in card });
 
     // Card data is sent directly to the payment processor; it is never sent to Tawseela's API.
     const paymentResponse = await fetch(intent.endpoint, {
@@ -144,6 +144,7 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string, openT
           securityCode: card.cvv, enable3DS: true,
         } },
         order: { reference: intent.reference, amount: intent.amount, currency: intent.currency, description: `Tawseela order ${order.no}` },
+        ...( 'token' in card ? { customer: { reference: intent.customerReference } } : {}),
         interactionSource: 'ECOMMERCE',
         reconciliation: { webhookUrl: intent.webhookUrl, merchantRedirect: intent.merchantRedirect, redirect: true },
         merchantId: intent.merchantId, newPaymentUI: true,

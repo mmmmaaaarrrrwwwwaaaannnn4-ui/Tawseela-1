@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
@@ -15,6 +15,8 @@ import { Reveal, RevealScope } from '@/components/ui/reveal';
 import { Txt } from '@/components/ui/txt';
 import { useStatusBar } from '@/hooks/use-status-bar';
 import { money, orderTime } from '@/lib/format';
+import { api } from '@/lib/api';
+import { cardBrandOf } from '@/data/seed';
 import { payLabel, selectMyOrders, useApp, type NewCard } from '@/store/app-store';
 import { useSession } from '@/store/session';
 import { fixed } from '@/theme/tokens';
@@ -40,7 +42,7 @@ export default function PaymentsScreen() {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<NewCard>(() => blankCard());
   const [err, setErr] = useState(false);
-  const [flip, setFlip] = useState(false);
+  const [flip, setFlip] = useState(false);\n  const [saving, setSaving] = useState(false);\n\n  useEffect(() => {\n    let active = true;\n    api.get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards')\n      .then((result) => { if (!active) return; const next = result.cards.map((x) => { const b = cardBrandOf(x.number.replace(/\\D/g, '')); return { id: x.id, brand: x.brand || b.name, num: x.number, exp: x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '', bg: b.bg, nick: '', name: x.name }; }); useApp.setState({ cards: next, defCard: useApp.getState().defCard && next.some((x) => x.id === useApp.getState().defCard) ? useApp.getState().defCard : (next[0]?.id ?? '') }); })\n      .catch(() => { if (active) useApp.setState({ cards: [], defCard: '' }); });\n    return () => { active = false; };\n  }, []);
 
   const cur = cards[Math.min(idx, cards.length - 1)];
   const curIsDef = !!cur && payM === 1 && defCard === cur.id;
@@ -51,20 +53,40 @@ export default function PaymentsScreen() {
     setFlip(false);
     setOpen(true);
   };
-  const saveCard = () => {
-    const before = useApp.getState().cards.length;
-    const miss = useApp.getState().addCard(draft);
-    if (miss) {
+  const saveCard = async () => {
+    const digits = draft.num.replace(/\\D/g, '');
+    const validExpiry = /^(0[1-9]|1[0-2])\\/\\d{2}$/.test(draft.exp);
+    const validCvv = /^\\d{3,4}$/.test(draft.cvv);
+    if (digits.length < 15 || !draft.name.trim() || !validExpiry || !validCvv) { setErr(true); return; }
+    if (saving) return;
+    setSaving(true);
+    try {
+      const intent = await api.get<{ endpoint: string; merchantId: string; customerReference: string; hash: string }>('/v1/me/cards/tokenization-intent');
+      const response = await fetch(intent.endpoint, {
+        method: 'POST',
+        headers: { accept: 'application/json', 'content-type': 'application/json', 'Kashier-Hash': intent.hash },
+        body: JSON.stringify({
+          merchantId: intent.merchantId,
+          customerReference: intent.customerReference,
+          paymentMethod: { type: 'CARD', card: { number: digits, nameOnCard: draft.name.trim(), expiry: { month: draft.exp.slice(0, 2), year: draft.exp.slice(-2) }, securityCode: draft.cvv } },
+          customer: { reference: intent.customerReference },
+        }),
+      });
+      const result: any = await response.json().catch(() => ({}));
+      const token = result?.response?.paymentMethod?.card?.cardToken ?? result?.response?.paymentMethod?.card?.cardDataToken;
+      if (!response.ok || result?.status !== 'SUCCESS' || typeof token !== 'string') throw new Error(result?.messages?.ar || result?.messages?.en || 'Kashier did not return a saved card token.');
+      await api.post('/v1/me/cards', { cardToken: token });
+      const saved = await api.get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards');
+      const next = saved.cards.map((x) => { const b = cardBrandOf(x.number.replace(/\\D/g, '')); return { id: x.id, brand: x.brand || b.name, num: x.number, exp: x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '', bg: b.bg, nick: '', name: x.name }; });
+      useApp.setState({ cards: next, defCard: token, payM: 1 });
+      setIdx(Math.max(0, next.findIndex((x) => x.id === token)));
+      setErr(false); setFlip(false); setOpen(false);
+      useApp.getState().showToast('تم حفظ البطاقة', 'تم حفظ رمز البطاقة لدى Kashier بنجاح.', 'check_circle');
+      router.replace('/checkout');
+    } catch (error) {
       setErr(true);
-      return;
-    }
-    setIdx(before);
-    setErr(false);
-    setFlip(false);
-    setOpen(false);
-    useApp.getState().setCheckout({ payM: 1 });
-    useApp.getState().showToast('تمت إضافة البطاقة', 'يمكنك الآن إكمال طلبك واختيار البطاقة.', 'check_circle');
-    router.replace('/checkout');
+      useApp.getState().showToast('تعذر حفظ البطاقة', error instanceof Error ? error.message : 'حاول مرة أخرى.', 'error');
+    } finally { setSaving(false); }
   };
 
   return (
@@ -116,7 +138,7 @@ export default function PaymentsScreen() {
                 <PressableScale
                   scaleTo={0.96}
                   onPress={() => {
-                    if (cur && useApp.getState().removeCard(cur.id)) setIdx((i) => Math.max(0, i - 1));
+                    if (cur) void api.delete(`/v1/me/cards/${encodeURIComponent(cur.id)}`).then(async () => { const saved = await api.get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards'); const next = saved.cards.map((x) => { const b = cardBrandOf(x.number.replace(/\\D/g, '')); return { id: x.id, brand: x.brand || b.name, num: x.number, exp: x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '', bg: b.bg, nick: '', name: x.name }; }); useApp.setState({ cards: next, defCard: next[0]?.id ?? '' }); setIdx(0); }).catch((e) => useApp.getState().showToast('تعذر حذف البطاقة', e instanceof Error ? e.message : 'حاول مرة أخرى.', 'error'));
                   }}
                   style={[styles.action, { borderWidth: 1, borderColor: c.line, backgroundColor: c.surface1 }]}
                 >
@@ -218,7 +240,7 @@ export default function PaymentsScreen() {
           showErrors={err}
           flipped={flip}
           onFlip={setFlip}
-          onSave={saveCard}
+          onSave={() => void saveCard()}
           onClose={() => {
             setOpen(false);
             setFlip(false);
