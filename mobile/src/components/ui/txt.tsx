@@ -20,7 +20,7 @@ export interface TxtProps extends TextProps {
   strike?: boolean;
 }
 
-/** Cairo for Arabic; Outfit for Latin text, with the same weight scale. */
+/** Native system font for Arabic; Outfit for Latin text. */
 export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, strike, style, children, ...rest }: TxtProps) {
   const { c } = useTheme();
   const isArabic = typeof children === 'string' && /[\u0600-\u06FF]/.test(children);
