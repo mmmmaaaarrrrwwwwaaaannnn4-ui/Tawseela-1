@@ -13,12 +13,14 @@
       "supportsTablet": false,
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
-        "UIDesignRequiresCompatibility": false
+        "UIDesignRequiresCompatibility": false,
+        "NSLocationWhenInUseUsageDescription": "نحتاج موقعك لتحديد موقع المطبخ على الخريطة."
       },
       "usesAppleSignIn": true
     },
     "android": {
       "package": "com.tawseela.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       "adaptiveIcon": {
         "backgroundColor": "#FFF000",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
