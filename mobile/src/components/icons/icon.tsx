@@ -2,9 +2,10 @@ import { memo } from 'react';
 import type { ComponentType } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import * as Lucide from 'lucide-react-native';
+import Svg, { Path } from 'react-native-svg';
 
 import { useTheme } from '@/theme/theme';
-import type { IconName } from './glyphs';
+import { GLYPHS, type IconName } from './glyphs';
 
 export type { IconName };
 
@@ -75,7 +76,16 @@ function IconBase({ name, size = 24, color, fill = false, style }: Props) {
   const { c } = useTheme();
   const Glyph = resolveIcon(name);
   const tint = color ?? c.text1;
-  if (!Glyph) return null;
+  if (!Glyph) {
+    const paths = GLYPHS[name];
+    const path = paths?.[fill ? 1 : 0] ?? paths?.[0];
+    if (!path) return null;
+    return (
+      <Svg width={size} height={size} viewBox="0 -960 960 960" style={style}>
+        <Path d={path} fill={tint} />
+      </Svg>
+    );
+  }
   return (
     <Glyph
       size={size}
