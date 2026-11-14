@@ -40,7 +40,7 @@ function GroupCard({ rows }: { rows: MenuRow[] }) {
           </View>
           <Icon name={row.icon} size={27} color={c.text2} />
           <View style={styles.chevron}>
-            <Icon name="chevron_left" size={22} color={c.text3} />
+            <Icon name="chevron_right" size={22} color={c.text3} />
           </View>
         </PressableScale>
       ))}
@@ -134,7 +134,7 @@ export default function ProfileScreen() {
                   <Txt s={16} w={600} color={fixed.paper} style={styles.rtlText}>إدارة المطعم</Txt>
                   <Txt s={13} color={fixed.paperA(0.72)} style={styles.rtlText}>الطلبات والقائمة والعروض والإعدادات</Txt>
                 </View>
-                <Icon name="chevron_left" size={23} color={fixed.paper} />
+                <Icon name="chevron_right" size={23} color={fixed.paper} />
               </PressableScale>
             </Reveal>
           ) : null}
@@ -146,7 +146,7 @@ export default function ProfileScreen() {
                   <Txt s={16} w={600} color={fixed.paper} style={styles.rtlText}>فريق العمل · {ROLE_INFO[staffRole].label}</Txt>
                   <Txt s={13} color={fixed.paperA(0.72)} style={styles.rtlText}>مهامي — {ROLE_INFO[staffRole].desc.toLowerCase()}</Txt>
                 </View>
-                <Icon name="chevron_left" size={23} color={fixed.paper} />
+                <Icon name="chevron_right" size={23} color={fixed.paper} />
               </PressableScale>
             </Reveal>
           ) : null}
