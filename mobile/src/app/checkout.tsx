@@ -203,7 +203,7 @@ function Checkout() {
               <Txt s={15} w={700}>{walletProvider || 'محفظة الموبايل'}</Txt>
               <TextInput value={walletPhone} onChangeText={(v) => setWalletPhone(v.replace(/[^0-9]/g, '').slice(0, 11))}
                 placeholder="01XXXXXXXXX" keyboardType="phone-pad" maxLength={11}
-                style={[styles.note, { minHeight: 52, borderColor: c.line, backgroundColor: c.surface1, color: c.text1, textAlign: 'left' }]} />
+                style={[styles.note, { minHeight: 52, borderColor: c.line, backgroundColor: c.surface1, color: c.text1 }]} />
             </Card>
           ) : null}
           {(s.payM === 0 || s.payM === 1) ? (
