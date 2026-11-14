@@ -163,8 +163,11 @@ async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInpu
     if (Array.isArray(days) && days.length > 0) {
       const openTime = String(brand?.get('openTime') ?? '09:00');
       const closeTime = String(brand?.get('closeTime') ?? '23:00');
-      const inHours = openTime <= closeTime ? clock >= openTime && clock < closeTime : clock >= openTime || clock < closeTime;
-      if (!days.includes(today) || !inHours) throw conflict('kitchen_closed', 'One of the kitchens in your cart is currently closed.');
+      const overnight = openTime > closeTime;
+      const weekdays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+      const scheduledDay = overnight && clock < closeTime ? weekdays[(weekdays.indexOf(today) + 6) % 7] : today;
+      const inHours = overnight ? clock >= openTime || clock < closeTime : clock >= openTime && clock < closeTime;
+      if (!days.includes(scheduledDay) || !inHours) throw conflict('kitchen_closed', 'One of the kitchens in your cart is currently closed.');
     }
   }
 
