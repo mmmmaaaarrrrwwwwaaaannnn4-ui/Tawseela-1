@@ -1,5 +1,7 @@
 import { Tabs, router } from 'expo-router';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+
+type TabRouteName = 'home' | 'menu' | 'payments' | 'profile';
 import { GlassView } from 'expo-glass-effect';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,14 +10,14 @@ import { Icon, type IconName } from '@/components/icons/icon';
 import { Txt } from '@/components/ui/txt';
 import { useTheme } from '@/theme/theme';
 
-const TAB_ITEMS: { name: 'home' | 'menu' | 'payments' | 'profile'; label: string; icon: IconName }[] = [
+const TAB_ITEMS: { name: TabRouteName; label: string; icon: IconName }[] = [
   { name: 'home', label: 'الرئيسية', icon: 'home' },
   { name: 'menu', label: 'القائمة', icon: 'menu_book' },
   { name: 'payments', label: 'باي', icon: 'credit_card' },
   { name: 'profile', label: 'المزيد', icon: 'menu' },
 ];
 
-function BottomBar({ state, navigation }: BottomTabBarProps) {
+function BottomBar({ state }: Pick<BottomTabBarProps, 'state'>) {
   const { c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const activeName = state.routes[state.index]?.name;
@@ -47,8 +49,7 @@ function BottomBar({ state, navigation }: BottomTabBarProps) {
                     accessibilityLabel={item.label}
                     accessibilityState={{ selected: focused }}
                     onPress={() => {
-                      const event = navigation.emit({ type: 'tabPress', target: route.key, canPreventDefault: true });
-                      if (!focused && !event.defaultPrevented) navigation.navigate(item.name);
+                      if (!focused) router.navigate(`/(tabs)/${item.name}`);
                     }}
                     style={styles.tab}
                   >
