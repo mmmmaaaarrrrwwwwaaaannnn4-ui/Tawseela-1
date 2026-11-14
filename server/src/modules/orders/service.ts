@@ -99,7 +99,7 @@ type Priced = {
  * the shared pricing rules the app uses. Every reason an order can't go ahead (closed kitchen, sold-out
  * dish, expired promo, used voucher, a total that no longer adds up) becomes a 409 the app can show as-is.
  */
-async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInput, me: Me): Promise<Priced> {
+async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInput, me: Me, now: number): Promise<Priced> {
   const ids = [...new Set(input.items.map((l) => l.id))];
   const [storeSnap, homeSnap, categorySnap, brandSnap, promoSnap, ...dishSnaps] = await Promise.all([
     tx.get(storeRef(db)),
@@ -119,6 +119,28 @@ async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInpu
   for (const snap of dishSnaps) {
     const p = Dish.safeParse({ id: snap.id, ...snap.data() });
     if (p.success) dishes.set(snap.id, p.data);
+  }
+
+  const kitchenIds = [...new Set([...dishes.values()].filter((dish) => settled.some((line) => line.id === dish.id)).map((dish) => dish.brand))];
+  const brandFees = new Map(brandSnap.docs.map((doc) => [doc.id, typeof doc.get('deliveryFee') === 'number' ? Number(doc.get('deliveryFee')) : null]));
+  const hasKitchenFees = kitchenIds.some((id) => brandFees.get(id) != null);
+  const deliveryFee = hasKitchenFees ? kitchenIds.reduce((sum, id) => sum + (brandFees.get(id) ?? store.fee), 0) : store.fee;
+
+  // Enforce a kitchen's configured weekly schedule in Egypt local time. Empty workDays keeps legacy kitchens unrestricted.
+  const cairoParts = new Intl.DateTimeFormat('en-US', { timeZone: 'Africa/Cairo', weekday: 'short', hour: '2-digit', minute: '2-digit', hourCycle: 'h23' }).formatToParts(new Date(now));
+  const part = (type: string) => cairoParts.find((x) => x.type === type)?.value ?? '';
+  const dayKey: Record<string, string> = { Sat: 'sat', Sun: 'sun', Mon: 'mon', Tue: 'tue', Wed: 'wed', Thu: 'thu', Fri: 'fri' };
+  const today = dayKey[part('weekday')];
+  const clock = `${part('hour')}:${part('minute')}`;
+  for (const id of kitchenIds) {
+    const brand = brandSnap.docs.find((doc) => doc.id === id);
+    const days = brand?.get('workDays');
+    if (Array.isArray(days) && days.length > 0) {
+      const openTime = String(brand?.get('openTime') ?? '09:00');
+      const closeTime = String(brand?.get('closeTime') ?? '23:00');
+      const inHours = openTime <= closeTime ? clock >= openTime && clock < closeTime : clock >= openTime || clock < closeTime;
+      if (!days.includes(today) || !inHours) throw conflict('kitchen_closed', 'One of the kitchens in your cart is currently closed.');
+    }
   }
 
   const vouchers = [...me.vouchers];
@@ -151,7 +173,7 @@ async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInpu
     dishOf: (id) => dishes.get(id)!,
     mode: input.mode,
     speed: input.speed,
-    fee: store.fee,
+    fee: deliveryFee,
     freeAt: store.freeAt,
     promo: promoPct ? { pct: promoPct } : null,
     credit: input.useCredit ? me.credit : 0,
@@ -189,7 +211,7 @@ export async function createOrder(
     }
     const { me, create } = await readUserTx(tx, db, user);
     const counter = await tx.get(orderCounterRef(db));
-    const priced = await priceOrder(tx, db, input, me);
+    const priced = await priceOrder(tx, db, input, me, opts.now);
     const { totals } = priced;
 
     const free = toCents(totals.total) === 0;

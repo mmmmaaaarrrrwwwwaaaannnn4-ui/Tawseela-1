@@ -70,7 +70,7 @@ export const Brand = z.object({
   workDays: z.array(z.enum(['sat','sun','mon','tue','wed','thu','fri'])).default([]),
   openTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('09:00'),
   closeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('23:00'),
-  deliveryFee: money.default(0),
+  deliveryFee: money.nullable().default(null),
   prepTime: z.number().int().min(1).max(240).default(30),
   order: z.number().int(),
 });

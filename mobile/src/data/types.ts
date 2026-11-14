@@ -52,7 +52,7 @@ export interface Brand {
   workDays: ('sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri')[];
   openTime: string;
   closeTime: string;
-  deliveryFee: number;
+  deliveryFee: number | null;
   prepTime: number;
 }
 

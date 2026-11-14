@@ -276,7 +276,7 @@ export function BrandStrip() {
                   <Txt s={12} w={500} color={fixed.paperA(0.82)}>
                     {b.tag}
                   </Txt>
-                  <Txt s={10.5} w={500} color={fixed.paperA(0.72)} numberOfLines={1}>{[b.address, b.deliveryFee > 0 ? `توصيل ${money(b.deliveryFee)}` : 'توصيل مجاني', `تجهيز ${b.prepTime} دقيقة`].filter(Boolean).join(' · ')}</Txt>
+                  <Txt s={10.5} w={500} color={fixed.paperA(0.72)} numberOfLines={1}>{[b.address, b.deliveryFee != null ? (b.deliveryFee > 0 ? `توصيل ${money(b.deliveryFee)}` : 'توصيل مجاني') : null, `تجهيز ${b.prepTime} دقيقة`].filter(Boolean).join(' · ')}</Txt>
                 </View>
               </Photo>
             </PressableScale>

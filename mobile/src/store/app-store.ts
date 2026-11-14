@@ -465,7 +465,10 @@ export const useApp = create<AppStore>()(
 
         totals: () => {
           const s = get();
-          return computeTotals({ cart: s.cart, dishOf: s.dishOf, mode: s.mode, speed: s.speed, fee: s.fee, freeAt: s.freeAt, promo: s.promo });
+          const kitchenIds = [...new Set(s.cart.map((line) => s.dishOf(line.id).brand))];
+          const hasKitchenFees = kitchenIds.some((id) => s.brands.find((brand) => brand.id === id)?.deliveryFee != null);
+          const deliveryFee = hasKitchenFees ? kitchenIds.reduce((sum, id) => sum + (s.brands.find((brand) => brand.id === id)?.deliveryFee ?? s.fee), 0) : s.fee;
+          return computeTotals({ cart: s.cart, dishOf: s.dishOf, mode: s.mode, speed: s.speed, fee: deliveryFee, freeAt: s.freeAt, promo: s.promo });
         },
 
         showToast: toast,
