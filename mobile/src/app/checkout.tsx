@@ -192,7 +192,7 @@ function Checkout() {
             <PressableScale onPress={() => setPaymentSheet(true)} scaleTo={0.98}
               style={[styles.choice, sel(s.payM !== 2)]}>
               <Icon name="credit_card" size={22} color={s.payM !== 2 ? c.accent : c.text1} />
-              <Txt s={13} w={700} textAlign="center">اختيار طريقة دفع</Txt>
+              <Txt s={13} w={700} align="center">اختيار طريقة دفع</Txt>
               <Radio on={s.payM !== 2} />
             </PressableScale>
           </View>
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   speedTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   pay: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1.5 },
   choice: { flex: 1, minHeight: 116, padding: 12, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'space-between', gap: 8 },
-  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.38)' },
+  sheetBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.38)' },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, padding: 20, paddingBottom: 34, gap: 10 },
   sheetHandle: { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: '#B8B8B8', marginBottom: 8 },
   sheetRow: { minHeight: 62, borderRadius: 16, borderWidth: 1, borderColor: '#E6E6E6', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
