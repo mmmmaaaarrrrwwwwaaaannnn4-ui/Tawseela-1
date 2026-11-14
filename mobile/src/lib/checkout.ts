@@ -142,11 +142,7 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string, openT
       headers: { accept: 'application/json', 'content-type': 'application/json', 'Kashier-Hash': intent.hash },
       body: JSON.stringify({
         apiOperation: 'PAY',
-        paymentMethod: { type: 'CARD', card: {
-          number: card.number.replace(/\s/g, ''), nameOnCard: card.name.trim(),
-          expiry: { month: card.month.padStart(2, '0'), year: card.year.length === 2 ? card.year : card.year.slice(-2) },
-          securityCode: card.cvv, enable3DS: true,
-        } },
+        paymentMethod: { type: 'CARD', card: cardFields },
         order: { reference: intent.reference, amount: intent.amount, currency: intent.currency, description: `Tawseela order ${order.no}` },
         ...( 'token' in card ? { customer: { reference: intent.customerReference } } : {}),
         interactionSource: 'ECOMMERCE',
