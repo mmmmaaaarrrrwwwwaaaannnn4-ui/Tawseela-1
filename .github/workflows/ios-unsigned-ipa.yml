@@ -1,4 +1,5 @@
 name: Build Tawseela Unsigned iOS IPA
+# Re-run iOS build for the latest More screen update
 
 on:
   workflow_dispatch:
