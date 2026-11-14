@@ -99,7 +99,11 @@ function BottomBar({ state }: { state: { index: number; routes: readonly { name:
 export default function TabsLayout() {
   return (
     <Tabs
-      tabBar={(props) => <BottomBar {...props} />}
+      tabBar={(props) => (
+        <BottomBar
+          state={props.state as unknown as { index: number; routes: readonly { name: string }[] }}
+        />
+      )}
       screenOptions={{ headerShown: false, animation: 'shift' }}
     >
       <Tabs.Screen name="home" options={{ title: 'الرئيسية' }} />
