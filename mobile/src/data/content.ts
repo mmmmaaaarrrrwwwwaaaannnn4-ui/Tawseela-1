@@ -141,8 +141,8 @@ export const ONBOARDING: OnboardingSlide[] = [
     icon: 'restaurant_menu',
     t: 'Fresh, top‑rated dishes',
     d: 'Pizzas, burgers and bowls cooked to order.',
-    bg: ['#FFE7D2', '#FFD2AE'],
-    fg: '#C2540A',
+    bg: ['#FFF000', '#FFE94A'],
+    fg: '#080808',
   },
   {
     img: unsplash('1569718212165-3a8278d5f624', 700),
@@ -152,8 +152,8 @@ export const ONBOARDING: OnboardingSlide[] = [
     icon: 'two_wheeler',
     t: 'Fast & reliable delivery',
     d: 'Real‑time tracking, on time.',
-    bg: ['#FFF6CF', '#FFE9A3'],
-    fg: '#8A6200',
+    bg: ['#FFF000', '#FFE94A'],
+    fg: '#080808',
   },
   {
     img: unsplash('1574071318508-1cdbab80d002', 700),
@@ -163,8 +163,8 @@ export const ONBOARDING: OnboardingSlide[] = [
     icon: 'credit_card',
     t: 'Secure & easy payments',
     d: 'Multiple options, 100% secure.',
-    bg: ['#FFE3EC', '#FFCCDD'],
-    fg: '#B23A6B',
+    bg: ['#FFF7A8', '#FFE94A'],
+    fg: '#E50920',
   },
 ];
 
@@ -320,14 +320,14 @@ export const CUSTOMER_STEPS: [string, string, IconName][] = [
 ];
 
 export const RESTAURANT = {
-  name: 'Fig & Fennel',
-  branch: 'Fig & Fennel, SoHo',
-  street: '112 Spring St',
-  streetFull: '112 Spring St, SoHo',
-  city: '112 Spring St, New York',
-  phone: '+1 (212) 555‑0100',
-  supportEmail: 'help@figandfennel.example',
+  name: 'Tawseela',
+  branch: 'Tawseela',
+  street: '',
+  streetFull: '',
+  city: '',
+  phone: '',
+  supportEmail: '',
   courier: { name: 'Marco Rossi', initials: 'MR', meta: 'Your courier · ★ 4.9 · e‑scooter' },
-  chef: 'Chef Lena',
+  chef: 'Tawseela Team',
   version: '4.2',
 } as const;

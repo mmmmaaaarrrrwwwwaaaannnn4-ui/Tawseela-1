@@ -1,11 +1,10 @@
-import { LinearGradient } from 'expo-linear-gradient';
-import { useEffect, useRef, useState } from 'react';
-import { StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
+import { useEffect, useRef } from 'react';
+import { Platform, StyleSheet, View } from 'react-native';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 
 import { Icon, type IconName } from '@/components/icons/icon';
 import { AccentFill } from '@/components/ui/buttons';
-import { Glass } from '@/components/ui/glass';
 import { useChrome } from '@/components/ui/layout';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
@@ -24,55 +23,63 @@ interface Props {
   onPress: (i: number) => void;
   /** Increments to pop the badge (fly-to-cart landing). */
   bump?: number;
-  /** Horizontal inset of the sliding pill (customer 4, admin 6). */
+  /** Kept for compatibility with existing callers; native iOS uses no selected capsule. */
   pillInset?: number;
 }
 
-/** Floating “liquid glass” tab bar with a sliding pill (66px, radius 33). */
-export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: Props) {
+/**
+ * Floating native iOS Liquid Glass tab bar.
+ *
+ * Native Liquid Glass bar with a separate tinted native glass surface for the
+ * selected tab. The non-iOS fallback stays translucent and never pretends to
+ * be the native iOS material.
+ */
+export function GlassTabBar({ items, index, onPress, bump = 0 }: Props) {
   const { c, isDark } = useTheme();
   const { floatBottom } = useChrome();
-  const [w, setW] = useState(0);
-  const x = useSharedValue(0);
-  const seg = w / items.length;
+  const liquidGlassAvailable =
+    Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
 
-  useEffect(() => {
-    if (seg) x.set(withSpring(index * seg, { damping: 14, stiffness: 170, mass: 0.8 }));
-  }, [index, seg, x]);
-
-  const pill = useAnimatedStyle(() => ({ transform: [{ translateX: x.value }] }));
-  const onLayout = (e: LayoutChangeEvent) => {
-    const nw = e.nativeEvent.layout.width;
-    if (Math.abs(nw - w) > 0.5) {
-      setW(nw);
-      x.set(index * (nw / items.length));
-    }
-  };
+  const tabs = (
+    <View style={styles.row}>
+      {items.map((item, i) => (
+        <TabButton
+          key={item.key}
+          item={item}
+          active={i === index}
+          onPress={() => onPress(i)}
+          bump={bump}
+        />
+      ))}
+    </View>
+  );
 
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { bottom: floatBottom }]}>
       <View style={styles.shadow}>
-        <Glass variant="nav" intensity={isDark ? 50 : 70} style={[styles.bar, { borderColor: c.glassLine }]}>
-          <LinearGradient
-            pointerEvents="none"
-            colors={['rgba(255,255,255,0.22)', 'rgba(255,255,255,0)', 'rgba(0,0,0,0.04)']}
-            locations={[0, 0.48, 1]}
-            style={[StyleSheet.absoluteFill, { borderRadius: 33 }]}
-          />
-          <View pointerEvents="none" style={[StyleSheet.absoluteFill, styles.hi, { borderTopColor: c.navHi, borderBottomColor: c.navLo }]} />
-          <View style={StyleSheet.absoluteFill} onLayout={onLayout} pointerEvents="none">
-            {seg ? (
-              <Animated.View style={[{ position: 'absolute', top: 0, bottom: 0, left: 0, width: seg }, pill]}>
-                <View style={[styles.pill, { left: pillInset, right: pillInset, backgroundColor: c.navPill, borderTopColor: c.navPillHi }]} />
-              </Animated.View>
-            ) : null}
+        {liquidGlassAvailable ? (
+          <GlassView
+            glassEffectStyle="clear"
+            isInteractive
+            colorScheme={isDark ? 'dark' : 'light'}
+            style={styles.nativeBar}
+          >
+            {tabs}
+          </GlassView>
+        ) : (
+          <View
+            style={[
+              styles.nativeBar,
+              styles.fallbackBar,
+              {
+                borderColor: c.glassLine,
+                backgroundColor: isDark ? 'rgba(24,24,24,0.34)' : 'rgba(32,32,32,0.12)',
+              },
+            ]}
+          >
+            {tabs}
           </View>
-          <View style={styles.row}>
-            {items.map((t, i) => (
-              <TabButton key={t.key} item={t} active={i === index} onPress={() => onPress(i)} bump={bump} />
-            ))}
-          </View>
-        </Glass>
+        )}
       </View>
     </View>
   );
@@ -80,29 +87,41 @@ export function GlassTabBar({ items, index, onPress, bump = 0, pillInset = 4 }: 
 
 function TabButton({ item, active, onPress, bump }: { item: TabItem; active: boolean; onPress: () => void; bump: number }) {
   const { c } = useTheme();
-  const color = active ? c.accentText : c.text2;
-  const s = useSharedValue(1);
-  const prev = useRef(bump);
+  const color = active ? c.accent : c.text2;
+  const scale = useSharedValue(1);
+  const previousBump = useRef(bump);
+
   useEffect(() => {
-    if (bump !== prev.current) {
-      prev.current = bump;
-      s.set(withSequence(withTiming(1.45, { duration: 160 }), withSpring(1, { damping: 8, stiffness: 220 })));
+    if (bump !== previousBump.current) {
+      previousBump.current = bump;
+      scale.set(withSequence(withTiming(1.38, { duration: 150 }), withSpring(1, { damping: 9, stiffness: 220 })));
     }
-  }, [bump, s]);
-  const badgeSt = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
+  }, [bump, scale]);
+
+  const badgeStyle = useAnimatedStyle(() => ({ transform: [{ scale: scale.value }] }));
+
   return (
     <PressableScale
       onPress={onPress}
-      scaleTo={0.93}
+      scaleTo={0.94}
       style={styles.tab}
       accessibilityRole="tab"
       accessibilityState={{ selected: active }}
       accessibilityLabel={item.label}
     >
-      <View>
-        <Icon name={item.icon} size={24} fill={active} color={color} />
+      {active ? (
+        <GlassView
+          pointerEvents="none"
+          glassEffectStyle="regular"
+          tintColor="#FFF000"
+          colorScheme="light"
+          style={styles.selectedGlass}
+        />
+      ) : null}
+      <View style={styles.iconWrap}>
+        <Icon name={item.icon} size={25} fill={active} color={color} />
         {item.badge ? (
-          <Animated.View style={[styles.badge, badgeSt]}>
+          <Animated.View style={[styles.badge, badgeStyle]}>
             <AccentFill radius={9} />
             <Txt s={10} w={700} color={c.accentInk}>
               {item.badge}
@@ -110,7 +129,7 @@ function TabButton({ item, active, onPress, bump }: { item: TabItem; active: boo
           </Animated.View>
         ) : null}
       </View>
-      <Txt s={10.5} w={600} color={color}>
+      <Txt s={10.5} w={active ? 700 : 500} color={color}>
         {item.label}
       </Txt>
     </PressableScale>
@@ -120,32 +139,55 @@ function TabButton({ item, active, onPress, bump }: { item: TabItem; active: boo
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 14, right: 14, zIndex: 40 },
   shadow: {
-    borderRadius: 33,
-    shadowColor: '#1A1A1A',
-    shadowOpacity: 0.2,
-    shadowRadius: 22,
-    shadowOffset: { width: 0, height: 22 },
-    elevation: 14,
+    borderRadius: 35,
+    shadowColor: '#000000',
+    shadowOpacity: 0.16,
+    shadowRadius: 24,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 12,
   },
-  bar: { height: 66, borderRadius: 33, borderWidth: 1 },
-  hi: { borderRadius: 33, borderTopWidth: 1, borderBottomWidth: 1 },
-  pill: {
-    position: 'absolute',
-    top: 7,
-    bottom: 7,
-    borderRadius: 26,
-    borderTopWidth: 1,
-    shadowColor: '#1A1A1A',
-    shadowOpacity: 0.1,
-    shadowRadius: 7,
-    shadowOffset: { width: 0, height: 6 },
+  nativeBar: {
+    minHeight: 72,
+    borderRadius: 35,
+    overflow: 'hidden',
+    backgroundColor: 'transparent',
   },
-  row: { flex: 1, flexDirection: 'row' },
-  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 },
+  fallbackBar: {
+    borderWidth: StyleSheet.hairlineWidth,
+  },
+  row: {
+    minHeight: 72,
+    flexDirection: 'row',
+    direction: 'rtl',
+    alignItems: 'stretch',
+    paddingHorizontal: 5,
+  },
+  tab: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 3,
+    paddingVertical: 8,
+    position: 'relative',
+  },
+  selectedGlass: {
+    ...StyleSheet.absoluteFill,
+    top: 5,
+    bottom: 5,
+    left: 3,
+    right: 3,
+    borderRadius: 24,
+  },
+  iconWrap: {
+    minWidth: 28,
+    minHeight: 27,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   badge: {
     position: 'absolute',
-    top: -6,
-    right: -11,
+    top: -5,
+    right: -10,
     minWidth: 18,
     height: 18,
     paddingHorizontal: 4,

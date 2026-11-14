@@ -49,8 +49,8 @@ export function Glow({
 
 /** Home: lime/pistachio wash top-right + top-left. */
 export const HOME_GLOW: GlowSpot[] = [
-  { rx: 90, ry: 34, cx: 70, cy: 0, color: '#A8D65C', opacity: 0.55 },
-  { rx: 70, ry: 26, cx: 10, cy: 4, color: '#D6EC96', opacity: 0.6 },
+  { rx: 90, ry: 34, cx: 70, cy: 0, color: '#FFF000', opacity: 0.55 },
+  { rx: 70, ry: 26, cx: 10, cy: 4, color: '#FFF8A6', opacity: 0.6 },
 ];
 
 export const LOGIN_GLOW: GlowSpot[] = [
@@ -59,11 +59,11 @@ export const LOGIN_GLOW: GlowSpot[] = [
 ];
 
 export const REGISTER_GLOW: GlowSpot[] = [
-  { rx: 90, ry: 30, cx: 30, cy: 0, color: '#FFBE8C', opacity: 0.5 },
-  { rx: 60, ry: 24, cx: 92, cy: 6, color: '#FFD6E4', opacity: 0.6 },
+  { rx: 90, ry: 30, cx: 30, cy: 0, color: '#FFF000', opacity: 0.5 },
+  { rx: 60, ry: 24, cx: 92, cy: 6, color: '#FFE8E8', opacity: 0.6 },
 ];
 
 export const SPLASH_GLOW: GlowSpot[] = [
-  { rx: 80, ry: 40, cx: 50, cy: 26, color: '#FFD6AA', opacity: 0.45 },
+  { rx: 80, ry: 40, cx: 50, cy: 26, color: '#FFF000', opacity: 0.45 },
   { rx: 70, ry: 30, cx: 50, cy: 100, color: '#D6EC96', opacity: 0.35 },
 ];

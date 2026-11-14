@@ -11,6 +11,7 @@ import { goBack, useChrome } from '@/components/ui/layout';
 import { Avatar, DishImage } from '@/components/ui/media';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
+import { arText } from '@/lib/ar';
 import { STATUS } from '@/data/seed';
 import type { Order, OrderStep } from '@/data/types';
 import { cnt, initials, money, orderTime } from '@/lib/format';
@@ -305,10 +306,10 @@ export function SearchField({
       <TextInput
         value={value}
         onChangeText={onChangeText}
-        placeholder={placeholder}
+        placeholder={arText(placeholder)}
         placeholderTextColor={c.text3}
         selectionColor={c.accent}
-        style={{ flex: 1, minWidth: 0, fontFamily: family(500), fontSize: 14.5, color: c.text1, paddingVertical: 0 }}
+        style={{ flex: 1, minWidth: 0, fontFamily: /[\u0600-\u06FF]/.test(placeholder) ? undefined : family(500), fontSize: 14.5, color: c.text1, paddingVertical: 0 }}
       />
     </View>
   );

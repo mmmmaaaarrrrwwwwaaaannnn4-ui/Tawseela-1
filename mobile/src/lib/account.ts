@@ -60,9 +60,9 @@ export function authMessage(e: unknown): string {
         ? 'Can’t reach the Firebase Auth emulator. Start it with `npm run emulators` and try again.'
         : 'You’re offline. Check your connection and try again.';
     case 'auth/user-disabled':
-      return 'This account has been disabled. Contact Fig & Fennel if you think that’s a mistake.';
+      return 'This account has been disabled. Contact Tawseela if you think that’s a mistake.';
     case 'auth/operation-not-allowed':
-      return 'This sign-in method isn’t turned on for Fig & Fennel yet.';
+      return 'This sign-in method isn’t turned on for Tawseela yet.';
     case 'auth/account-exists-with-different-credential':
       return 'This email already signs in another way. Use that method first.';
     case 'auth/requires-recent-login':
@@ -82,7 +82,7 @@ function toSessionUser(u: FirebaseUser, name?: string): SessionUser {
   const prev = useSession.getState().user;
   return {
     uid: u.uid,
-    name: name || u.displayName || u.email?.split('@')[0] || 'Fig guest',
+    name: name || u.displayName || u.email?.split('@')[0] || 'Tawseela guest',
     email: u.email ?? '',
     phone: prev?.uid === u.uid ? prev.phone : undefined,
     photo: u.photoURL ?? undefined,

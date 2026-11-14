@@ -10,6 +10,7 @@ import { Txt } from '@/components/ui/txt';
 import { accentGradient } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme';
 import { family } from '@/theme/typography';
+import { arText } from '@/lib/ar';
 
 /* ------------------------------------------------------------------ form state */
 
@@ -67,12 +68,14 @@ export function Field({ icon, height = 52, radius = 20, tone = 'soft', error, ri
   const [focus, setFocus] = useState(false);
   const softBg = isDark ? c.surface2 : '#F3F3F0';
   const bg = tone === 'soft' ? (focus ? c.surface1 : softBg) : c.surface1;
-  const border = error ? c.err : focus ? (tone === 'soft' ? 'rgba(255,122,26,0.55)' : c.accent) : tone === 'soft' ? 'transparent' : c.line;
+  const border = error ? c.err : focus ? (tone === 'soft' ? 'rgba(255,212,0,0.65)' : c.accent) : tone === 'soft' ? 'transparent' : c.line;
   return (
     <View style={[{ justifyContent: 'center' }, style]}>
       <TextInput
         ref={ref}
         placeholderTextColor={c.text3}
+        placeholder={typeof rest.placeholder === 'string' ? arText(rest.placeholder) : rest.placeholder}
+        textAlign="right"
         {...rest}
         onFocus={(e) => {
           setFocus(true);
@@ -91,7 +94,7 @@ export function Field({ icon, height = 52, radius = 20, tone = 'soft', error, ri
             borderColor: border,
             borderWidth: tone === 'soft' ? 1.5 : 1,
             color: c.text1,
-            fontFamily: family(500),
+            fontFamily: typeof rest.placeholder === 'string' && /[\u0600-\u06FF]/.test(rest.placeholder) ? undefined : family(500),
             paddingLeft: tone === 'soft' ? 50 : 48,
             paddingRight: right ? 64 : 16,
           },
@@ -152,7 +155,7 @@ export function AuthCta({
     >
       <LinearGradient colors={accentGradient} style={[StyleSheet.absoluteFill, { borderRadius: height / 2 }]} />
       {busy ? <Spinner /> : null}
-      <Txt s={16} w={weight} color="#FFFFFF">
+      <Txt s={16} w={weight} color="#111111">
         {busy ? busyLabel : label}
       </Txt>
     </PressableScale>
@@ -214,8 +217,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#FF7A1A',
-    shadowColor: '#FF6B0B',
+    backgroundColor: '#FFD400',
+    shadowColor: '#FFC400',
     shadowOpacity: 0.34,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 14 },

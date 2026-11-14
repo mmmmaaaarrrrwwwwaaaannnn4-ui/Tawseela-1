@@ -1,4 +1,4 @@
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Alert, ScrollView, StyleSheet, View } from 'react-native';
 
 import { AdminHeader, openBrandEditor, useAdminPadding } from '@/components/admin/admin-ui';
 import { Icon } from '@/components/icons/icon';
@@ -36,27 +36,10 @@ function Brands() {
             Each kitchen is a brand on the Home screen. Turning one off hides all its dishes.
           </Txt>
         </Reveal>
-        <Reveal i={1}>
-          <PressableScale
-            onPress={() => openBrandEditor('new')}
-            scaleTo={0.98}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 9,
-              paddingVertical: 15,
-              borderRadius: 18,
-              borderWidth: 1,
-              borderStyle: 'dashed',
-              borderColor: c.line,
-              backgroundColor: c.surface1,
-            }}
-          >
-            <Icon name="add" size={20} color={c.text1} />
-            <Txt s={14} w={700}>Add new kitchen</Txt>
-          </PressableScale>
-        </Reveal>
+        <PressableScale onPress={() => openBrandEditor('new')} scaleTo={0.97} style={[styles.add, { backgroundColor: c.accent, borderColor: c.accent }]}>
+          <Icon name="add" size={20} color={c.accentInk} />
+          <Txt s={14} w={700} color={c.accentInk}>إضافة مطبخ جديد</Txt>
+        </PressableScale>
         {brands.map((b, i) => (
           <Reveal key={b.id} i={Math.min(i, 8)}>
             <PressableScale onPress={() => openBrandEditor(b.id)} scaleTo={0.985} style={[styles.row, { borderColor: c.line, backgroundColor: c.surface1 }]}>
@@ -73,7 +56,11 @@ function Brands() {
                   {b.tag} · {cnt(menu.filter((m) => m.brand === b.id).length, 'dish')}
                 </Txt>
               </View>
-              <ToggleButton on={b.on} onPress={() => useApp.getState().toggleBrand(b.id)} label="Toggle" />
+              <View style={styles.actions}>
+                <PressableScale onPress={() => openBrandEditor(b.id)} style={styles.iconBtn} accessibilityLabel="Edit kitchen"><Icon name="edit" size={19} color={c.text1} /></PressableScale>
+                <PressableScale onPress={() => Alert.alert('حذف المطبخ', `هل أنت متأكد من حذف ${b.name}؟`, [{ text: 'إلغاء', style: 'cancel' }, { text: 'حذف', style: 'destructive', onPress: () => void useApp.getState().deleteBrand(b.id) }])} style={styles.iconBtn} accessibilityLabel="Delete kitchen"><Icon name="delete" size={19} color={c.err} /></PressableScale>
+                <ToggleButton on={b.on} onPress={() => useApp.getState().toggleBrand(b.id)} label="Toggle" />
+              </View>
             </PressableScale>
           </Reveal>
         ))}
@@ -84,6 +71,9 @@ function Brands() {
 }
 
 const styles = StyleSheet.create({
+  add: { minHeight: 50, borderRadius: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 4 },
+  actions: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  iconBtn: { width: 34, height: 34, borderRadius: 17, alignItems: 'center', justifyContent: 'center' },
   row: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingLeft: 10, paddingRight: 12, borderRadius: 18, borderWidth: 1 },
   tile: { width: 60, height: 60 },
   badge: {

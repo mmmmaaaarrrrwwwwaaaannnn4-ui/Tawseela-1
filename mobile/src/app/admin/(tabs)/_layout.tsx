@@ -5,11 +5,11 @@ import { useApp } from '@/store/app-store';
 import { useTheme } from '@/theme/theme';
 
 const TABS: Omit<TabItem, 'badge'>[] = [
-  { key: 'index', label: 'Dashboard', icon: 'dashboard' },
-  { key: 'orders', label: 'Orders', icon: 'receipt_long' },
-  { key: 'kitchen', label: 'Kitchen', icon: 'skillet' },
-  { key: 'menu', label: 'Menu', icon: 'menu_book' },
-  { key: 'more', label: 'More', icon: 'more_horiz' },
+  { key: 'index', label: 'لوحة التحكم', icon: 'dashboard' },
+  { key: 'orders', label: 'الطلبات', icon: 'receipt_long' },
+  { key: 'kitchen', label: 'المطبخ', icon: 'skillet' },
+  { key: 'menu', label: 'القائمة', icon: 'menu_book' },
+  { key: 'more', label: 'المزيد', icon: 'more_horiz' },
 ];
 
 function AdminTabBar({ state, navigateToTab }: BottomTabBarProps) {

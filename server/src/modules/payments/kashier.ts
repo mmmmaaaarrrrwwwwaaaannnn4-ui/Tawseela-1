@@ -54,13 +54,13 @@ export async function createKashierSession(config: any, order: Order, user: Auth
 
 
 /** Create a Direct API payment intent. Amount and order reference always come from Firestore. */
-export async function createKashierDirectIntent(config: any, order: Order) {
+export async function createKashierDirectIntent(config: any, order: Order, savedCard = false) {
   requireKashier(config);
   if (!config.PUBLIC_API_URL) throw unavailable('payment_callback_unavailable', 'PUBLIC_API_URL must be configured before online payments are enabled.');
   const mode = config.KASHIER_MODE as 'test' | 'live';
   const amount = Number(order.total).toFixed(2);
   const currency = String(config.CURRENCY || 'EGP').toUpperCase();
-  const path = `/?payment=${config.KASHIER_MERCHANT_ID}.${order.id}.${amount}.${currency}`;
+  const path = `/?payment=${config.KASHIER_MERCHANT_ID}.${order.id}.${amount}.${currency}${savedCard ? `.${order.uid}` : ''}`;
   const hash = createHmac('sha256', config.KASHIER_PAYMENT_API_KEY).update(path).digest('hex');
   const base = config.PUBLIC_API_URL.replace(/\/$/, '');
   return {
@@ -418,6 +418,36 @@ async function applyPaid(db: Firestore, orderId: string, now: number, eventId?: 
     });
     if (awardNow) award(tx, db, snap.get('uid') as string, Math.floor(snap.get('subtotal') as number) * POINTS.perDollar);
   });
+}
+
+/** Verify a Direct API card order from Kashier's reconciliation records (never trust WebView redirects). */
+export async function verifyKashierDirectOrder(config: any, db: Firestore, orderId: string, now: number) {
+  requireKashier(config);
+  const ref = db.collection(COL.orders).doc(orderId);
+  const snap = await ref.get();
+  if (!snap.exists) return;
+  const response = await fetch(`${apiBase(config.KASHIER_MODE)}/v3/payment/orders?search=${encodeURIComponent(orderId)}&page=1&limit=20`, {
+    headers: { Authorization: config.KASHIER_SECRET_KEY, accept: 'application/json' },
+    signal: AbortSignal.timeout(15_000),
+  });
+  const result: any = await response.json().catch(() => ({}));
+  if (!response.ok) throw new AppError(502, 'kashier_verify_failed', 'Could not verify the card payment with Kashier.');
+  const rows = Array.isArray(result?.data) ? result.data : [];
+  const data = rows.find((x: any) => String(x?.merchantOrderId ?? '') === orderId);
+  if (!data) return;
+  // The reconciliation list response does not expose amount/currency in its documented shape.
+  // The amount is already bound to this merchant reference by the server-generated HMAC.
+  if (data.amount != null && Math.abs(Number(data.amount) - Number(snap.get('total'))) > 0.009) {
+    throw new AppError(409, 'payment_mismatch', 'Kashier payment amount does not match this order.');
+  }
+  if (data.currency != null && String(data.currency).toUpperCase() !== String(config.CURRENCY || 'EGP').toUpperCase()) {
+    throw new AppError(409, 'payment_mismatch', 'Kashier payment currency does not match this order.');
+  }
+  const status = String(data.status ?? '').toUpperCase();
+  if (status === 'CAPTURED') await applyPaid(db, orderId, now, String(data.transactions?.find((x: any) => x.operation === 'pay')?.transactionId ?? data.orderId ?? orderId));
+  else if (['FAILED', 'CANCELLED', 'REJECTED', 'EXPIRED'].includes(status)) {
+    if (snap.get('payment.status') !== 'paid') await ref.update({ 'payment.status': 'failed', updatedAt: FieldValue.serverTimestamp() });
+  }
 }
 
 export async function verifyKashierSession(config: any, db: Firestore, orderId: string, now: number) {

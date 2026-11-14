@@ -2,16 +2,20 @@ name: Build Tawseela Unsigned iOS IPA
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - build/tawseela-ios-ipa-v10
 
 permissions:
   contents: read
 
 jobs:
   build-ios:
-    runs-on: macos-26
+    runs-on: xcode-27
     timeout-minutes: 60
     env:
       EXPO_PUBLIC_API_URL: https://tawseela-ap-pzip-1--marwankomanda0.replit.app
+      EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
 
     steps:
       - name: Checkout repository
@@ -28,8 +32,17 @@ jobs:
           npm install --global npm@10.9.4
           npm --version
 
+      - name: Sync npm lockfile
+        run: npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
+
+      - name: Verify all workspace TypeScript
+        run: npm run typecheck
+
+      - name: Run workspace unit tests
+        run: npm test
 
       - name: Upload npm diagnostic logs
         if: failure()
@@ -59,13 +72,30 @@ jobs:
           printf '%s' "$IOS_FIREBASE_PLIST_BASE64" | base64 --decode > GoogleService-Info.plist
           plutil -lint GoogleService-Info.plist
 
-      - name: Generate iOS project and install Pods
+      - name: Generate iOS project
         working-directory: mobile
         env:
           GOOGLE_SERVICE_INFO_PLIST: ./GoogleService-Info.plist
           GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
         run: |
+          npx expo config --type public --json > "$RUNNER_TEMP/expo-config.json"
+          node -e '
+            const fs = require("fs");
+            const c = JSON.parse(fs.readFileSync(process.env.RUNNER_TEMP + "/expo-config.json", "utf8"));
+            const firebase = c.extra?.firebase;
+            const checks = {
+              iosBundleIdentifier: c.ios?.bundleIdentifier === "com.tawseela.app",
+              iosGoogleServicesFile: c.ios?.googleServicesFile === "./GoogleService-Info.plist" && fs.existsSync("GoogleService-Info.plist"),
+              firebaseIosApiKey: !!firebase?.ios?.apiKey,
+              firebaseIosAppId: !!firebase?.ios?.appId,
+              googleWebClientId: !!c.extra?.googleWebClientId,
+              googleNativePlugin: (c.plugins || []).some(p => (Array.isArray(p) ? p[0] : p) === "@react-native-google-signin/google-signin")
+            };
+            for (const [name, ok] of Object.entries(checks)) console.log(name + ": " + (ok ? "OK" : "MISSING"));
+            if (Object.values(checks).some(ok => !ok)) process.exit(1);
+          '
           npx expo prebuild --platform ios --no-install
+          test -f ios/Tawseela/GoogleService-Info.plist || find ios -name GoogleService-Info.plist -print -quit | grep -q .
           cd ios
           pod install
 
@@ -73,6 +103,8 @@ jobs:
         working-directory: mobile
         run: |
           xcodebuild -version
+          xcodebuild -version | grep -q '^Xcode 27' || { echo 'Liquid Glass requires the Xcode 27 SDK for this Expo SDK 58 build'; exit 1; }
+          /usr/libexec/PlistBuddy -c 'Print :UIDesignRequiresCompatibility' ios/Tawseela/Info.plist | grep -qx 'false' || { echo 'UIDesignRequiresCompatibility must be false'; exit 1; }
           xcodebuild -list -workspace ios/Tawseela.xcworkspace
 
       - name: Build unsigned iOS archive

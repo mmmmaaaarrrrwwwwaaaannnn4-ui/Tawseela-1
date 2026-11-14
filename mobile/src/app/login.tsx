@@ -71,7 +71,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
         >
           <View style={styles.top}>
-            <SoftChip label="Fig & Fennel" style={{ width: 52, height: 52, borderRadius: 26, borderWidth: 0 }}>
+            <SoftChip label="Tawseela" style={{ width: 52, height: 52, borderRadius: 26, borderWidth: 0 }}>
               <Icon name="eco" size={24} fill color={fixed.orange} />
             </SoftChip>
             <Txt s={18} w={500}>
@@ -107,7 +107,7 @@ export default function LoginScreen() {
               {pending ? 'Almost there' : 'Welcome back'}
             </Txt>
             <Txt s={30} w={600} lh={1.1} ls={-0.02}>
-              {pending ? 'Sign in to place your order' : 'Sign in to Fig & Fennel'}
+              {pending ? 'Sign in to place your order' : 'Sign in to Tawseela'}
             </Txt>
             <Txt s={14} lh={1.5} color={c.text2}>
               {pending ? 'Your cart is saved. Sign in or create an account to check out.' : 'Track live orders, save favourites and check out in one tap.'}

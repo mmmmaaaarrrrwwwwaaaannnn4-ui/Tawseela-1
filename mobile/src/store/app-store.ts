@@ -124,8 +124,9 @@ export interface Remote {
   createCategory: (name: string) => Promise<ApiCategory>;
   patchCategory: (id: string, p: { on?: boolean; img?: string }) => Promise<ApiCategory>;
   reorder: (kind: 'categories' | 'banners' | 'sections', ids: string[]) => Promise<void>;
-  createBrand: (b: Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img'>) => Promise<ApiBrand>;
-  patchBrand: (id: string, p: Partial<Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img' | 'on'>>) => Promise<ApiBrand>;
+  createBrand: (b: Omit<ApiBrand, 'id' | 'order'>) => Promise<ApiBrand>;
+  patchBrand: (id: string, p: Partial<Omit<ApiBrand, 'id' | 'order'>>) => Promise<ApiBrand>;
+  deleteBrand: (id: string) => Promise<void>;
   patchBanner: (id: string, p: { on?: boolean }) => Promise<unknown>;
   patchSection: (k: HomeSectionKey, p: { on?: boolean }) => Promise<unknown>;
   patchDeal: (p: Partial<Deal>) => Promise<Deal>;
@@ -300,8 +301,9 @@ interface Actions {
   moveCat: (i: number, d: number) => void;
   addCat: (name: string) => Promise<boolean>;
   toggleBrand: (id: string) => void;
-  addBrand: (b: Omit<Brand, 'id'>) => Promise<boolean>;
+  createBrand: (b: Omit<Brand, 'id'>) => Promise<boolean>;
   saveBrand: (b: Brand) => Promise<boolean>;
+  deleteBrand: (id: string) => Promise<boolean>;
   toggleSection: (k: HomeSectionKey) => void;
   moveSection: (i: number, d: number) => void;
   toggleBanner: (id: string) => void;
@@ -397,7 +399,7 @@ const initialState = (): State => ({
   ...emptyAccount(),
 
   inbox: SEED_INBOX.map((n) => ({ ...n })),
-  prefs: { lang: 'English', orderNotif: true, offers: true, journalNotif: false, sms: false, location: true, personal: true },
+  prefs: { lang: 'العربية', orderNotif: true, offers: true, journalNotif: false, sms: false, location: true, personal: true },
   orderNotif: true,
   filters: { sort: 0, veg: false, hot: false, under: false },
   menuCat: 'All',
@@ -463,7 +465,10 @@ export const useApp = create<AppStore>()(
 
         totals: () => {
           const s = get();
-          return computeTotals({ cart: s.cart, dishOf: s.dishOf, mode: s.mode, speed: s.speed, fee: s.fee, freeAt: s.freeAt, promo: s.promo });
+          const kitchenIds = [...new Set(s.cart.map((line) => s.dishOf(line.id).brand))];
+          const hasKitchenFees = kitchenIds.some((id) => s.brands.find((brand) => brand.id === id)?.deliveryFee != null);
+          const deliveryFee = hasKitchenFees ? kitchenIds.reduce((sum, id) => sum + (s.brands.find((brand) => brand.id === id)?.deliveryFee ?? s.fee), 0) : s.fee;
+          return computeTotals({ cart: s.cart, dishOf: s.dishOf, mode: s.mode, speed: s.speed, fee: deliveryFee, freeAt: s.freeAt, promo: s.promo });
         },
 
         showToast: toast,
@@ -1000,30 +1005,37 @@ export const useApp = create<AppStore>()(
             catalog: true,
           });
         },
-        addBrand: async (b) => {
-          const name = b.name.trim();
-          const tag = b.tag.trim();
-          if (!name || !tag || !b.img) {
-            toast('Missing details', 'Enter a name, tagline and kitchen photo.', 'error');
+        createBrand: async (b) => {
+          try {
+            const created = await server().createBrand(b);
+            set((s) => ({ brands: [...s.brands, { ...created, icon: created.icon as IconName }] }));
+            server().catalogChanged();
+            toast('Kitchen added', created.name, 'storefront');
+            return true;
+          } catch (e) {
+            toast('Kitchen not added', server().errorMessage(e), 'error');
             return false;
           }
-          const res = await write({
-            keys: ['brands'],
-            call: (api) => api.createBrand({ name, tag, icon: b.icon, img: b.img }),
-            done: (created, s) => ({
-              brands: [...s.brands, { ...created, icon: created.icon as Brand['icon'] }],
-            }),
-            fail: 'Kitchen not added',
-            catalog: true,
-          });
-          if (res) toast('Kitchen added', name, 'storefront');
-          return !!res;
+        },
+        deleteBrand: async (id) => {
+          const brand = get().brands.find((x) => x.id === id);
+          if (!brand) return false;
+          try {
+            await server().deleteBrand(id);
+            set((s) => ({ brands: s.brands.filter((x) => x.id !== id) }));
+            server().catalogChanged();
+            toast('Kitchen deleted', brand.name, 'delete');
+            return true;
+          } catch (e) {
+            toast('Kitchen not deleted', server().errorMessage(e), 'error');
+            return false;
+          }
         },
         saveBrand: async (b) => {
           const res = await write({
             keys: ['brands'],
             apply: (s) => ({ brands: s.brands.map((x) => (x.id === b.id ? { ...b } : x)) }),
-            call: (api) => api.patchBrand(b.id, { name: b.name, tag: b.tag, img: b.img, on: b.on }),
+            call: (api) => api.patchBrand(b.id, { name: b.name, tag: b.tag, icon: b.icon, img: b.img, on: b.on, lat: b.lat, lng: b.lng, address: b.address, phone: b.phone, description: b.description, workDays: b.workDays, openTime: b.openTime, closeTime: b.closeTime, deliveryFee: b.deliveryFee, prepTime: b.prepTime }),
             fail: 'Kitchen not saved',
             catalog: true,
           });
@@ -1220,7 +1232,7 @@ export const useApp = create<AppStore>()(
     },
     {
       name: 'fig-app',
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => deviceStorage),
       /**
        * What survives a relaunch: the cached catalog (so the menu opens instantly and offline), the cart,
@@ -1269,8 +1281,9 @@ export const useApp = create<AppStore>()(
         const p = (persisted ?? {}) as Partial<State>;
         if (version < 2) {
           const { cart, saved, addrs, addr, cards, defCard, inbox, prefs, theme, onboarded, orderNotif, mode, speed, payM } = p;
-          return { cart, saved, addrs, addr, cards, defCard, inbox, prefs, theme, onboarded, orderNotif, mode, speed, payM } as AppStore;
+          return { cart, saved, addrs, addr, cards, defCard, inbox, prefs: { ...prefs, lang: 'العربية' }, theme, onboarded, orderNotif, mode, speed, payM } as AppStore;
         }
+        if (version < 3) return { ...p, prefs: { ...p.prefs, lang: 'العربية' } } as AppStore;
         return p as AppStore;
       },
     },

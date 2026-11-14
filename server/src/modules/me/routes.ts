@@ -1,7 +1,7 @@
 import { ApiError, IssueResult, LikeResult, Me, REWARDS, ReportGeneralIssue, UpdateMe } from '@fig/shared';
 import { FieldValue } from 'firebase-admin/firestore';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
-import { randomUUID } from 'node:crypto';
+import { randomUUID, createHmac } from 'node:crypto';
 import { z } from 'zod';
 
 import { COL, bumpCatalog } from '../../lib/collections';
@@ -15,11 +15,78 @@ const secured = { security: [{ firebase: [] }] };
 const errors = { 400: ApiError, 401: ApiError, 403: ApiError, 404: ApiError, 409: ApiError };
 
 const meRoutes: FastifyPluginAsyncZod = async (app) => {
-  const { db, auth, now } = app.deps;
+  const { db, auth, now, config } = app.deps;
 
   // before body validation, so a signed-out caller gets 401 rather than details about the payload
   app.addHook('preValidation', async (req) => {
     requireUser(req);
+  });
+
+  // Kashier card vault: PAN/CVV go directly from the device to Kashier, never through this API.
+  const tokenBase = () => config.KASHIER_MODE === 'live' ? 'https://fep.kashier.io' : 'https://test-fep.kashier.io';
+  const tokenHash = (uid: string) => {
+    // Config values are optional at the type level; validate them here as well as at each route.
+    const paymentApiKey = config.KASHIER_PAYMENT_API_KEY;
+    const merchantId = config.KASHIER_MERCHANT_ID;
+    if (!paymentApiKey || !merchantId) {
+      throw new AppError(503, 'payments_unavailable', 'Kashier card saving is not configured.');
+    }
+    return createHmac('sha256', paymentApiKey)
+      .update(`/?tokenization=${merchantId}.${uid}`)
+      .digest('hex');
+  };
+
+  app.get('/me/cards/tokenization-intent', { schema: { tags: ['payments'], summary: 'Create a short-lived Kashier card-tokenization hash', ...secured } }, async (req) => {
+    const user = requireUser(req);
+    if (!config.KASHIER_MERCHANT_ID || !config.KASHIER_PAYMENT_API_KEY) throw new AppError(503, 'payments_unavailable', 'Kashier card saving is not configured.');
+    return { endpoint: `${tokenBase()}/v3/cards/tokens`, merchantId: config.KASHIER_MERCHANT_ID, customerReference: user.uid, hash: tokenHash(user.uid) };
+  });
+
+  app.get('/me/cards', { schema: { tags: ['payments'], summary: 'List this customer’s Kashier saved cards', ...secured } }, async (req) => {
+    const user = requireUser(req);
+    if (!config.KASHIER_MERCHANT_ID || !config.KASHIER_PAYMENT_API_KEY || !config.KASHIER_SECRET_KEY) throw new AppError(503, 'payments_unavailable', 'Kashier is not configured.');
+    const url = `${tokenBase()}/v3/cards/customer?customerReference=${encodeURIComponent(user.uid)}&merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}`;
+    const response = await fetch(url, { headers: { Authorization: config.KASHIER_SECRET_KEY, 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+    const body: any = await response.json().catch(() => ({}));
+    if (response.status === 400 && /no cards/i.test(JSON.stringify(body))) return { cards: [] };
+    if (!response.ok) throw new AppError(502, 'card_list_failed', 'Could not retrieve saved cards from Kashier.');
+    // Kashier returns a list under response.paymentMethods[] (not paymentMethod.card).
+    const methods = body?.response?.paymentMethods;
+    const cards = Array.isArray(methods)
+      ? methods.filter((x: any) => String(x?.type || '').toUpperCase() === 'CARD').map((x: any) => x.card).filter(Boolean)
+      : [];
+    return {
+      cards: cards.filter((x: any) => x.cardToken).map((x: any) => ({
+        id: String(x.cardToken),
+        token: String(x.cardToken),
+        number: String(x.number || ''),
+        name: String(x.nameOnCard || ''),
+        expiry: x.expiry ? { month: String(x.expiry.month || ''), year: String(x.expiry.year || '') } : null,
+        brand: String(x.brand || x.scheme || 'CARD'),
+      })),
+    };
+  });
+
+  app.post('/me/cards', { schema: { tags: ['payments'], summary: 'Verify and register a Kashier card token for this customer', ...secured, body: z.object({ cardToken: z.string().min(8).max(200) }) } }, async (req) => {
+    const user = requireUser(req);
+    if (!config.KASHIER_MERCHANT_ID || !config.KASHIER_PAYMENT_API_KEY || !config.KASHIER_SECRET_KEY) throw new AppError(503, 'payments_unavailable', 'Kashier is not configured.');
+    const url = `${tokenBase()}/v3/cards/tokens/${encodeURIComponent(req.body.cardToken)}?merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}&customerReference=${encodeURIComponent(user.uid)}`;
+    const response = await fetch(url, { headers: { Authorization: config.KASHIER_SECRET_KEY, 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+    const body: any = await response.json().catch(() => ({}));
+    const card = body?.response?.paymentMethod?.card;
+    if (!response.ok || !card?.cardToken || card.cardToken !== req.body.cardToken) throw new AppError(400, 'card_token_invalid', 'Kashier could not verify this saved card.');
+    await userRef(db, user.uid).set({ paymentMethods: { cards: { [req.body.cardToken]: { token: req.body.cardToken, number: String(card.number || ''), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD'), savedAt: now() } } } }, { merge: true });
+    return { saved: true, card: { id: String(card.cardToken), number: String(card.number || ''), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD') } };
+  });
+
+  app.delete('/me/cards/:token', { schema: { tags: ['payments'], summary: 'Delete a saved Kashier card token', ...secured, params: z.object({ token: z.string().min(8).max(200) }) } }, async (req) => {
+    const user = requireUser(req);
+    if (!config.KASHIER_MERCHANT_ID || !config.KASHIER_PAYMENT_API_KEY || !config.KASHIER_SECRET_KEY) throw new AppError(503, 'payments_unavailable', 'Kashier is not configured.');
+    const url = `${tokenBase()}/v3/cards/tokens/${encodeURIComponent(req.params.token)}?customerReference=${encodeURIComponent(user.uid)}&merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}`;
+    const response = await fetch(url, { method: 'DELETE', headers: { Authorization: config.KASHIER_SECRET_KEY, 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+    if (!response.ok) throw new AppError(502, 'card_delete_failed', 'Kashier could not remove this card.');
+    await userRef(db, user.uid).set({ paymentMethods: { cards: { [req.params.token]: FieldValue.delete() } } }, { merge: true });
+    return { deleted: true };
   });
 
   app.get('/me', { schema: { tags: ['me'], summary: 'The signed-in account: role, Fig Club points and tier, credit, vouchers, likes', ...secured, response: { 200: Me, ...errors } } }, async (req) => {

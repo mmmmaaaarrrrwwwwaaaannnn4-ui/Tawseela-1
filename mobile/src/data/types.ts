@@ -44,6 +44,16 @@ export interface Brand {
   icon: IconName;
   img: string;
   on: boolean;
+  lat: number | null;
+  lng: number | null;
+  address: string;
+  phone: string;
+  description: string;
+  workDays: ('sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri')[];
+  openTime: string;
+  closeTime: string;
+  deliveryFee: number | null;
+  prepTime: number;
 }
 
 export interface SizeOption {
@@ -232,7 +242,7 @@ export interface OnboardingSlide {
 }
 
 export interface Prefs {
-  lang: 'English' | 'Español' | 'Français';
+  lang: 'العربية' | 'English' | 'Español' | 'Français';
   orderNotif: boolean;
   offers: boolean;
   journalNotif: boolean;

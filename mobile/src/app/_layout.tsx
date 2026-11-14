@@ -4,6 +4,7 @@ import * as SplashScreen from 'expo-splash-screen';
 import * as SystemUI from 'expo-system-ui';
 import { useEffect, useMemo } from 'react';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { I18nManager } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { FlyLayer, ToastHost } from '@/components/ui/overlays';
@@ -14,6 +15,11 @@ import { useAppHydrated } from '@/store/app-store';
 import { selectIsAdmin, selectIsStaff, selectSignedIn, useSession, useSessionHydrated } from '@/store/session';
 import { AppThemeProvider, useTheme } from '@/theme/theme';
 import { fontAssets } from '@/theme/typography';
+
+// Keep the app's component geometry stable (the screens use explicit RTL text).
+// Global forceRTL mirrors every row and animated selection track, reversing visual states.
+I18nManager.allowRTL(true);
+I18nManager.forceRTL(false);
 
 SplashScreen.preventAutoHideAsync().catch(() => undefined);
 SplashScreen.setOptions({ duration: 300, fade: true });

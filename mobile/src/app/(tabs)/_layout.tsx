@@ -1,44 +1,29 @@
-import { Tabs, type BottomTabBarProps } from 'expo-router/js-tabs';
-
-import { GlassTabBar, type TabItem } from '@/components/glass-tab-bar';
-import { selectCartCount, useApp } from '@/store/app-store';
-import { useTheme } from '@/theme/theme';
-
-const TABS: Omit<TabItem, 'badge'>[] = [
-  { key: 'home', label: 'Home', icon: 'home' },
-  { key: 'menu', label: 'Menu', icon: 'restaurant_menu' },
-  { key: 'saved', label: 'Saved', icon: 'favorite' },
-  { key: 'cart', label: 'Cart', icon: 'shopping_bag' },
-  { key: 'profile', label: 'Profile', icon: 'person' },
-];
-
-function CustomerTabBar({ state, navigateToTab }: BottomTabBarProps) {
-  const count = useApp(selectCartCount);
-  const bump = useApp((s) => s.bump);
-  const items = TABS.map((t) => ({ ...t, badge: t.key === 'cart' && count > 0 ? count : undefined }));
-  const active = TABS.findIndex((t) => t.key === state.routes[state.index]?.name);
-  return (
-    <GlassTabBar
-      items={items}
-      index={Math.max(0, active)}
-      bump={bump}
-      onPress={(i) => {
-        const route = state.routes.find((r) => r.name === TABS[i].key);
-        if (route) navigateToTab(route.key);
-      }}
-    />
-  );
-}
+import { NativeTabs } from 'expo-router/native-tabs';
 
 export default function TabsLayout() {
-  const { c } = useTheme();
   return (
-    <Tabs tabBar={(props) => <CustomerTabBar {...props} />} screenOptions={{ headerShown: false, animation: 'fade', sceneStyle: { backgroundColor: c.bg } }}>
-      <Tabs.Screen name="home" />
-      <Tabs.Screen name="menu" />
-      <Tabs.Screen name="saved" />
-      <Tabs.Screen name="cart" />
-      <Tabs.Screen name="profile" />
-    </Tabs>
+    <NativeTabs tintColor="#E50920" disableTransparentOnScrollEdge>
+      <NativeTabs.Trigger name="home">
+        <NativeTabs.Trigger.Icon sf={{ default: 'house', selected: 'house.fill' }} md={{ default: 'home', selected: 'home' }} />
+        <NativeTabs.Trigger.Label>الرئيسية</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="payments">
+        <NativeTabs.Trigger.Icon sf={{ default: 'creditcard', selected: 'creditcard.fill' }} md={{ default: 'credit_card', selected: 'credit_card' }} />
+        <NativeTabs.Trigger.Label>البطاقات</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="menu">
+        <NativeTabs.Trigger.Icon sf={{ default: 'list.bullet', selected: 'list.bullet' }} md={{ default: 'menu', selected: 'menu' }} />
+        <NativeTabs.Trigger.Label>القائمة</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      <NativeTabs.Trigger name="profile">
+        <NativeTabs.Trigger.Icon sf={{ default: 'person.crop.circle', selected: 'person.crop.circle.fill' }} md={{ default: 'person', selected: 'person' }} />
+        <NativeTabs.Trigger.Label>حسابي</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+      {/* Cart is last so it occupies the far-left/leading edge in the Arabic RTL tab bar. */}
+      <NativeTabs.Trigger name="cart" prominent>
+        <NativeTabs.Trigger.Icon sf={{ default: 'bag', selected: 'bag.fill' }} md={{ default: 'shopping_bag', selected: 'shopping_bag' }} />
+        <NativeTabs.Trigger.Label>السلة</NativeTabs.Trigger.Label>
+      </NativeTabs.Trigger>
+    </NativeTabs>
   );
 }

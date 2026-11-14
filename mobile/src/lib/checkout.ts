@@ -5,7 +5,6 @@ import { useSession } from '@/store/session';
 
 import { api, ApiError, errorMessage, newIdempotencyKey, request } from './api';
 import { round2 } from './pricing';
-import * as Linking from 'expo-linking';
 import { syncCatalog, syncMe } from './sync';
 
 /*
@@ -55,11 +54,11 @@ let last: { sig: string; key: string } | null = null;
 
 /**
  * One checkout attempt: place the order (cash goes straight to the kitchen), or for a card or wallet
- * submit card details directly to Kashier FEP, then wait for the signed webhook to settle the order.
+ * submit card details to the payment processor, then wait for the signed confirmation.
  */
-export type CardDetails = { number: string; name: string; month: string; year: string; cvv: string };
+export type CardDetails = { number: string; name: string; month: string; year: string; cvv: string } | { token: string; cvv: string };
 
-export async function placeOrder(card?: CardDetails, walletPhone?: string): Promise<CheckoutResult> {
+export async function placeOrder(card?: CardDetails, walletPhone?: string, openThreeDS?: (url: string) => Promise<void>): Promise<CheckoutResult> {
   const req = buildOrderRequest();
   if (!req.items.length) return { ok: false, message: 'Your cart is empty.' };
   // the same key while the request is unchanged: a retry returns the same order
@@ -93,8 +92,8 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string): Prom
   if (order.payment.method === 'cash') return done(order);
 
   if (order.payment.method === 'wallet') {
-    const phone = String(walletPhone || '').replace(/[\\s()-]/g, '');
-    if (!/^01[0125]\\d{8}$/.test(phone)) {
+    const phone = String(walletPhone || '').replace(/[\s()-]/g, '');
+    if (!/^01[0125]\d{8}$/.test(phone)) {
       return { ok: false, message: 'أدخل رقم محفظة مصري صحيح مكوّن من 11 رقمًا.' };
     }
 
@@ -131,20 +130,21 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string): Prom
     const intent = await api.post<{
       hash: string; endpoint: string; merchantId: string; reference: string; amount: string; currency: string;
       customerReference: string; webhookUrl: string; merchantRedirect: string;
-    }>(`/v1/orders/${encodeURIComponent(order.id)}/payment/direct-intent`);
+    }>(`/v1/orders/${encodeURIComponent(order.id)}/payment/direct-intent`, { savedCard: 'token' in card });
 
-    // Card data is sent directly from the device to Kashier; it is never sent to Tawseela's API.
+    const cardFields = 'token' in card
+      ? { cardToken: card.token, securityCode: card.cvv, enable3DS: true }
+      : { number: card.number.replace(/\s/g, ''), nameOnCard: card.name.trim(), expiry: { month: card.month.padStart(2, '0'), year: card.year.length === 2 ? card.year : card.year.slice(-2) }, securityCode: card.cvv, enable3DS: true };
+
+    // Card data is sent directly to the payment processor; it is never sent to Tawseela's API.
     const paymentResponse = await fetch(intent.endpoint, {
       method: 'POST',
       headers: { accept: 'application/json', 'content-type': 'application/json', 'Kashier-Hash': intent.hash },
       body: JSON.stringify({
         apiOperation: 'PAY',
-        paymentMethod: { type: 'CARD', card: {
-          number: card.number.replace(/\s/g, ''), nameOnCard: card.name.trim(),
-          expiry: { month: card.month.padStart(2, '0'), year: card.year.length === 2 ? card.year : card.year.slice(-2) },
-          securityCode: card.cvv, enable3DS: true,
-        } },
+        paymentMethod: { type: 'CARD', card: cardFields },
         order: { reference: intent.reference, amount: intent.amount, currency: intent.currency, description: `Tawseela order ${order.no}` },
+        ...( 'token' in card ? { customer: { reference: intent.customerReference } } : {}),
         interactionSource: 'ECOMMERCE',
         reconciliation: { webhookUrl: intent.webhookUrl, merchantRedirect: intent.merchantRedirect, redirect: true },
         merchantId: intent.merchantId, newPaymentUI: true,
@@ -152,7 +152,7 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string): Prom
     });
     const gateway: any = await paymentResponse.json().catch(() => ({}));
 
-    console.log('[Kashier diagnostic]', {
+    console.log('[Payment diagnostic]', {
       httpStatus: paymentResponse.status,
       httpOk: paymentResponse.ok,
       status: gateway?.status,
@@ -163,12 +163,15 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string): Prom
     });
     if (!paymentResponse.ok || gateway?.status === 'FAILURE' || gateway?.response?.status === 'FAILURE') {
       last = null;
-      return { ok: false, message: gateway?.messages?.ar || gateway?.messages?.en || 'لم يقبل كاشير عملية الدفع. راجع بيانات البطاقة وحاول مرة أخرى.' };
+      return { ok: false, message: gateway?.messages?.ar || gateway?.messages?.en || 'تعذر إتمام الدفع. راجع بيانات البطاقة وحاول مرة أخرى.' };
     }
     const redirectUrl = gateway?.response?.authentication?.redirectUrl;
-    if (typeof redirectUrl === 'string' && redirectUrl.startsWith('https://')) await Linking.openURL(redirectUrl);
+    if (typeof redirectUrl === 'string' && redirectUrl.startsWith('https://')) {
+      if (!openThreeDS) return { ok: false, message: 'يلزم إكمال تحقق البنك داخل التطبيق قبل تأكيد الدفع.' };
+      await openThreeDS(redirectUrl);
+    }
 
-    // Only the signed Kashier webhook can mark this order as paid. The app response is not trusted.
+    // Only the signed payment confirmation can mark this order as paid. The app response is not trusted.
     for (let i = 0; i < 45; i++) {
       await new Promise((resolve) => setTimeout(resolve, 2000));
       const current = await api.post<Order>(`/v1/orders/${encodeURIComponent(order.id)}/payment/sync`).catch(() => null);
@@ -177,7 +180,7 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string): Prom
     }
     return { ok: false, message: 'عملية الدفع لم يصل تأكيدها بعد. لا تحاول الدفع مرة ثانية؛ حدّث حالة الطلب أو تواصل مع الدعم.' };
   } catch (e) {
-    return { ok: false, message: errorMessage(e, 'تعذر بدء الدفع المباشر مع كاشير.') };
+    return { ok: false, message: errorMessage(e, 'تعذر بدء عملية الدفع. حاول مرة أخرى.') };
   }
 }
 
