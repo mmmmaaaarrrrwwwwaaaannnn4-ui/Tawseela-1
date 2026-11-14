@@ -1,8 +1,8 @@
 import {
-  ReadexPro_400Regular,
-  ReadexPro_500Medium,
-  ReadexPro_600SemiBold,
-} from '@expo-google-fonts/readex-pro';
+  IBMPlexSansArabic_400Regular,
+  IBMPlexSansArabic_500Medium,
+  IBMPlexSansArabic_700Bold,
+} from '@expo-google-fonts/ibm-plex-sans-arabic';
 import {
   Outfit_300Light,
   Outfit_400Regular,
@@ -19,9 +19,9 @@ export const fontAssets = {
   Outfit_600SemiBold,
   Outfit_700Bold,
   Outfit_800ExtraBold,
-  ReadexPro_400Regular,
-  ReadexPro_500Medium,
-  ReadexPro_600SemiBold,
+  IBMPlexSansArabic_400Regular,
+  IBMPlexSansArabic_500Medium,
+  IBMPlexSansArabic_700Bold,
 };
 
 export type Weight = 300 | 400 | 500 | 600 | 700 | 800;
@@ -35,13 +35,13 @@ const OUTFIT: Record<Weight, string> = {
   800: 'Outfit_800ExtraBold',
 };
 
-const READEX_ARABIC: Record<Weight, string> = {
-  300: 'ReadexPro_400Regular',
-  400: 'ReadexPro_400Regular',
-  500: 'ReadexPro_500Medium',
-  600: 'ReadexPro_600SemiBold',
-  700: 'ReadexPro_600SemiBold',
-  800: 'ReadexPro_600SemiBold',
+const IBM_PLEX_ARABIC: Record<Weight, string> = {
+  300: 'IBMPlexSansArabic_400Regular',
+  400: 'IBMPlexSansArabic_400Regular',
+  500: 'IBMPlexSansArabic_500Medium',
+  600: 'IBMPlexSansArabic_700Bold',
+  700: 'IBMPlexSansArabic_700Bold',
+  800: 'IBMPlexSansArabic_700Bold',
 };
 
 export function family(w: Weight): string {
@@ -49,5 +49,5 @@ export function family(w: Weight): string {
 }
 
 export function arabicFamily(w: Weight): string {
-  return READEX_ARABIC[w];
+  return IBM_PLEX_ARABIC[w];
 }
