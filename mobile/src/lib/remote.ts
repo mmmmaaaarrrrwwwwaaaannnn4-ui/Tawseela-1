@@ -26,7 +26,9 @@ export const remote: Remote = {
   reorder: async (kind, ids) => {
     await api.put(`/v1/admin/${kind}/order`, { ids });
   },
+  createBrand: (b) => api.post<Brand>('/v1/admin/brands', b),
   patchBrand: (id, p) => api.patch<Brand>(`/v1/admin/brands/${enc(id)}`, p),
+  deleteBrand: (id) => api.delete(`/v1/admin/brands/${enc(id)}`),
   patchBanner: (id, p) => api.patch(`/v1/admin/banners/${enc(id)}`, p),
   patchSection: (k, p) => api.patch(`/v1/admin/sections/${enc(k)}`, p),
   patchDeal: (p) => api.patch<Deal>('/v1/admin/deal', p),

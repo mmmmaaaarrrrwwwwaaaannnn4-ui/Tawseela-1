@@ -7,19 +7,22 @@
     "icon": "./assets/images/icon.png",
     "scheme": "tawseela",
     "userInterfaceStyle": "automatic",
-    "backgroundColor": "#F8F8F6",
+    "backgroundColor": "#FFFDE0",
     "ios": {
       "bundleIdentifier": "com.tawseela.app",
       "supportsTablet": false,
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "UIDesignRequiresCompatibility": false,
+        "NSLocationWhenInUseUsageDescription": "نحتاج موقعك لتحديد موقع المطبخ على الخريطة."
       },
       "usesAppleSignIn": true
     },
     "android": {
       "package": "com.tawseela.app",
+      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
       "adaptiveIcon": {
-        "backgroundColor": "#FF7A1A",
+        "backgroundColor": "#FFF000",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
@@ -35,7 +38,7 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#FBFAF7",
+          "backgroundColor": "#FFFDE0",
           "image": "./assets/images/splash-icon.png",
           "imageWidth": 84,
           "dark": {
@@ -49,7 +52,7 @@
       [
         "expo-image-picker",
         {
-          "photosPermission": "Fig & Fennel uses your photos so the team can add pictures of dishes, kitchens and stories.",
+          "photosPermission": "Tawseela needs access to your photos to add profile pictures and order images.",
           "cameraPermission": false,
           "microphonePermission": false
         }

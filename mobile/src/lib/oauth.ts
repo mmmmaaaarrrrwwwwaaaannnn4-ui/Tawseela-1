@@ -108,11 +108,14 @@ export async function signInWithGoogle(): Promise<OAuthResult> {
   // Without the Firebase files the build has no OAuth client IDs (and on iOS no URL scheme, which
   // would abort the app), so never call into the SDK until they're bundled.
   if (!nativeFirebaseConfig || !googleWebClientId) {
-    const file = process.env.EXPO_OS === 'android' ? 'google-services.json' : 'GoogleService-Info.plist and google-services.json';
+    const missing = [
+      ...(!nativeFirebaseConfig ? [process.env.EXPO_OS === 'ios' ? 'GoogleService-Info.plist (iOS Firebase app configuration)' : 'google-services.json (Android Firebase app configuration)'] : []),
+      ...(!googleWebClientId ? ['Google Web OAuth client ID'] : []),
+    ];
     return {
       ok: false,
       reason: 'unavailable',
-      message: `Google sign-in isn’t set up for this build yet — ${file} ${file.includes(' and ') ? 'are' : 'is'} missing.`,
+      message: `Google sign-in isn’t configured in this build. Missing: ${missing.join(' and ')}. Please install the latest IPA built after the Firebase configuration update.`,
     };
   }
   const m = loadGoogle();

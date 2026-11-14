@@ -21,7 +21,7 @@ import { useTheme } from '@/theme/theme';
 /**
  * "Check your inbox". Firebase confirms an address with a link, not a code, so this screen shows where
  * the link went and whether it has been opened yet — after signing up (verification) or after
- * "Forgot password" (reset). Ordering never waits on verification.
+ * "Forgot password" (reset). Account access requires verification.
  */
 export default function VerifyScreen() {
   useStatusBar('light');
@@ -72,9 +72,13 @@ export default function VerifyScreen() {
     setBusy(true);
     const ok = await checkEmailVerified();
     setBusy(false);
-    const name = current.name.split(' ')[0];
-    if (ok) finish(current, 'Email verified', `Welcome to Fig & Fennel, ${name}`);
-    else finish(current, 'Account created', 'Open the link we emailed whenever you like — you can order meanwhile');
+    const refreshed = useSession.getState().user;
+    if (!ok || !refreshed?.emailVerified) {
+      useApp.getState().showToast('Email not verified', 'Open the verification link in your inbox before continuing.', 'info');
+      return;
+    }
+    const name = refreshed.name.split(' ')[0];
+    finish(refreshed, 'Email verified', `Welcome to Tawseela, ${name}`);
   };
 
   const again = async () => {
@@ -106,7 +110,7 @@ export default function VerifyScreen() {
             <Txt s={14.5} lh={1.5} color={c.text2}>
               {forgot
                 ? `We sent a password reset link to ${email || 'your email'}. Open it to choose a new password, then sign in with it here.`
-                : `We sent a verification link to ${email || 'your email'}. Open it to confirm your address — you can keep ordering in the meantime.`}
+                : `We sent a verification link to ${email || 'your email'}. Open it to confirm your address before continuing.`}
             </Txt>
             <View
               style={[styles.cell, { borderColor: verified ? c.ok : c.line, backgroundColor: c.surface1 }]}

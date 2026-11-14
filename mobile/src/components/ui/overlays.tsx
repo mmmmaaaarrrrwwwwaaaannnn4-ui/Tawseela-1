@@ -297,7 +297,7 @@ export function useFlyToCart() {
   const { floatBottom, top } = useChrome();
   const flyToCart = useApp((s) => s.flyToCart);
   return (ref: RefObject<HostInstance | null> | null | undefined, target: 'tab' | 'header' = 'tab') => {
-    const to = target === 'header' ? { x: width - 16 - 22, y: top + 2 + 22 } : { x: 14 + (width - 28) * (3.5 / 5), y: height - floatBottom - 40 };
+    const to = target === 'header' ? { x: width - 16 - 22, y: top + 2 + 22 } : { x: 14 + 38, y: height - 7 - 36 };
     const node = ref?.current;
     if (!node) {
       useApp.getState().endFly();

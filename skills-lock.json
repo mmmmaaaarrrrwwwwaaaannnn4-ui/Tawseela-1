@@ -1,0 +1,19 @@
+{
+  "version": 2,
+  "skills": {
+    "agent-tools": {
+      "source": "inference-sh/skills",
+      "ref": "eb2684c319ff3ff8164a21c1a6e690616ad8548e",
+      "sourceType": "github",
+      "skillPath": "skills/agent-tools/SKILL.md",
+      "computedHash": "bccfabf06b4e1237faeb6b5fbcaac4102314c6b685ae6245649c8f70ba2f9cd9"
+    },
+    "ui-ux-pro-max": {
+      "source": "nextlevelbuilder/ui-ux-pro-max-skill",
+      "ref": "6623f12b4058d09618c89cffb2de59a47c45f999",
+      "sourceType": "github",
+      "skillPath": ".claude/skills/ui-ux-pro-max/SKILL.md",
+      "computedHash": "c132fd8f23aabb392eab0fb1d378bbfe0fefb8fb48c67e18ee52c48607ae04cd"
+    }
+  }
+}

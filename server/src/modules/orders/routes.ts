@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { AppError } from '../../lib/errors';
 import { requireUser } from '../../plugins/auth';
-import { createKashierDirectIntent, requireKashier, verifyKashierSession } from '../payments/kashier';
+import { createKashierDirectIntent, initiateKashierWallet, reconcileKashierWallet, requireKashier, verifyKashierSession, verifyKashierDirectOrder } from '../payments/kashier';
 import { cancelUnpaid, createOrder, getOrderFor, inKitchen, listOrders, rateOrder, reportIssue } from './service';
 
 const secured = { security: [{ firebase: [] }] };
@@ -48,12 +48,35 @@ const orderRoutes: FastifyPluginAsyncZod = async (app) => {
   );
 
   app.post(
+    '/orders/:id/payment/wallet/initiate',
+    {
+      config: { rateLimit: { max: 5, timeWindow: '1 minute' } },
+      schema: {
+        tags: ['payments'],
+        summary: 'Initiate an Egyptian mobile wallet R2P payment',
+        ...secured,
+        params: idParam,
+        body: z.object({ walletPhone: z.string().min(10).max(20) }),
+        response: { 200: z.object({ status: z.literal('PENDING') }), ...errors },
+      },
+    },
+    async (req) => {
+      const user = requireUser(req);
+      const order = await getOrderFor(db, user, req.params.id);
+      if (order.payment.method !== 'wallet' || order.stage === 'cancelled' || order.payment.status === 'paid') {
+        throw new AppError(409, 'payment_not_available', 'This order is not awaiting wallet payment.');
+      }
+      return initiateKashierWallet(config, db, order.id, user.uid, req.body.walletPhone, now());
+    },
+  );
+
+  app.post(
     '/orders/:id/payment/direct-intent',
     {
       config: { rateLimit: { max: 8, timeWindow: '1 minute' } },
       schema: {
         tags: ['payments'], summary: 'Create a signed Kashier Direct API card payment intent',
-        ...secured, params: idParam,
+        ...secured, params: idParam, body: z.object({ savedCard: z.boolean().optional() }).default({}),
         response: { 200: z.object({ hash: z.string(), endpoint: z.string().url(), merchantId: z.string(), reference: z.string(), amount: z.string(), currency: z.string(), customerReference: z.string(), webhookUrl: z.string().url(), merchantRedirect: z.string() }), ...errors },
       },
     },
@@ -63,7 +86,7 @@ const orderRoutes: FastifyPluginAsyncZod = async (app) => {
       if (order.payment.method === 'cash' || order.stage === 'cancelled' || order.payment.status === 'paid') {
         throw new AppError(409, 'payment_not_available', 'This order is not awaiting an online payment.');
       }
-      const intent = await createKashierDirectIntent(config, order);
+      const intent = await createKashierDirectIntent(config, order, req.body.savedCard === true);
       await db.collection('orders').doc(order.id).update({ 'payment.provider': 'kashier_direct', updatedAt: new Date(now()) });
       return intent;
     },
@@ -115,7 +138,13 @@ const orderRoutes: FastifyPluginAsyncZod = async (app) => {
       const order = await getOrderFor(db, user, req.params.id);
       if (order.payment.method === 'cash') return order;
       const storedOrder = await db.collection('orders').doc(order.id).get();
-      if (storedOrder.get('payment.kashierSessionId')) await verifyKashierSession(config, db, order.id, now());
+      if (order.payment.method === 'wallet') {
+        await reconcileKashierWallet(config, db, order.id, user.uid, now());
+      } else if (storedOrder.get('payment.provider') === 'kashier_direct') {
+        await verifyKashierDirectOrder(config, db, order.id, now());
+      } else if (storedOrder.get('payment.kashierSessionId')) {
+        await verifyKashierSession(config, db, order.id, now());
+      }
       return getOrderFor(db, user, order.id);
     },
   );

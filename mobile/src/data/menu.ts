@@ -270,11 +270,11 @@ export const CAT_IMG: Record<string, string> = MENU.reduce<Record<string, string
 }, {});
 
 export const BRANDS: Brand[] = [
-  { id: 'fire', name: 'Fig Pizza Co.', tag: 'Wood‑fired Neapolitan', icon: 'local_pizza', img: unsplash('1579751626657-72bc17010498', 700), on: true },
-  { id: 'smash', name: 'Smash Lab', tag: 'Burgers, wings & fries', icon: 'lunch_dining', img: unsplash('1568901346375-23c9450c58cd', 700), on: true },
-  { id: 'nonna', name: 'Nonna’s Table', tag: 'Fresh pasta, slow sauces', icon: 'dinner_dining', img: unsplash('1621996346565-e3dbc646d9a9', 700), on: true },
-  { id: 'spice', name: 'Spice Route', tag: 'Curries, biryani & ramen', icon: 'ramen_dining', img: unsplash('1565557623262-b51c2513a641', 700), on: true },
-  { id: 'sugar', name: 'Sugar & Smoke', tag: 'Cakes baked every morning', icon: 'cake', img: unsplash('1606313564200-e75d5e30476c', 700), on: true },
+  { id: 'fire', name: 'Fig Pizza Co.', tag: 'Wood‑fired Neapolitan', icon: 'local_pizza', img: unsplash('1579751626657-72bc17010498', 700), on: true, lat: null, lng: null, address: '', phone: '', description: '', workDays: [], openTime: '09:00', closeTime: '23:00', deliveryFee: null, prepTime: 30 },
+  { id: 'smash', name: 'Smash Lab', tag: 'Burgers, wings & fries', icon: 'lunch_dining', img: unsplash('1568901346375-23c9450c58cd', 700), on: true, lat: null, lng: null, address: '', phone: '', description: '', workDays: [], openTime: '09:00', closeTime: '23:00', deliveryFee: null, prepTime: 30 },
+  { id: 'nonna', name: 'Nonna’s Table', tag: 'Fresh pasta, slow sauces', icon: 'dinner_dining', img: unsplash('1621996346565-e3dbc646d9a9', 700), on: true, lat: null, lng: null, address: '', phone: '', description: '', workDays: [], openTime: '09:00', closeTime: '23:00', deliveryFee: null, prepTime: 30 },
+  { id: 'spice', name: 'Spice Route', tag: 'Curries, biryani & ramen', icon: 'ramen_dining', img: unsplash('1565557623262-b51c2513a641', 700), on: true, lat: null, lng: null, address: '', phone: '', description: '', workDays: [], openTime: '09:00', closeTime: '23:00', deliveryFee: null, prepTime: 30 },
+  { id: 'sugar', name: 'Sugar & Smoke', tag: 'Cakes baked every morning', icon: 'cake', img: unsplash('1606313564200-e75d5e30476c', 700), on: true, lat: null, lng: null, address: '', phone: '', description: '', workDays: [], openTime: '09:00', closeTime: '23:00', deliveryFee: null, prepTime: 30 },
 ];
 
 const SIZES: Record<string, SizeOption[]> = {
