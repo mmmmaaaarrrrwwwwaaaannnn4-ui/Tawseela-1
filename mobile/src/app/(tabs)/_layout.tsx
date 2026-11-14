@@ -1,6 +1,6 @@
 import { Tabs, router, useNavigation } from 'expo-router';
-import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
-import { Platform, Pressable, StyleSheet, View } from 'react-native';
+import { GlassView } from 'expo-glass-effect';
+import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/icons/icon';
@@ -18,7 +18,6 @@ function BottomBar({ state }: { state: { index: number; routes: { key: string; n
   const navigation = useNavigation<any>();
   const { c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
-  const nativeGlass = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
   const activeName = state.routes[state.index]?.name;
 
   const glassColorScheme = isDark ? 'dark' : 'light';
@@ -28,16 +27,11 @@ function BottomBar({ state }: { state: { index: number; routes: { key: string; n
       <View style={styles.dockRow}>
         <View style={styles.mainBarShadow}>
           <GlassView
-            glassEffectStyle="clear"
+            glassEffectStyle="regular"
             isInteractive
             colorScheme={glassColorScheme}
             style={[
               styles.mainBar,
-              !nativeGlass && {
-                backgroundColor: isDark ? 'rgba(24,24,24,0.82)' : 'rgba(255,255,255,0.82)',
-                borderColor: c.glassLine,
-                borderWidth: StyleSheet.hairlineWidth,
-              },
             ]}
           >
             <View style={styles.tabsRow}>
@@ -89,11 +83,6 @@ function BottomBar({ state }: { state: { index: number; routes: { key: string; n
               colorScheme={glassColorScheme}
               style={[
                 styles.cartGlass,
-                !nativeGlass && {
-                  backgroundColor: isDark ? 'rgba(24,24,24,0.82)' : 'rgba(255,255,255,0.82)',
-                  borderColor: c.glassLine,
-                  borderWidth: StyleSheet.hairlineWidth,
-                },
               ]}
             >
               <Icon name="add_shopping_cart" size={29} color={c.accent} />
