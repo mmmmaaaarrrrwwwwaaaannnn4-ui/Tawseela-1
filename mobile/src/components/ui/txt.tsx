@@ -20,7 +20,7 @@ export interface TxtProps extends TextProps {
   strike?: boolean;
 }
 
-/** Native system font for Arabic; Outfit for Latin text. */
+/** IBM Plex Sans Arabic for Arabic; Outfit for Latin text. */
 export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, strike, style, children, ...rest }: TxtProps) {
   const { c } = useTheme();
   const isArabic = typeof children === 'string' && /[\u0600-\u06FF]/.test(children);
