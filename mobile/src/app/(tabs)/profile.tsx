@@ -67,7 +67,7 @@ export default function ProfileScreen() {
       stories: s.posts.filter((p) => p.on).length,
       unread: s.inbox.filter((n) => n.unread).length,
       addrCount: s.addrs.length,
-      addrTag: (s.addrs[s.addr] ?? s.addrs[0]).tag,
+      addrTag: (s.addrs[s.addr] ?? s.addrs[0])?.tag ?? 'المنزل',
       pay: payLabel(s, true),
     })),
   );
