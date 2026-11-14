@@ -1,4 +1,4 @@
-import { Tabs, router } from 'expo-router';
+import { Tabs, router, useNavigation } from 'expo-router';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,15 +14,8 @@ const TAB_ITEMS: { name: 'home' | 'menu' | 'payments' | 'profile'; label: string
   { name: 'profile', label: 'المزيد', icon: 'menu' },
 ];
 
-type BottomBarProps = {
-  state: { index: number; routes: { key: string; name: string }[] };
-  navigation: {
-    emit: (event: { type: 'tabPress'; target: string; canPreventDefault: true }) => { defaultPrevented?: boolean };
-    navigate: (name: string) => void;
-  };
-};
-
-function BottomBar({ state, navigation }: BottomBarProps) {
+function BottomBar({ state }: { state: { index: number; routes: { key: string; name: string }[] } }) {
+  const navigation = useNavigation();
   const { c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const nativeGlass = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
@@ -115,7 +108,7 @@ function BottomBar({ state, navigation }: BottomBarProps) {
 export default function TabsLayout() {
   return (
     <Tabs
-      tabBar={(props) => <BottomBar {...props} />}
+      tabBar={(props) => <BottomBar state={props.state} />}
       screenOptions={{ headerShown: false, animation: 'shift' }}
     >
       <Tabs.Screen name="home" options={{ title: 'الرئيسية' }} />
