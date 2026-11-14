@@ -15,7 +15,7 @@ const secured = { security: [{ firebase: [] }] };
 const errors = { 400: ApiError, 401: ApiError, 403: ApiError, 404: ApiError, 409: ApiError };
 
 const meRoutes: FastifyPluginAsyncZod = async (app) => {
-  const { db, auth, now } = app.deps;
+  const { db, auth, now, config } = app.deps;
 
   // before body validation, so a signed-out caller gets 401 rather than details about the payload
   app.addHook('preValidation', async (req) => {
