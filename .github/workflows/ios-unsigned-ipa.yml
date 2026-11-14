@@ -2,6 +2,9 @@ name: Build Tawseela Unsigned iOS IPA
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - build/tawseela-ios-ipa-v10
 
 permissions:
   contents: read
