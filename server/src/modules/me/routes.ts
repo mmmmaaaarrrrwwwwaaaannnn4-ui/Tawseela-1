@@ -24,8 +24,17 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
 
   // Kashier card vault: PAN/CVV go directly from the device to Kashier, never through this API.
   const tokenBase = () => config.KASHIER_MODE === 'live' ? 'https://fep.kashier.io' : 'https://test-fep.kashier.io';
-  const tokenHash = (uid: string) => createHmac('sha256', config.KASHIER_PAYMENT_API_KEY)
-    .update(`/?tokenization=${config.KASHIER_MERCHANT_ID}.${uid}`).digest('hex');
+  const tokenHash = (uid: string) => {
+    // Config values are optional at the type level; validate them here as well as at each route.
+    const paymentApiKey = config.KASHIER_PAYMENT_API_KEY;
+    const merchantId = config.KASHIER_MERCHANT_ID;
+    if (!paymentApiKey || !merchantId) {
+      throw new AppError(503, 'payments_unavailable', 'Kashier card saving is not configured.');
+    }
+    return createHmac('sha256', paymentApiKey)
+      .update(`/?tokenization=${merchantId}.${uid}`)
+      .digest('hex');
+  };
 
   app.get('/me/cards/tokenization-intent', { schema: { tags: ['payments'], summary: 'Create a short-lived Kashier card-tokenization hash', ...secured } }, async (req) => {
     const user = requireUser(req);
