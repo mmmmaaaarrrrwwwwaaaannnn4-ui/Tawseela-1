@@ -53,25 +53,25 @@ export default function ProfileScreen() {
     };
 
   const profRows: { icon: IconName; l: string; s: string; go: () => void }[] = [
-    { icon: 'receipt_long', l: 'My orders', s: st.active ? '1 on the way' : cnt(st.myCount, 'past order'), go: go('/orders', true) },
-    { icon: 'loyalty', l: 'نقاط توصيلة', s: `${st.points.toLocaleString('en-US')} points · ${tier}`, go: go('/rewards') },
-    { icon: 'event_seat', l: 'My reservations', s: st.upcoming ? `${st.upcoming} upcoming` : 'Book a table for tonight', go: go('/my-bookings') },
-    { icon: 'auto_stories', l: 'مجلة توصيلة', s: `${st.stories} stories from our kitchen`, go: go('/journal') },
-    { icon: 'notifications', l: 'Notifications', s: st.unread ? `${st.unread} unread` : 'All caught up', go: go('/inbox') },
+    { icon: 'receipt_long', l: 'سجل الطلبات', s: st.active ? 'طلب في الطريق' : cnt(st.myCount, 'طلب سابق'), go: go('/orders', true) },
+    { icon: 'loyalty', l: 'مكافآت توصيلة', s: `${st.points.toLocaleString('en-US')} نقطة · ${tier === 'Gold' ? 'ذهبي' : tier === 'Silver' ? 'فضي' : 'برونزي'}`, go: go('/rewards') },
+    { icon: 'event_seat', l: 'حجوزاتي', s: st.upcoming ? `${st.upcoming} حجز قادم` : 'احجز طاولتك الآن', go: go('/my-bookings') },
+    { icon: 'auto_stories', l: 'مجلة توصيلة', s: `${st.stories} قصة من مطبخنا`, go: go('/journal') },
+    { icon: 'notifications', l: 'الإشعارات', s: st.unread ? `${st.unread} إشعار غير مقروء` : 'أنت على اطلاع بكل جديد', go: go('/inbox') },
   ];
   const acctRows: { icon: IconName; l: string; s: string; go: () => void }[] = [
-    { icon: 'person', l: 'Edit profile', s: 'Name, email, phone', go: go('/edit-profile', true) },
-    { icon: 'location_on', l: 'Addresses', s: `${cnt(st.addrCount, 'saved address')} · ${st.addrTag} default`, go: go('/addresses') },
-    { icon: 'credit_card', l: 'Payment methods', s: `${st.pay} · ${money(st.credit)} credit`, go: go('/payments') },
-    { icon: 'settings', l: 'Settings', s: 'Language, notifications, privacy', go: go('/settings') },
-    { icon: 'help', l: 'Help & FAQ', s: 'Orders, refunds, contact us', go: go('/help') },
+    { icon: 'person', l: 'تعديل الملف الشخصي', s: 'الاسم والبريد الإلكتروني ورقم الهاتف', go: go('/edit-profile', true) },
+    { icon: 'location_on', l: 'عناويني', s: `${cnt(st.addrCount, 'عنوان محفوظ')} · ${st.addrTag} الافتراضي`, go: go('/addresses') },
+    { icon: 'credit_card', l: 'طرق الدفع', s: `${st.pay} · رصيد ${money(st.credit)}`, go: go('/payments') },
+    { icon: 'settings', l: 'الإعدادات', s: 'اللغة والإشعارات والخصوصية', go: go('/settings') },
+    { icon: 'help', l: 'المساعدة', s: 'الطلبات والاسترداد والتواصل معنا', go: go('/help') },
   ];
 
   return (
     <RevealScope>
       <View style={{ flex: 1, backgroundColor: c.bg }}>
         <ScrollView
-          contentContainerStyle={{ paddingTop: chrome.contentTop, paddingBottom: chrome.bottomPad, paddingHorizontal: 20, gap: 14 }}
+          contentContainerStyle={{ paddingTop: chrome.contentTop, paddingBottom: chrome.bottomPad, paddingHorizontal: 20, gap: 14, direction: 'rtl' }}
           showsVerticalScrollIndicator={false}
         >
           <Reveal i={0} style={{ paddingTop: 6 }}>
@@ -93,14 +93,14 @@ export default function ProfileScreen() {
               </View>
               <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
                 <Txt s={18} w={700} numberOfLines={1}>
-                  {user ? user.name : 'Guest'}
+                  {user ? user.name : 'زائر'}
                 </Txt>
                 <Txt s={13} lh={1.4} color={c.text2}>
-                  {user ? user.email : 'Sign in to order and track deliveries'}
+                  {user ? user.email : 'سجّل الدخول للطلب ومتابعة التوصيل'}
                 </Txt>
               </View>
               {!user ? (
-                <AccentButton label="Sign in" height={42} fontSize={14} onPress={() => router.push('/login')} style={{ paddingHorizontal: 16 }} />
+                <AccentButton label="تسجيل الدخول" height={42} fontSize={14} onPress={() => router.push('/login')} style={{ paddingHorizontal: 16 }} />
               ) : null}
             </View>
           </Reveal>
@@ -114,10 +114,10 @@ export default function ProfileScreen() {
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Txt s={15} w={700} color={fixed.paper}>
-                    Restaurant admin
+                    إدارة المطعم
                   </Txt>
                   <Txt s={12.5} color={fixed.paperA(0.72)}>
-                    Orders, menu, promotions and settings
+                    الطلبات والقائمة والعروض والإعدادات
                   </Txt>
                 </View>
                 <Icon name="chevron_right" size={22} color={fixed.paper} />
@@ -137,10 +137,10 @@ export default function ProfileScreen() {
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
                   <Txt s={15} w={700} color={fixed.paper}>
-                    Staff · {ROLE_INFO[staffRole].label}
+                    فريق العمل · {ROLE_INFO[staffRole].label}
                   </Txt>
                   <Txt s={12.5} color={fixed.paperA(0.72)}>
-                    My queue — {ROLE_INFO[staffRole].desc.toLowerCase()}
+                    مهامي — {ROLE_INFO[staffRole].desc.toLowerCase()}
                   </Txt>
                 </View>
                 <Icon name="chevron_right" size={22} color={fixed.paper} />
@@ -157,7 +157,7 @@ export default function ProfileScreen() {
           </Reveal>
 
           <Reveal i={3}>
-            <Eyebrow style={{ paddingTop: 6, paddingHorizontal: 4 }}>Account</Eyebrow>
+            <Eyebrow style={{ paddingTop: 6, paddingHorizontal: 4 }}>الحساب</Eyebrow>
           </Reveal>
           <Reveal i={3}>
             <ListCard>
@@ -176,7 +176,7 @@ export default function ProfileScreen() {
                 accessibilityState={{ checked: st.orderNotif }}
               >
                 <Txt s={14.5} w={600}>
-                  Order notifications
+                  إشعارات الطلبات
                 </Txt>
                 <Toggle on={st.orderNotif} />
               </PressableScale>
@@ -185,7 +185,7 @@ export default function ProfileScreen() {
 
           {user ? (
             <OutlineButton
-              label="Sign out"
+              label="تسجيل الخروج"
               color={c.err}
               onPress={() => {
                 void signOutAccount();
