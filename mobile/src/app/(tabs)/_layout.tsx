@@ -2,6 +2,7 @@ import { Tabs, router } from 'expo-router';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 
 type TabRouteName = 'home' | 'menu' | 'payments' | 'profile';
+type TabHref = Parameters<typeof router.navigate>[0];
 import { GlassView } from 'expo-glass-effect';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -49,7 +50,7 @@ function BottomBar({ state }: Pick<BottomTabBarProps, 'state'>) {
                     accessibilityLabel={item.label}
                     accessibilityState={{ selected: focused }}
                     onPress={() => {
-                      if (!focused) router.navigate(`/(tabs)/${item.name}`);
+                      if (!focused) router.navigate(`/(tabs)/${item.name}` as TabHref);
                     }}
                     style={styles.tab}
                   >
