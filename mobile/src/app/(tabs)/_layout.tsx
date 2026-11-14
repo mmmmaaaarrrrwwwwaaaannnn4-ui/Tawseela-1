@@ -13,7 +13,7 @@ const TAB_RED = '#E50920';
 const MAIN_TABS = [
   { key: 'home', label: 'الرئيسية', route: '/home', icon: 'home' as const, activeIcon: 'home' as const },
   { key: 'payments', label: 'إضافة فيزا', route: '/(tabs)/payments', icon: 'credit_card' as const, activeIcon: 'credit_card' as const },
-  { key: 'menu', label: 'القائمة', route: '/menu', icon: 'list' as const, activeIcon: 'list' as const },
+  { key: 'menu', label: 'القائمة', route: '/menu', icon: 'menu' as const, activeIcon: 'menu' as const },
   { key: 'profile', label: 'حسابي', route: '/profile', icon: 'person' as const, activeIcon: 'person' as const },
 ];
 
@@ -80,7 +80,7 @@ const styles = StyleSheet.create({
   fallback: { borderWidth: StyleSheet.hairlineWidth },
   tabsRow: { flex: 1, minHeight: 72, flexDirection: 'row-reverse', alignItems: 'stretch', paddingHorizontal: 5 },
   tab: { flex: 1, minWidth: 0, alignItems: 'center', justifyContent: 'center', gap: 3, paddingVertical: 7, position: 'relative' },
-  activePill: { ...StyleSheet.absoluteFillObject, top: 4, bottom: 4, left: 2, right: 2, borderRadius: 26, backgroundColor: 'rgba(229,9,32,0.10)' },
+  activePill: { ...StyleSheet.absoluteFill, top: 4, bottom: 4, left: 2, right: 2, borderRadius: 26, backgroundColor: 'rgba(229,9,32,0.10)' },
   cartDock: { width: 76, height: 72 },
   cartHit: { width: '100%', height: '100%' },
   cartGlass: { width: '100%', height: '100%', borderRadius: 36, overflow: 'hidden', alignItems: 'center', justifyContent: 'center' },
