@@ -1,7 +1,6 @@
 import { Tabs, router } from 'expo-router';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/icons/icon';
@@ -10,12 +9,20 @@ import { useTheme } from '@/theme/theme';
 
 const TAB_ITEMS: { name: 'home' | 'menu' | 'payments' | 'profile'; label: string; icon: IconName }[] = [
   { name: 'home', label: 'الرئيسية', icon: 'home' },
-  { name: 'menu', label: 'القائمة', icon: 'format_list_bulleted' },
+  { name: 'menu', label: 'القائمة', icon: 'menu_book' },
   { name: 'payments', label: 'باي', icon: 'credit_card' },
   { name: 'profile', label: 'المزيد', icon: 'menu' },
 ];
 
-function BottomBar({ state, navigation }: BottomTabBarProps) {
+type BottomBarProps = {
+  state: { index: number; routes: { key: string; name: string }[] };
+  navigation: {
+    emit: (event: { type: 'tabPress'; target: string; canPreventDefault: true }) => { defaultPrevented?: boolean };
+    navigate: (name: string) => void;
+  };
+};
+
+function BottomBar({ state, navigation }: BottomBarProps) {
   const { c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const nativeGlass = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
@@ -165,7 +172,7 @@ const styles = StyleSheet.create({
     position: 'relative',
   },
   selectedGlass: {
-    ...StyleSheet.absoluteFillObject,
+    position: 'absolute',
     top: 5,
     bottom: 5,
     left: 3,
