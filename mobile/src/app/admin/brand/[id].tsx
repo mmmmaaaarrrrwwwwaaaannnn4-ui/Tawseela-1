@@ -34,7 +34,8 @@ function EditBrand() {
   const menu = useApp((s) => s.menu);
   const [draft, setDraft] = useState<Brand>(() => {
     const b = useApp.getState().brands;
-    return { ...(b.find((x) => x.id === id) ?? b[0]) };
+    const found = b.find((x) => x.id === id);
+    return found ? { ...found } : { id: 'new', name: '', tag: '', icon: b[0]?.icon ?? 'storefront', img: b[0]?.img ?? '', on: true };
   });
   const dishes = menu.filter((m) => m.brand === draft.id);
 
@@ -42,7 +43,11 @@ function EditBrand() {
   const save = async () => {
     if (saving) return;
     setSaving(true);
-    const ok = await useApp.getState().saveBrand({ ...draft, name: draft.name.trim() || draft.name, tag: draft.tag.trim() });
+    const name = draft.name.trim();
+    if (!name) { setSaving(false); useApp.getState().showToast('اسم المطبخ مطلوب', 'اكتب اسم المطبخ أولًا.', 'error'); return; }
+    const ok = id === 'new'
+      ? await useApp.getState().createBrand({ name, tag: draft.tag.trim(), icon: draft.icon, img: draft.img, on: draft.on })
+      : await useApp.getState().saveBrand({ ...draft, name, tag: draft.tag.trim() });
     setSaving(false);
     if (ok) goBack();
   };
@@ -97,9 +102,9 @@ function EditBrand() {
           </PressableScale>
         ))}
       </ScrollView>
-      <AdminHeader title="Edit kitchen" back />
+      <AdminHeader title={id === 'new' ? 'Add kitchen' : 'Edit kitchen'} back />
       <FloatingBar>
-        <AccentButton label="Save kitchen" loading={saving} loadingLabel="Saving…" onPress={() => void save()} />
+        <AccentButton label={id === 'new' ? 'Add kitchen' : 'Save kitchen'} loading={saving} loadingLabel="Saving…" onPress={() => void save()} />
       </FloatingBar>
     </View>
   );
