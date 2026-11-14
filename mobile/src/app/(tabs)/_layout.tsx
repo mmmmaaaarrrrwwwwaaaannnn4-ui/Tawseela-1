@@ -1,4 +1,5 @@
-import { Tabs, router, useNavigation } from 'expo-router';
+import { Tabs, router } from 'expo-router';
+import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
 import { GlassView } from 'expo-glass-effect';
 import { Pressable, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -14,8 +15,7 @@ const TAB_ITEMS: { name: 'home' | 'menu' | 'payments' | 'profile'; label: string
   { name: 'profile', label: 'المزيد', icon: 'menu' },
 ];
 
-function BottomBar({ state }: { state: { index: number; routes: { key: string; name: string }[] } }) {
-  const navigation = useNavigation<any>();
+function BottomBar({ state, navigation }: BottomTabBarProps) {
   const { c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const activeName = state.routes[state.index]?.name;
@@ -27,7 +27,7 @@ function BottomBar({ state }: { state: { index: number; routes: { key: string; n
       <View style={styles.dockRow}>
         <View style={styles.mainBarShadow}>
           <GlassView
-            glassEffectStyle="clear"
+            glassEffectStyle="regular"
             isInteractive
             colorScheme={glassColorScheme}
             style={[
@@ -55,7 +55,7 @@ function BottomBar({ state }: { state: { index: number; routes: { key: string; n
                     {focused ? (
                       <GlassView
                         pointerEvents="none"
-                        glassEffectStyle={{ style: 'clear', animate: true, animationDuration: 0.35 }}
+                        glassEffectStyle="regular"
                         colorScheme={glassColorScheme}
                         style={styles.selectedGlass}
                       />
@@ -77,7 +77,7 @@ function BottomBar({ state }: { state: { index: number; routes: { key: string; n
             style={styles.cartPressable}
           >
             <GlassView
-              glassEffectStyle="clear"
+              glassEffectStyle="regular"
               isInteractive
               colorScheme={glassColorScheme}
               style={[
@@ -96,7 +96,7 @@ function BottomBar({ state }: { state: { index: number; routes: { key: string; n
 export default function TabsLayout() {
   return (
     <Tabs
-      tabBar={(props) => <BottomBar state={props.state} />}
+      tabBar={(props) => <BottomBar {...props} />}
       screenOptions={{ headerShown: false, animation: 'shift' }}
     >
       <Tabs.Screen name="home" options={{ title: 'الرئيسية' }} />
