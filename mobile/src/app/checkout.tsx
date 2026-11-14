@@ -210,7 +210,7 @@ function Checkout() {
             <Card radius={20} style={{ padding: 16, gap: 10 }}>
               <Txt s={14} w={700}>بطاقات الدفع المحفوظة</Txt>
               {s.cards.length ? s.cards.map((card) => (
-                <PressableScale key={card.id} onPress={() => set({ payM: 1 })} style={[styles.sheetRow, { borderColor: card.id === s.defCard ? c.accent : c.line, backgroundColor: card.id === s.defCard ? c.accentSoft : c.surface1 }]}>
+                <PressableScale key={card.id} onPress={() => { useApp.getState().makeDefaultCard(card.id); set({ payM: 1 }); }} style={[styles.sheetRow, { borderColor: card.id === s.defCard ? c.accent : c.line, backgroundColor: card.id === s.defCard ? c.accentSoft : c.surface1 }]}>
                   <Icon name="credit_card" size={22} color={c.accent} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Txt s={14} w={700}>{card.brand} · {card.num}</Txt>
