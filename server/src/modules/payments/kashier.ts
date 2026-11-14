@@ -191,27 +191,41 @@ export async function initiateKashierWallet(
       signal: AbortSignal.timeout(20000),
     });
 
-    const result: any = await response.json().catch(() => ({}));
+    const rawResponse = await response.text().catch(() => '');
+    let result: any = {};
+    try { result = rawResponse ? JSON.parse(rawResponse) : {}; } catch { result = {}; }
     const data = result?.response ?? result?.data?.response ?? result?.data ?? result;
     const status = String(data?.status ?? result?.status ?? '').toUpperCase();
     const systemOrderId = String(data?.order?.systemOrderId ?? data?.systemOrderId ?? '');
-    // Kashier documents transactionResponseCode (for example k_4/k_5), not only responseCode.
-    const code = String(
-      data?.transactionResponseCode ??
-      data?.responseCode ??
-      data?.code ??
-      result?.transactionResponseCode ??
-      result?.responseCode ??
-      result?.code ??
-      '',
-    ).toLowerCase();
-    const providerMessage = String(
-      data?.transactionResponseMessage?.en ??
-      data?.messages?.en ??
-      data?.message ??
-      result?.message ??
-      '',
-    ).slice(0, 240);
+    // Kashier may put its rejection code/message at several response levels.
+    const candidates = [data, result?.response, result?.data, result];
+    const pick = (...keys: string[]) => {
+      for (const source of candidates) {
+        for (const key of keys) {
+          const value = source?.[key];
+          if (value != null && value !== '') {
+            if (typeof value === 'object') {
+              const nested = value.en ?? value.message ?? value.description ?? value.code;
+              if (nested != null && nested !== '') return String(nested);
+              try { return JSON.stringify(value); } catch {}
+            }
+            return String(value);
+          }
+        }
+      }
+      return '';
+    };
+    const code = pick('transactionResponseCode', 'responseCode', 'errorCode', 'code').toLowerCase();
+    const providerMessage = pick('transactionResponseMessage', 'message', 'errorMessage', 'description', 'detail', 'errors').slice(0, 500);
+    const providerStatus = pick('status', 'transactionStatus');
+    const diagnostic = [
+      `HTTP ${response.status}`,
+      providerStatus ? `status=${providerStatus}` : '',
+      code ? `code=${code}` : '',
+      providerMessage ? `message=${providerMessage}` : '',
+      !providerMessage && rawResponse ? `body=${rawResponse.slice(0, 500)}` : '',
+      !providerStatus && !code && !providerMessage && !rawResponse ? 'Kashier returned an empty response body.' : '',
+    ].filter(Boolean).join(' | ').slice(0, 1000);
 
     if (!response.ok || status !== 'SUCCESS' || !systemOrderId) {
       await attemptRef.update({
@@ -219,16 +233,12 @@ export async function initiateKashierWallet(
         providerCode: code || null,
         providerMessage: providerMessage || null,
         providerHttpStatus: response.status,
+        providerDiagnostic: diagnostic,
         updatedAt: FieldValue.serverTimestamp(),
       });
       throw new AppError(502, 'wallet_initiation_failed',
-        code === 'k_5'
-          ? 'This number is not registered with a supported wallet provider.'
-          : code === 'k_4'
-            ? 'Kashier accepted the wallet request but returned an incomplete payment reference. Contact support before retrying.'
-            : providerMessage
-              ? `Kashier rejected the wallet request: ${providerMessage}`
-              : `Kashier could not send the wallet payment request (HTTP ${response.status}${code ? `, code ${code}` : ''}).`);
+        `فشل طلب محفظة Kashier. تفاصيل التشخيص: ${diagnostic}`);
+
     }
 
     await attemptRef.update({
