@@ -2,6 +2,7 @@ import { Tabs, router } from 'expo-router';
 import { GlassView, isGlassEffectAPIAvailable, isLiquidGlassAvailable } from 'expo-glass-effect';
 import { Platform, Pressable, StyleSheet, View } from 'react-native';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Icon, type IconName } from '@/components/icons/icon';
 import { Txt } from '@/components/ui/txt';
@@ -16,13 +17,14 @@ const TAB_ITEMS: { name: 'home' | 'menu' | 'payments' | 'profile'; label: string
 
 function BottomBar({ state, navigation }: BottomTabBarProps) {
   const { c, isDark } = useTheme();
+  const insets = useSafeAreaInsets();
   const nativeGlass = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
   const activeName = state.routes[state.index]?.name;
 
   const glassColorScheme = isDark ? 'dark' : 'light';
 
   return (
-    <View pointerEvents="box-none" style={styles.dock}>
+    <View pointerEvents="box-none" style={[styles.dock, { bottom: Math.max(insets.bottom, 8) + 8 }]}>
       <View style={styles.dockRow}>
         <View style={styles.mainBarShadow}>
           <GlassView
