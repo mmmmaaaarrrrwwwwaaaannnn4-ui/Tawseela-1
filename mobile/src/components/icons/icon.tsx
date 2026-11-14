@@ -34,7 +34,7 @@ const ICON_ALIASES: Partial<Record<IconName, keyof typeof Lucide>> = {
   auto_stories: 'BookOpen', badge: 'BadgeCheck', block: 'Ban', bolt: 'Zap', cake: 'Cake',
   calendar_month: 'CalendarDays', call: 'Phone', cancel: 'XCircle', category: 'Shapes',
   celebration: 'PartyPopper', chat: 'MessageCircle', check: 'Check', check_circle: 'CheckCircle',
-  chevron_right: 'ChevronRight', close: 'X', contactless: 'Contactless', content_copy: 'Copy',
+  chevron_right: 'ChevronRight', close: 'X', contactless: 'CreditCard', content_copy: 'Copy',
   countertops: 'CookingPot', credit_card: 'CreditCard', dark_mode: 'Moon', dashboard: 'LayoutDashboard',
   dashboard_customize: 'PanelsTopLeft', deck: 'Armchair', delete: 'Trash2', dinner_dining: 'Utensils',
   directions: 'Navigation', door_front: 'DoorOpen', download: 'Download', eco: 'Leaf', edit: 'Pencil',
