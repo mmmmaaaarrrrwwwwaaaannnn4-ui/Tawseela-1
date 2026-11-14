@@ -276,8 +276,9 @@ function Checkout() {
           <PressableScale onPress={() => setPaymentSheet(false)} style={styles.sheetClose}><Txt s={14} w={700}>إغلاق</Txt></PressableScale>
         </View>
       </Modal>
-      <Modal visible={!!threeDSUrl} animationType="slide" presentationStyle="overFullScreen" onRequestClose={finishThreeDS}>
-        <View style={[styles.threeDSRoot, { backgroundColor: c.bg }]}>
+      <Modal visible={!!threeDSUrl} transparent animationType="slide" onRequestClose={finishThreeDS}>
+        <View style={styles.threeDSRoot}>
+          <View style={[styles.threeDSSheet, { backgroundColor: c.bg, borderColor: c.line }]}>
           <View style={[styles.threeDSHeader, { backgroundColor: c.surface1, borderColor: c.line }]}>
             <PressableScale onPress={finishThreeDS} style={[styles.threeDSClose, { backgroundColor: c.bg, borderColor: c.line }]} accessibilityRole="button" accessibilityLabel="إغلاق التحقق">
               <Icon name="close" size={21} color={c.text1} />
@@ -323,6 +324,7 @@ function Checkout() {
               <PressableScale onPress={() => { setThreeDSError(false); setThreeDSReload((v) => v + 1); }}><Txt s={13} w={700} color={c.accent}>إعادة المحاولة</Txt></PressableScale>
             </View>
           ) : null}
+          </View>
         </View>
       </Modal>
       <FloatingBar>
@@ -341,7 +343,8 @@ function Checkout() {
 }
 
 const styles = StyleSheet.create({
-  threeDSRoot: { flex: 1, paddingTop: 48 },
+  threeDSRoot: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.48)' },
+  threeDSSheet: { height: '94%', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, overflow: 'hidden', paddingTop: 12 },
   threeDSHeader: { minHeight: 66, borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
   threeDSClose: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   threeDSEmpty: { width: 40, height: 40 },
