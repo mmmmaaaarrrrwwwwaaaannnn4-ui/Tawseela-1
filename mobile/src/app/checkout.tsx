@@ -58,6 +58,7 @@ function Checkout() {
   const [walletProvider, setWalletProvider] = useState('');
   const [threeDSUrl, setThreeDSUrl] = useState<string | null>(null);
   const [threeDSError, setThreeDSError] = useState(false);
+  const [threeDSReload, setThreeDSReload] = useState(0);
   const challengeResolver = useRef<(() => void) | null>(null);
   const finishThreeDS = () => {
     setThreeDSUrl(null);
@@ -289,6 +290,7 @@ function Checkout() {
           </View>
           {threeDSUrl ? (
             <WebView
+              key={threeDSReload}
               source={{ uri: threeDSUrl }}
               style={styles.threeDSWebView}
               javaScriptEnabled
@@ -318,7 +320,7 @@ function Checkout() {
           {threeDSError ? (
             <View style={[styles.threeDSError, { backgroundColor: c.surface1 }]}>
               <Txt s={13} w={600} color={c.err}>تعذر تحميل صفحة البنك. تحقق من اتصال الإنترنت وحاول مرة أخرى.</Txt>
-              <PressableScale onPress={() => { setThreeDSError(false); setThreeDSUrl(threeDSUrl); }}><Txt s={13} w={700} color={c.accent}>إعادة المحاولة</Txt></PressableScale>
+              <PressableScale onPress={() => { setThreeDSError(false); setThreeDSReload((v) => v + 1); }}><Txt s={13} w={700} color={c.accent}>إعادة المحاولة</Txt></PressableScale>
             </View>
           ) : null}
         </View>
