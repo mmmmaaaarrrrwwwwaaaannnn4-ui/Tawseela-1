@@ -47,7 +47,7 @@ function EditBrand() {
     setSaving(true);
     const name = draft.name.trim();
     if (draft.workDays.length === 0) { setSaving(false); useApp.getState().showToast('حدد أيام العمل', 'اختر يومًا واحدًا على الأقل لفتح المطبخ.', 'error'); return; }
-    if (draft.lat == null || draft.lng == null) { setSaving(false); useApp.getState().showToast('حدد موقع المطبخ', 'اضغط على الخريطة لاختيار موقع صحيح قبل الحفظ.', 'error'); return; }
+    if (draft.lat == null || draft.lng == null || !Number.isFinite(draft.lat) || !Number.isFinite(draft.lng) || draft.lat < -90 || draft.lat > 90 || draft.lng < -180 || draft.lng > 180) { setSaving(false); useApp.getState().showToast('حدد موقع المطبخ', 'اضغط على الخريطة لاختيار موقع صحيح قبل الحفظ.', 'error'); return; }
     if (!name) { setSaving(false); useApp.getState().showToast('اسم المطبخ مطلوب', 'اكتب اسم المطبخ أولًا.', 'error'); return; }
     const ok = id === 'new'
       ? await useApp.getState().createBrand({ name, tag: draft.tag.trim(), icon: draft.icon, img: draft.img, on: draft.on, lat: draft.lat, lng: draft.lng, address: draft.address, phone: draft.phone, description: draft.description, workDays: draft.workDays, openTime: draft.openTime, closeTime: draft.closeTime, deliveryFee: draft.deliveryFee, prepTime: draft.prepTime })
@@ -91,6 +91,7 @@ function EditBrand() {
         <Reveal i={2} style={{ gap: 8 }}>
           <FieldLabel>Kitchen location — tap the map to place the pin</FieldLabel>
           <View style={{ height: 260, overflow: 'hidden', borderRadius: 18, borderWidth: 1, borderColor: c.line }}><WebView originWhitelist={['*']} source={{ html: mapHtml }} onMessage={(event) => { try { const p = JSON.parse(event.nativeEvent.data); if (!Number.isFinite(Number(p.lat)) || !Number.isFinite(Number(p.lng))) { useApp.getState().showToast('تعذر تحديد الموقع', 'جرّب البحث عن عنوان أو اضغط على الخريطة مباشرة.', 'error'); return; } setDraft((d) => ({ ...d, lat: Number(p.lat), lng: Number(p.lng), ...(typeof p.address === 'string' && p.address ? { address: p.address } : {}) })); } catch {} }} javaScriptEnabled geolocationEnabled /></View>
+          <View style={{ flexDirection: 'row', gap: 8 }}><View style={{ flex: 1 }}><FieldLabel>Latitude</FieldLabel><AdminInput value={draft.lat == null ? '' : String(draft.lat)} onChangeText={(v) => setDraft((d) => ({ ...d, lat: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="30.0444" /></View><View style={{ flex: 1 }}><FieldLabel>Longitude</FieldLabel><AdminInput value={draft.lng == null ? '' : String(draft.lng)} onChangeText={(v) => setDraft((d) => ({ ...d, lng: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="31.2357" /></View></View>
           <Txt s={12} color={c.text3}>{draft.lat != null && draft.lng != null ? `Coordinates: ${draft.lat.toFixed(6)}, ${draft.lng.toFixed(6)}` : 'لم يتم تحديد موقع بعد'}</Txt>
         </Reveal>
         <ToggleCardRow title="Live on the app" sub="Shows on Home and in the menu" on={draft.on} onPress={() => setDraft((d) => ({ ...d, on: !d.on }))} />
