@@ -74,7 +74,7 @@ export default function CartScreen() {
             <View style={{ marginHorizontal: 10 }}>
               <EmptyHero
                 top={50}
-                icon="shopping_bag"
+                icon="shopping_cart"
                 title="Your cart is empty"
                 text="The oven’s already hot. Pick something good."
                 cta="Browse the menu"
