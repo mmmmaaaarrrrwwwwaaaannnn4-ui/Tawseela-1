@@ -15,7 +15,7 @@ const TAB_ITEMS: { name: 'home' | 'menu' | 'payments' | 'profile'; label: string
 ];
 
 function BottomBar({ state }: { state: { index: number; routes: { key: string; name: string }[] } }) {
-  const navigation = useNavigation();
+  const navigation = useNavigation<any>();
   const { c, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const nativeGlass = Platform.OS === 'ios' && isLiquidGlassAvailable() && isGlassEffectAPIAvailable();
