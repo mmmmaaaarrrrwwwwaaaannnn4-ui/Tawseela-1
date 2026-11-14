@@ -420,6 +420,33 @@ async function applyPaid(db: Firestore, orderId: string, now: number, eventId?: 
   });
 }
 
+/** Verify a Direct API card order from Kashier's reconciliation records (never trust WebView redirects). */
+export async function verifyKashierDirectOrder(config: any, db: Firestore, orderId: string, now: number) {
+  requireKashier(config);
+  const ref = db.collection(COL.orders).doc(orderId);
+  const snap = await ref.get();
+  if (!snap.exists) return;
+  const response = await fetch(`${apiBase(config.KASHIER_MODE)}/v3/payment/orders?search=${encodeURIComponent(orderId)}&page=1&limit=20`, {
+    headers: { Authorization: config.KASHIER_SECRET_KEY, accept: 'application/json' },
+    signal: AbortSignal.timeout(15_000),
+  });
+  const result: any = await response.json().catch(() => ({}));
+  if (!response.ok) throw new AppError(502, 'kashier_verify_failed', 'Could not verify the card payment with Kashier.');
+  const rows = Array.isArray(result?.data) ? result.data : [];
+  const data = rows.find((x: any) => String(x?.merchantOrderId ?? '') === orderId);
+  if (!data) return;
+  const amount = Number(data.amount ?? data.totalAmount ?? snap.get('total'));
+  const currency = String(data.currency ?? config.CURRENCY ?? 'EGP').toUpperCase();
+  if (Math.abs(amount - Number(snap.get('total'))) > 0.009 || currency !== String(config.CURRENCY || 'EGP').toUpperCase()) {
+    throw new AppError(409, 'payment_mismatch', 'Kashier payment details do not match this order.');
+  }
+  const status = String(data.status ?? '').toUpperCase();
+  if (status === 'CAPTURED') await applyPaid(db, orderId, now, String(data.transactions?.find((x: any) => x.operation === 'pay')?.transactionId ?? data.orderId ?? orderId));
+  else if (['FAILED', 'CANCELLED', 'REJECTED', 'EXPIRED'].includes(status)) {
+    if (snap.get('payment.status') !== 'paid') await ref.update({ 'payment.status': 'failed', updatedAt: FieldValue.serverTimestamp() });
+  }
+}
+
 export async function verifyKashierSession(config: any, db: Firestore, orderId: string, now: number) {
   requireKashier(config);
   const ref = db.collection(COL.orders).doc(orderId);
