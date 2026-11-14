@@ -49,7 +49,7 @@ export const light: Palette = {
   navHi: 'rgba(255,253,240,0.96)',
   navLo: 'rgba(0,58,43,0.10)',
   navPill: 'rgba(225,255,0,0.28)',
-  navPillHi: 'rgba(255,255,255,0.75)',
+  navPillHi: 'rgba(229,255,0,0.34)',
   text1: '#003A2B',
   text2: '#31594D',
   text3: '#60766D',
@@ -62,8 +62,8 @@ export const light: Palette = {
   accentInk: '#003A2B',
   accentText: '#00523D',
   accentSoft: 'rgba(225,255,0,0.28)',
-  glassSolid: 'rgba(255,253,250,0.96)',
-  navSolid: 'rgba(255,255,255,0.94)',
+  glassSolid: 'rgba(248,248,241,0.97)',
+  navSolid: 'rgba(248,248,241,0.96)',
 };
 
 export const dark: Palette = {
@@ -92,8 +92,8 @@ export const dark: Palette = {
   accentInk: '#003A2B',
   accentText: '#E5FF00',
   accentSoft: 'rgba(225,255,0,0.28)',
-  glassSolid: 'rgba(30,27,24,0.97)',
-  navSolid: 'rgba(42,38,34,0.95)',
+  glassSolid: 'rgba(0,43,31,0.97)',
+  navSolid: 'rgba(0,47,35,0.96)',
 };
 
 /** Theme-independent colours used literally in the design. */
