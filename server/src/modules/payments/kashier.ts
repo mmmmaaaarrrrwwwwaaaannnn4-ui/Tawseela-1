@@ -58,9 +58,11 @@ export async function createKashierDirectIntent(config: any, order: Order, saved
   requireKashier(config);
   if (!config.PUBLIC_API_URL) throw unavailable('payment_callback_unavailable', 'PUBLIC_API_URL must be configured before online payments are enabled.');
   const mode = config.KASHIER_MODE as 'test' | 'live';
-  const amount = Number(order.total).toFixed(2);
+  const amountValue = Number(order.total);
+  const amount = amountValue.toFixed(2);
+  const signedAmount = String(amountValue);
   const currency = String(config.CURRENCY || 'EGP').toUpperCase();
-  const path = `/?payment=${config.KASHIER_MERCHANT_ID}.${order.id}.${amount}.${currency}${savedCard ? `.${order.uid}` : ''}`;
+  const path = `/?payment=${config.KASHIER_MERCHANT_ID}.${order.id}.${signedAmount}.${currency}${savedCard ? `.${order.uid}` : ''}`;
   const hash = createHmac('sha256', config.KASHIER_PAYMENT_API_KEY).update(path).digest('hex');
   const base = config.PUBLIC_API_URL.replace(/\/$/, '');
   return {
@@ -126,7 +128,8 @@ export async function initiateKashierWallet(
   const mode = config.KASHIER_MODE as 'test' | 'live';
   const reference = `PM-${Date.now()}-${randomUUID().replace(/-/g, '').slice(0, 12)}`;
   const attemptRef = db.collection(COL.paymentAttempts).doc(reference);
-  const path = `/?payment=${config.KASHIER_MERCHANT_ID}.${reference}.${amount.toFixed(2)}.${currency}`;
+  // Kashier signs the numeric amount representation (11, not 11.00).
+  const path = `/?payment=${config.KASHIER_MERCHANT_ID}.${reference}.${String(amount)}.${currency}`;
   const hash = createHmac('sha256', config.KASHIER_PAYMENT_API_KEY).update(path).digest('hex');
   const base = config.PUBLIC_API_URL.replace(/\/$/, '');
 
@@ -285,7 +288,8 @@ export async function reconcileKashierWallet(
   const endpoint = mode === 'live' ? 'https://fep.kashier.io' : 'https://test-fep.kashier.io';
   const response = await fetch(`${endpoint}/v3/orders/${encodeURIComponent(systemOrderId)}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json', accept: 'application/json' },
+    // Order operations authenticate with the Kashier Secret Key (they are not signed with Kashier-Hash).
+    headers: { Authorization: config.KASHIER_SECRET_KEY, 'Content-Type': 'application/json', accept: 'application/json' },
     body: JSON.stringify({
       apiOperation: 'RECONCILE_WALLET',
       paymentMethod: { type: 'wallet' },
