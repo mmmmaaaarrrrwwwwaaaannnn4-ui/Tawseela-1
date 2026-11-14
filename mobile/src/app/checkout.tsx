@@ -1,7 +1,8 @@
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
+import { WebView } from 'react-native-webview';
 
 import { Icon, type IconName } from '@/components/icons/icon';
 import { AccentButton, LinkButton } from '@/components/ui/buttons';
@@ -12,6 +13,7 @@ import { Reveal, RevealScope } from '@/components/ui/reveal';
 import { Txt } from '@/components/ui/txt';
 import { useStatusBar } from '@/hooks/use-status-bar';
 import { placeOrder } from '@/lib/checkout';
+import { API_URL } from '@/lib/api';
 import { cnt, money } from '@/lib/format';
 import { SPEEDS } from '@/lib/pricing';
 import { useApp } from '@/store/app-store';
@@ -54,6 +56,14 @@ function Checkout() {
   const [walletPhone, setWalletPhone] = useState('');
   const [paymentSheet, setPaymentSheet] = useState(false);
   const [walletProvider, setWalletProvider] = useState('');
+  const [threeDSUrl, setThreeDSUrl] = useState<string | null>(null);
+  const [threeDSError, setThreeDSError] = useState(false);
+  const challengeResolver = useRef<(() => void) | null>(null);
+  const finishThreeDS = () => {
+    setThreeDSUrl(null);
+    challengeResolver.current?.();
+    challengeResolver.current = null;
+  };
   const set = useApp((st) => st.setCheckout);
 
   /** The server validates and settles online payments; provider details stay out of customer-facing copy. */
@@ -72,6 +82,11 @@ function Checkout() {
     const r = await placeOrder(
       s.payM === 0 || s.payM === 1 ? { number: cardNumber, name: cardName, month: cardMonth, year: cardYear, cvv: cardCvv } : undefined,
       s.payM === 3 ? walletPhone : undefined,
+      (url) => new Promise<void>((resolve) => {
+        challengeResolver.current = resolve;
+        setThreeDSError(false);
+        setThreeDSUrl(url);
+      }),
     );
     setCardNumber(''); setCardName(''); setCardMonth(''); setCardYear(''); setCardCvv(''); setWalletPhone('');
     setPaying(false);
@@ -260,6 +275,54 @@ function Checkout() {
           <PressableScale onPress={() => setPaymentSheet(false)} style={styles.sheetClose}><Txt s={14} w={700}>إغلاق</Txt></PressableScale>
         </View>
       </Modal>
+      <Modal visible={!!threeDSUrl} animationType="slide" presentationStyle="overFullScreen" onRequestClose={finishThreeDS}>
+        <View style={[styles.threeDSRoot, { backgroundColor: c.bg }]}>
+          <View style={[styles.threeDSHeader, { backgroundColor: c.surface1, borderColor: c.line }]}>
+            <PressableScale onPress={finishThreeDS} style={[styles.threeDSClose, { backgroundColor: c.bg, borderColor: c.line }]} accessibilityRole="button" accessibilityLabel="إغلاق التحقق">
+              <Icon name="close" size={21} color={c.text1} />
+            </PressableScale>
+            <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+              <Txt s={16} w={700}>التحقق من البنك</Txt>
+              <Txt s={11.5} color={c.text3}>أدخل رمز التأكيد داخل التطبيق</Txt>
+            </View>
+            <View style={styles.threeDSEmpty} />
+          </View>
+          {threeDSUrl ? (
+            <WebView
+              source={{ uri: threeDSUrl }}
+              style={styles.threeDSWebView}
+              javaScriptEnabled
+              domStorageEnabled
+              sharedCookiesEnabled={false}
+              thirdPartyCookiesEnabled
+              setSupportMultipleWindows={false}
+              originWhitelist={['https://*']}
+              onShouldStartLoadWithRequest={(request) => {
+                let returnUrl = '';
+                try { returnUrl = decodeURIComponent(new URL(threeDSUrl).searchParams.get('merchantRedirect') || ''); } catch {}
+                const target = request.url;
+                const isReturn = target.startsWith(API_URL + '/v1/payments/kashier/return') ||
+                  (returnUrl.length > 0 && target.startsWith(returnUrl));
+                if (isReturn) {
+                  finishThreeDS();
+                  return false;
+                }
+                return target.startsWith('https://');
+              }}
+              onError={() => setThreeDSError(true)}
+              onHttpError={(event) => { if (event.nativeEvent.statusCode >= 400) setThreeDSError(true); }}
+              startInLoadingState
+              renderLoading={() => <View style={styles.threeDSLoading}><Txt s={13} color={c.text2}>جارٍ تحميل صفحة التحقق الآمنة…</Txt></View>}
+            />
+          ) : null}
+          {threeDSError ? (
+            <View style={[styles.threeDSError, { backgroundColor: c.surface1 }]}>
+              <Txt s={13} w={600} color={c.err}>تعذر تحميل صفحة البنك. تحقق من اتصال الإنترنت وحاول مرة أخرى.</Txt>
+              <PressableScale onPress={() => { setThreeDSError(false); setThreeDSUrl(threeDSUrl); }}><Txt s={13} w={700} color={c.accent}>إعادة المحاولة</Txt></PressableScale>
+            </View>
+          ) : null}
+        </View>
+      </Modal>
       <FloatingBar>
         <AccentButton
           height={54}
@@ -276,6 +339,13 @@ function Checkout() {
 }
 
 const styles = StyleSheet.create({
+  threeDSRoot: { flex: 1, paddingTop: 48 },
+  threeDSHeader: { minHeight: 66, borderBottomWidth: StyleSheet.hairlineWidth, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  threeDSClose: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  threeDSEmpty: { width: 40, height: 40 },
+  threeDSWebView: { flex: 1, backgroundColor: '#FFFFFF' },
+  threeDSLoading: { position: 'absolute', top: '48%', left: 0, right: 0, alignItems: 'center', zIndex: 2 },
+  threeDSError: { position: 'absolute', bottom: 20, left: 16, right: 16, padding: 14, borderRadius: 16, gap: 10 },
   addrCard: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14 },
   tile: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   speed: { flex: 1, padding: 14, borderRadius: 18, borderWidth: 1.5, gap: 4 },
