@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "main": "expo-router/entry",
   "dependencies": {
-    "@expo-google-fonts/cairo": "^0.4.3",
+    "@expo-google-fonts/cairo": "^0.4.2",
     "@expo-google-fonts/outfit": "^0.4.3",
     "@fig/shared": "*",
     "@react-native-async-storage/async-storage": "2.2.0",
@@ -29,7 +29,6 @@
     "expo-status-bar": "~58.0.4",
     "expo-system-ui": "~58.0.7",
     "firebase": "^13.2.0",
-    "lucide-react-native": "^1.73.0",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "react-native": "0.88.1",
