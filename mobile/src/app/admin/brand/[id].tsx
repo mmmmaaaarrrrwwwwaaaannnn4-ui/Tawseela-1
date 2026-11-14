@@ -89,7 +89,7 @@ function EditBrand() {
         </Reveal>
         <Reveal i={2} style={{ gap: 8 }}>
           <FieldLabel>Kitchen location — tap the map to place the pin</FieldLabel>
-          <View style={{ height: 260, overflow: 'hidden', borderRadius: 18, borderWidth: 1, borderColor: c.line }}><WebView originWhitelist={['*']} source={{ html: mapHtml }} onMessage={(event) => { try { const p = JSON.parse(event.nativeEvent.data); setDraft((d) => ({ ...d, lat: Number(p.lat), lng: Number(p.lng), ...(typeof p.address === 'string' && p.address ? { address: p.address } : {}) })); } catch {} }} javaScriptEnabled geolocationEnabled /></View>
+          <View style={{ height: 260, overflow: 'hidden', borderRadius: 18, borderWidth: 1, borderColor: c.line }}><WebView originWhitelist={['*']} source={{ html: mapHtml }} onMessage={(event) => { try { const p = JSON.parse(event.nativeEvent.data); if (!Number.isFinite(Number(p.lat)) || !Number.isFinite(Number(p.lng))) { useApp.getState().showToast('تعذر تحديد الموقع', 'جرّب البحث عن عنوان أو اضغط على الخريطة مباشرة.', 'error'); return; } setDraft((d) => ({ ...d, lat: Number(p.lat), lng: Number(p.lng), ...(typeof p.address === 'string' && p.address ? { address: p.address } : {}) })); } catch {} }} javaScriptEnabled geolocationEnabled /></View>
           <Txt s={12} color={c.text3}>{draft.lat != null && draft.lng != null ? `Coordinates: ${draft.lat.toFixed(6)}, ${draft.lng.toFixed(6)}` : 'لم يتم تحديد موقع بعد'}</Txt>
         </Reveal>
         <ToggleCardRow title="Live on the app" sub="Shows on Home and in the menu" on={draft.on} onPress={() => setDraft((d) => ({ ...d, on: !d.on }))} />

@@ -270,7 +270,7 @@ function Checkout() {
           <Txt s={19} w={700}>اختار طريقة الدفع</Txt>
           <PressableScale style={styles.sheetRow} onPress={() => { set({ payM: 0 }); setWalletProvider(''); setPaymentSheet(false); }}>
             <View style={[styles.brandMark, { backgroundColor: '#111111' }]}><Txt color="#FFFFFF" w={800}>Pay</Txt></View>
-            <View style={{ flex: 1 }}><Txt s={15} w={700}>Apple Pay</Txt><Txt s={12} color={c.text3}>الدفع باستخدام Apple Pay</Txt></View>
+            <View style={{ flex: 1 }}><Txt s={15} w={700}>بطاقة محفوظة</Txt><Txt s={12} color={c.text3}>الدفع باستخدام بطاقة محفوظة عبر Kashier</Txt></View>
             <Radio on={s.payM === 0} />
           </PressableScale>
           {walletOptions.map((w) => (

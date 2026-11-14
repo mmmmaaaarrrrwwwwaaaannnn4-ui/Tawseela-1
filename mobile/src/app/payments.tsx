@@ -23,7 +23,7 @@ import { fixed } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme';
 
 const OTHER: { l: string; icon: IconName; s: string; m: number }[] = [
-  { l: 'Apple Pay', icon: 'phone_iphone', s: 'Face ID · instant', m: 0 },
+  { l: 'Kashier card', icon: 'credit_card', s: 'Pay with a saved bank card', m: 0 },
   { l: 'Cash on delivery', icon: 'payments', s: 'Pay the courier at the door', m: 2 },
 ];
 
