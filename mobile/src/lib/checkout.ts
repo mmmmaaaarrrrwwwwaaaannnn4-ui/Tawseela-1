@@ -122,7 +122,26 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string, openT
         message: 'تم إرسال طلب الدفع إلى المحفظة، لكن لم يصل التأكيد بعد. افتح تطبيق المحفظة وراجع طلب الدفع قبل إعادة المحاولة.',
       };
     } catch (e) {
-      return { ok: false, message: errorMessage(e, 'تعذر إرسال طلب الدفع إلى المحفظة.') };
+      // Preserve the server/provider diagnostic instead of collapsing wallet failures
+      // into a generic customer-facing message.
+      if (e instanceof ApiError) {
+        const details = e.details == null
+          ? ''
+          : typeof e.details === 'string'
+            ? e.details
+            : JSON.stringify(e.details);
+        const diagnostic = [
+          `HTTP: ${e.status}`,
+          `Code: ${e.code}`,
+          `Message: ${e.message}`,
+          details ? `Details: ${details.slice(0, 1200)}` : '',
+        ].filter(Boolean).join(' | ');
+        console.error('[Wallet payment diagnostic]', diagnostic);
+        return { ok: false, message: diagnostic };
+      }
+      const message = errorMessage(e, 'تعذر إرسال طلب الدفع إلى المحفظة.');
+      console.error('[Wallet payment diagnostic] Unexpected client error:', e);
+      return { ok: false, message: `Wallet error: ${message}` };
     }
   }
 
