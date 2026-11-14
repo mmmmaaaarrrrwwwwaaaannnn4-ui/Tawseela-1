@@ -134,7 +134,7 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string, openT
 
     const cardFields = 'token' in card
       ? { cardToken: card.token, securityCode: card.cvv, enable3DS: true }
-      : { number: card.number.replace(/\\s/g, ''), nameOnCard: card.name.trim(), expiry: { month: card.month.padStart(2, '0'), year: card.year.length === 2 ? card.year : card.year.slice(-2) }, securityCode: card.cvv, enable3DS: true };
+      : { number: card.number.replace(/\s/g, ''), nameOnCard: card.name.trim(), expiry: { month: card.month.padStart(2, '0'), year: card.year.length === 2 ? card.year : card.year.slice(-2) }, securityCode: card.cvv, enable3DS: true };
 
     // Card data is sent directly to the payment processor; it is never sent to Tawseela's API.
     const paymentResponse = await fetch(intent.endpoint, {
