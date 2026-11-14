@@ -2,13 +2,20 @@ import { memo } from 'react';
 import type { ComponentType } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import * as Lucide from 'lucide-react-native';
-import type { LucideProps } from 'lucide-react-native';
 
 import { useTheme } from '@/theme/theme';
 
 import type { IconName } from './glyphs';
 
 export type { IconName };
+
+type LucideIconProps = {
+  size?: number;
+  color?: string;
+  strokeWidth?: number;
+  fill?: string;
+  style?: StyleProp<ViewStyle>;
+};
 
 interface Props {
   name: IconName;
@@ -164,7 +171,7 @@ function toPascalCase(value: string) {
 function IconBase({ name, size = 24, color, fill = false, style }: Props) {
   const { c } = useTheme();
   const iconName = ALIASES[name] ?? toPascalCase(name);
-  const IconComponent = (Lucide as unknown as Record<string, ComponentType<LucideProps>>)[iconName]
+  const IconComponent = (Lucide as unknown as Record<string, ComponentType<LucideIconProps>>)[iconName]
     ?? Lucide.CircleHelp;
 
   return (
