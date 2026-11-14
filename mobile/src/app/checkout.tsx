@@ -39,6 +39,8 @@ function Checkout() {
       addr: st.addrs[st.addr] ?? st.addrs[0],
       speed: st.speed,
       payM: st.payM,
+      cards: st.cards,
+      defCard: st.defCard,
       note: st.note,
       cart: st.cart,
       promo: st.promo,
@@ -206,8 +208,20 @@ function Checkout() {
           ) : null}
           {(s.payM === 0 || s.payM === 1) ? (
             <Card radius={20} style={{ padding: 16, gap: 10 }}>
-              <Txt s={13} color={c.text2}>أضف بطاقة من صفحة طرق الدفع، ثم ارجع لإتمام طلبك.</Txt>
-              <AccentButton label="إضافة فيزا أو ماستركارد" onPress={() => router.push('/payments')} icon="add_card" />
+              <Txt s={14} w={700}>بطاقات الدفع المحفوظة</Txt>
+              {s.cards.length ? s.cards.map((card) => (
+                <PressableScale key={card.id} onPress={() => set({ payM: 1 })} style={[styles.sheetRow, { borderColor: card.id === s.defCard ? c.accent : c.line, backgroundColor: card.id === s.defCard ? c.accentSoft : c.surface1 }]}>
+                  <Icon name="credit_card" size={22} color={c.accent} />
+                  <View style={{ flex: 1, gap: 2 }}>
+                    <Txt s={14} w={700}>{card.brand} · {card.num}</Txt>
+                    <Txt s={11.5} color={c.text3}>{card.name}</Txt>
+                  </View>
+                  <Radio on={card.id === s.defCard} />
+                </PressableScale>
+              )) : (
+                <Txt s={13} color={c.text2}>لا توجد بطاقة محفوظة حتى الآن.</Txt>
+              )}
+              <AccentButton label={s.cards.length ? 'إدارة البطاقات' : 'إضافة فيزا أو ماستركارد'} onPress={() => router.push('/payments')} icon="add_card" />
             </Card>
           ) : null}
         </Reveal>
