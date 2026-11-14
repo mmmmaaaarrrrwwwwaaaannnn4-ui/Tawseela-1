@@ -220,7 +220,7 @@ const ICONS: Partial<Record<IconName, LucideIcon>> = {
   workspace_premium: BadgeCheck,
 };
 
-function IconBase({ name, size = 24, color, fill = false, style }: {
+function IconBase({ name, size = 24, color, style }: {
   name: IconName;
   size?: number;
   color?: string;
