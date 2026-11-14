@@ -4,7 +4,7 @@
   "main": "expo-router/entry",
   "dependencies": {
     "@expo-google-fonts/outfit": "^0.4.3",
-    "@expo-google-fonts/readex-pro": "^0.4.2",
+    "@expo-google-fonts/readex-pro": "0.4.1",
     "@fig/shared": "*",
     "@react-native-async-storage/async-storage": "2.2.0",
     "@react-native-google-signin/google-signin": "^17.0.0",
