@@ -31,18 +31,38 @@ function EditBrand() {
   useStatusBar();
   const pad = useAdminPadding('cta');
   const { id } = useLocalSearchParams<{ id: string }>();
+  const isNew = id === 'new';
   const menu = useApp((s) => s.menu);
   const [draft, setDraft] = useState<Brand>(() => {
-    const b = useApp.getState().brands;
-    return { ...(b.find((x) => x.id === id) ?? b[0]) };
+    const brands = useApp.getState().brands;
+    const existing = brands.find((x) => x.id === id);
+    if (existing) return { ...existing };
+    return {
+      id: 'new',
+      name: '',
+      tag: '',
+      icon: 'local_pizza',
+      img: brands[0]?.img ?? '',
+      on: true,
+    };
   });
-  const dishes = menu.filter((m) => m.brand === draft.id);
 
+  const dishes = isNew ? [] : menu.filter((m) => m.brand === draft.id);
   const [saving, setSaving] = useState(false);
+
   const save = async () => {
     if (saving) return;
+    const name = draft.name.trim();
+    const tag = draft.tag.trim();
+    if (!name || !tag || !draft.img) {
+      useApp.getState().showToast('Missing details', 'Enter a name, tagline and kitchen photo.', 'error');
+      return;
+    }
+
     setSaving(true);
-    const ok = await useApp.getState().saveBrand({ ...draft, name: draft.name.trim() || draft.name, tag: draft.tag.trim() });
+    const ok = isNew
+      ? await useApp.getState().addBrand({ name, tag, icon: draft.icon, img: draft.img, on: draft.on })
+      : await useApp.getState().saveBrand({ ...draft, name, tag });
     setSaving(false);
     if (ok) goBack();
   };
@@ -61,45 +81,69 @@ function EditBrand() {
             <View style={styles.heroLabel}>
               <Icon name={draft.icon} size={22} fill color={fixed.paper} />
               <Txt s={20} w={600} color={fixed.paper} numberOfLines={1} style={{ flexShrink: 1 }}>
-                {draft.name}
+                {draft.name || 'New kitchen'}
               </Txt>
             </View>
-            <PhotoButton aspect={[16, 9]} folder="kitchens" onUploaded={(img) => setDraft((d) => ({ ...d, img }))} style={styles.photoBtn} />
+            <PhotoButton
+              aspect={[16, 9]}
+              folder="kitchens"
+              label={draft.img ? 'Replace photo' : 'Upload photo'}
+              onUploaded={(img) => setDraft((d) => ({ ...d, img }))}
+              style={styles.photoBtn}
+            />
           </Photo>
         </Reveal>
+
         <Reveal i={1} style={{ gap: 8 }}>
           <FieldLabel>Kitchen name</FieldLabel>
           <AdminInput value={draft.name} onChangeText={(v) => setDraft((d) => ({ ...d, name: v }))} placeholder="Kitchen name" />
           <FieldLabel>Tagline</FieldLabel>
           <AdminInput value={draft.tag} onChangeText={(v) => setDraft((d) => ({ ...d, tag: v }))} placeholder="Short description" />
         </Reveal>
-        <ToggleCardRow title="Live on the app" sub="Shows on Home and in the menu" on={draft.on} onPress={() => setDraft((d) => ({ ...d, on: !d.on }))} />
-        <Reveal i={2} from={{ y: 0, scale: 1 }}>
-          <Txt s={17} w={600} style={{ marginTop: 6 }}>
-            Dishes in this kitchen
-          </Txt>
-        </Reveal>
-        {dishes.map((m) => (
-          <PressableScale
-            key={m.id}
-            onPress={() => openItemEditor(m.id)}
-            scaleTo={0.985}
-            style={[styles.row, { borderColor: c.line, backgroundColor: c.surface1 }]}
-          >
-            <DishImage uri={m.img} size={44} />
-            <Txt s={14} w={600} style={{ flex: 1 }} numberOfLines={1}>
-              {m.name}
-            </Txt>
-            <Txt s={13.5} w={700}>
-              {money(m.price)}
-            </Txt>
-            <Icon name="chevron_right" size={20} color={c.text3} />
-          </PressableScale>
-        ))}
+
+        <ToggleCardRow
+          title="Live on the app"
+          sub="Shows on Home and in the menu"
+          on={draft.on}
+          onPress={() => setDraft((d) => ({ ...d, on: !d.on }))}
+        />
+
+        {!isNew && (
+          <>
+            <Reveal i={2} from={{ y: 0, scale: 1 }}>
+              <Txt s={17} w={600} style={{ marginTop: 6 }}>
+                Dishes in this kitchen
+              </Txt>
+            </Reveal>
+            {dishes.map((m) => (
+              <PressableScale
+                key={m.id}
+                onPress={() => openItemEditor(m.id)}
+                scaleTo={0.985}
+                style={[styles.row, { borderColor: c.line, backgroundColor: c.surface1 }]}
+              >
+                <DishImage uri={m.img} size={44} />
+                <Txt s={14} w={600} style={{ flex: 1 }} numberOfLines={1}>
+                  {m.name}
+                </Txt>
+                <Txt s={13.5} w={700}>
+                  {money(m.price)}
+                </Txt>
+                <Icon name="chevron_right" size={20} color={c.text3} />
+              </PressableScale>
+            ))}
+          </>
+        )}
       </ScrollView>
-      <AdminHeader title="Edit kitchen" back />
+
+      <AdminHeader title={isNew ? 'Add kitchen' : 'Edit kitchen'} back />
       <FloatingBar>
-        <AccentButton label="Save kitchen" loading={saving} loadingLabel="Saving…" onPress={() => void save()} />
+        <AccentButton
+          label={isNew ? 'Create kitchen' : 'Save kitchen'}
+          loading={saving}
+          loadingLabel={isNew ? 'Creating…' : 'Saving…'}
+          onPress={() => void save()}
+        />
       </FloatingBar>
     </View>
   );

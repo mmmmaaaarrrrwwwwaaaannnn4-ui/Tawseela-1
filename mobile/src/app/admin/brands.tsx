@@ -36,6 +36,27 @@ function Brands() {
             Each kitchen is a brand on the Home screen. Turning one off hides all its dishes.
           </Txt>
         </Reveal>
+        <Reveal i={1}>
+          <PressableScale
+            onPress={() => openBrandEditor('new')}
+            scaleTo={0.98}
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 9,
+              paddingVertical: 15,
+              borderRadius: 18,
+              borderWidth: 1,
+              borderStyle: 'dashed',
+              borderColor: c.line,
+              backgroundColor: c.surface1,
+            }}
+          >
+            <Icon name="add" size={20} color={c.text1} />
+            <Txt s={14} w={700}>Add new kitchen</Txt>
+          </PressableScale>
+        </Reveal>
         {brands.map((b, i) => (
           <Reveal key={b.id} i={Math.min(i, 8)}>
             <PressableScale onPress={() => openBrandEditor(b.id)} scaleTo={0.985} style={[styles.row, { borderColor: c.line, backgroundColor: c.surface1 }]}>

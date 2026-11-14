@@ -124,6 +124,7 @@ export interface Remote {
   createCategory: (name: string) => Promise<ApiCategory>;
   patchCategory: (id: string, p: { on?: boolean; img?: string }) => Promise<ApiCategory>;
   reorder: (kind: 'categories' | 'banners' | 'sections', ids: string[]) => Promise<void>;
+  createBrand: (b: Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img'>) => Promise<ApiBrand>;
   patchBrand: (id: string, p: Partial<Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img' | 'on'>>) => Promise<ApiBrand>;
   patchBanner: (id: string, p: { on?: boolean }) => Promise<unknown>;
   patchSection: (k: HomeSectionKey, p: { on?: boolean }) => Promise<unknown>;
@@ -299,6 +300,7 @@ interface Actions {
   moveCat: (i: number, d: number) => void;
   addCat: (name: string) => Promise<boolean>;
   toggleBrand: (id: string) => void;
+  addBrand: (b: Omit<Brand, 'id'>) => Promise<boolean>;
   saveBrand: (b: Brand) => Promise<boolean>;
   toggleSection: (k: HomeSectionKey) => void;
   moveSection: (i: number, d: number) => void;
@@ -997,6 +999,25 @@ export const useApp = create<AppStore>()(
             fail: 'Kitchen not updated',
             catalog: true,
           });
+        },
+        addBrand: async (b) => {
+          const name = b.name.trim();
+          const tag = b.tag.trim();
+          if (!name || !tag || !b.img) {
+            toast('Missing details', 'Enter a name, tagline and kitchen photo.', 'error');
+            return false;
+          }
+          const res = await write({
+            keys: ['brands'],
+            call: (api) => api.createBrand({ name, tag, icon: b.icon, img: b.img }),
+            done: (created, s) => ({
+              brands: [...s.brands, { ...created, icon: created.icon as Brand['icon'] }],
+            }),
+            fail: 'Kitchen not added',
+            catalog: true,
+          });
+          if (res) toast('Kitchen added', name, 'storefront');
+          return !!res;
         },
         saveBrand: async (b) => {
           const res = await write({

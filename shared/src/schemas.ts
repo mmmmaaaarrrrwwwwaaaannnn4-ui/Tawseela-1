@@ -64,6 +64,14 @@ export const Brand = z.object({
   order: z.number().int(),
 });
 export type Brand = z.infer<typeof Brand>;
+export const BrandInput = z.object({
+  name: Brand.shape.name,
+  tag: Brand.shape.tag,
+  icon: Brand.shape.icon,
+  img: Brand.shape.img,
+});
+export type BrandInput = z.infer<typeof BrandInput>;
+
 
 export const Banner = z.object({
   id,

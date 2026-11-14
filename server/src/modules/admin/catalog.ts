@@ -4,6 +4,7 @@ import {
   Banner,
   BannerPatch,
   Brand,
+  BrandInput,
   BrandPatch,
   Category,
   CategoryInput,
@@ -184,6 +185,45 @@ const adminCatalogRoutes: FastifyPluginAsyncZod = async (app) => {
   );
 
   /* ---------- kitchens and banners ---------- */
+
+  app.post('/brands', {
+    schema: {
+      summary: 'Create a kitchen',
+      body: BrandInput,
+      response: { 201: Brand, ...errors },
+    },
+  }, async (req, reply) => {
+    const name = req.body.name.trim();
+    const all = await col(COL.brands).get();
+
+    if (all.docs.some((d) =>
+      String(d.get('name')).toLowerCase() === name.toLowerCase()
+    )) {
+      throw conflict('duplicate', `${name} already exists.`);
+    }
+
+    let id = slug(name);
+    if (all.docs.some((d) => d.id === id)) {
+      id = `${id}-${now().toString(36).slice(-4)}`;
+    }
+
+    const doc = {
+      ...req.body,
+      name,
+      on: true,
+      order: await nextOrder(COL.brands),
+      createdAt: FieldValue.serverTimestamp(),
+    };
+
+    const batch = db.batch();
+    batch.create(col(COL.brands).doc(id), doc);
+    bumpCatalog(db, batch);
+    await batch.commit();
+
+    return reply.code(201).send(
+      Brand.parse({ id, ...doc })
+    );
+  });
 
   app.patch('/brands/:id', { schema: { summary: 'Edit or toggle a kitchen (saveBrand, toggleBrand)', params: idParam, body: BrandPatch, response: { 200: Brand, ...errors } } }, async (req) =>
     patch(col(COL.brands).doc(req.params.id), 'That kitchen', req.body, Brand),
