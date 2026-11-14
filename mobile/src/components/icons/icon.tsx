@@ -42,7 +42,7 @@ const ICON_ALIASES: Partial<Record<IconName, keyof typeof Lucide>> = {
   front_hand: 'Hand', function: 'FunctionSquare', label: 'Tag', light: 'Sun', group: 'Users', group_add: 'UserPlus', help: 'CircleHelp', history: 'History',
   home: 'House', inbox: 'Inbox', info: 'Info', inventory_2: 'Package', ios_share: 'Share',
   keyboard_arrow_down: 'ChevronDown', keyboard_arrow_up: 'ChevronUp', kitchen: 'ChefHat',
-  language: 'Languages', light: 'Sun', light_mode: 'Sun', link: 'Link', local_offer: 'Tag',
+  language: 'Languages', light_mode: 'Sun', link: 'Link', local_offer: 'Tag',
   local_pizza: 'Pizza', local_shipping: 'Truck', location_city: 'Building2', location_on: 'MapPin',
   lock: 'Lock', lock_open: 'LockOpen', lock_reset: 'KeyRound', login: 'LogIn', loyalty: 'Award',
   lunch_dining: 'Sandwich', mail: 'Mail', menu: 'Menu', menu_book: 'BookOpen', more: 'Ellipsis',
