@@ -1,5 +1,6 @@
 import { memo } from 'react';
 import type { ComponentType } from 'react';
+import type { StyleProp, ViewStyle } from 'react-native';
 import * as Lucide from 'lucide-react-native';
 
 import { useTheme } from '@/theme/theme';
@@ -13,7 +14,7 @@ interface Props {
   color?: string;
   /** Retained for compatibility with existing call sites. */
   fill?: boolean | 0 | 1;
-  style?: object;
+  style?: StyleProp<ViewStyle>;
 }
 
 type NativeIcon = ComponentType<{
@@ -23,6 +24,7 @@ type NativeIcon = ComponentType<{
   strokeLinecap?: 'round' | 'butt' | 'square';
   strokeLinejoin?: 'round' | 'miter' | 'bevel';
   fill?: string;
+  style?: StyleProp<ViewStyle>;
 }>;
 
 const ICON_ALIASES: Partial<Record<IconName, keyof typeof Lucide>> = {
