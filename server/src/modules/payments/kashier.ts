@@ -192,18 +192,40 @@ export async function initiateKashierWallet(
     const data = result?.response ?? result?.data?.response ?? result?.data ?? result;
     const status = String(data?.status ?? result?.status ?? '').toUpperCase();
     const systemOrderId = String(data?.order?.systemOrderId ?? data?.systemOrderId ?? '');
+    // Kashier documents transactionResponseCode (for example k_4/k_5), not only responseCode.
+    const code = String(
+      data?.transactionResponseCode ??
+      data?.responseCode ??
+      data?.code ??
+      result?.transactionResponseCode ??
+      result?.responseCode ??
+      result?.code ??
+      '',
+    ).toLowerCase();
+    const providerMessage = String(
+      data?.transactionResponseMessage?.en ??
+      data?.messages?.en ??
+      data?.message ??
+      result?.message ??
+      '',
+    ).slice(0, 240);
 
     if (!response.ok || status !== 'SUCCESS' || !systemOrderId) {
-      const code = String(data?.responseCode ?? data?.code ?? '');
       await attemptRef.update({
         status: 'failed',
-        providerCode: code,
+        providerCode: code || null,
+        providerMessage: providerMessage || null,
+        providerHttpStatus: response.status,
         updatedAt: FieldValue.serverTimestamp(),
       });
       throw new AppError(502, 'wallet_initiation_failed',
         code === 'k_5'
           ? 'This number is not registered with a supported wallet provider.'
-          : 'Kashier could not send the wallet payment request.');
+          : code === 'k_4'
+            ? 'Kashier accepted the wallet request but returned an incomplete payment reference. Contact support before retrying.'
+            : providerMessage
+              ? `Kashier rejected the wallet request: ${providerMessage}`
+              : `Kashier could not send the wallet payment request (HTTP ${response.status}${code ? `, code ${code}` : ''}).`);
     }
 
     await attemptRef.update({
