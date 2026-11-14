@@ -62,21 +62,6 @@ const ICON_ALIASES: Partial<Record<IconName, keyof typeof Lucide>> = {
   wine_bar: 'Wine', work: 'Briefcase', workspace_premium: 'Trophy',
 };
 
-const REQUIRED_ICONS = {
-  Heart: Lucide.Heart,
-  Gift: Lucide.Gift,
-  Settings: Lucide.Settings,
-  MessageSquareText: Lucide.MessageSquareText,
-  CircleHelp: Lucide.CircleHelp,
-  House: Lucide.House,
-  ShoppingCart: Lucide.ShoppingCart,
-  Wallet: Lucide.Wallet,
-  Menu: Lucide.Menu,
-  Search: Lucide.Search,
-  QrCode: Lucide.QrCode,
-  ChevronLeft: Lucide.ChevronLeft,
-};
-
 function resolveIcon(name: IconName): NativeIcon {
   const key = ICON_ALIASES[name] ?? name.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('');
   const Glyph = (Lucide as unknown as Record<string, unknown>)[key];
