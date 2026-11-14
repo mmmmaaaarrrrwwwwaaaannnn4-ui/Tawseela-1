@@ -12,7 +12,6 @@ interface Props {
   name: IconName;
   size?: number;
   color?: string;
-  /** Retained for compatibility with existing call sites. */
   fill?: boolean | 0 | 1;
   style?: StyleProp<ViewStyle>;
 }
@@ -33,12 +32,12 @@ const ICON_ALIASES: Partial<Record<IconName, keyof typeof Lucide>> = {
   arrow_back_ios_new: 'ChevronLeft', arrow_forward: 'ArrowRight', article: 'FileText',
   auto_stories: 'BookOpen', badge: 'BadgeCheck', block: 'Ban', bolt: 'Zap', cake: 'Cake',
   calendar_month: 'CalendarDays', call: 'Phone', cancel: 'XCircle', category: 'Shapes',
-  celebration: 'PartyPopper', chat: 'MessageCircle', check: 'Check', check_circle: 'CheckCircle',
+  celebration: 'PartyPopper', chat: 'MessageCircle', check: 'Check', check_circle: 'CircleCheck',
   chevron_right: 'ChevronRight', close: 'X', contactless: 'CreditCard', content_copy: 'Copy',
   countertops: 'CookingPot', credit_card: 'CreditCard', dark_mode: 'Moon', dashboard: 'LayoutDashboard',
   dashboard_customize: 'PanelsTopLeft', deck: 'Armchair', delete: 'Trash2', dinner_dining: 'Utensils',
   directions: 'Navigation', door_front: 'DoorOpen', download: 'Download', eco: 'Leaf', edit: 'Pencil',
-  edit_note: 'FilePenLine', edit_square: 'SquarePen', error: 'AlertCircle', event: 'Calendar',
+  edit_note: 'FilePenLine', edit_square: 'SquarePen', error: 'CircleAlert', event: 'Calendar',
   event_busy: 'CalendarX', event_seat: 'Armchair', expand_more: 'ChevronDown', favorite: 'Heart',
   front_hand: 'Hand', group: 'Users', group_add: 'UserPlus', help: 'CircleHelp', history: 'History',
   home: 'House', inbox: 'Inbox', info: 'Info', inventory_2: 'Package', ios_share: 'Share',
@@ -48,7 +47,7 @@ const ICON_ALIASES: Partial<Record<IconName, keyof typeof Lucide>> = {
   lock: 'Lock', lock_open: 'LockOpen', lock_reset: 'KeyRound', login: 'LogIn', loyalty: 'Award',
   lunch_dining: 'Sandwich', mail: 'Mail', menu: 'Menu', menu_book: 'BookOpen', more: 'Ellipsis',
   more_horiz: 'Ellipsis', my_location: 'LocateFixed', notifications: 'Bell', orders: 'ShoppingBag',
-  password: 'KeyRound', payments: 'CreditCard', person: 'User', person_remove: 'UserMinus',
+  password: 'KeyRound', payments: 'Wallet', person: 'UserRound', person_remove: 'UserMinus',
   phone_iphone: 'Smartphone', photo_camera: 'Camera', pin: 'MapPin', post: 'FileText',
   public: 'Globe', ramen_dining: 'Soup', rate_review: 'MessageSquareText', receipt_long: 'ReceiptText',
   redeem: 'Gift', remove: 'Minus', remove_shopping_cart: 'ShoppingCart', replay: 'RotateCcw',
@@ -63,13 +62,30 @@ const ICON_ALIASES: Partial<Record<IconName, keyof typeof Lucide>> = {
   wine_bar: 'Wine', work: 'Briefcase', workspace_premium: 'Trophy',
 };
 
+const REQUIRED_ICONS = {
+  Heart: Lucide.Heart,
+  Gift: Lucide.Gift,
+  Settings: Lucide.Settings,
+  MessageSquareText: Lucide.MessageSquareText,
+  CircleHelp: Lucide.CircleHelp,
+  House: Lucide.House,
+  ShoppingCart: Lucide.ShoppingCart,
+  Wallet: Lucide.Wallet,
+  Menu: Lucide.Menu,
+  Search: Lucide.Search,
+  QrCode: Lucide.QrCode,
+  ChevronLeft: Lucide.ChevronLeft,
+};
+
 function resolveIcon(name: IconName): NativeIcon {
-  const mapped = ICON_ALIASES[name] ?? name.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('');
-  const candidate = (Lucide as unknown as Record<string, unknown>)[mapped];
-  return (typeof candidate === 'function' ? candidate : Lucide.CircleHelp) as NativeIcon;
+  const key = ICON_ALIASES[name] ?? name.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join('');
+  const Glyph = (Lucide as unknown as Record<string, unknown>)[key];
+  if (typeof Glyph !== 'function') {
+    throw new Error(`Unknown Lucide icon: ${name} (resolved to ${String(key)})`);
+  }
+  return Glyph as NativeIcon;
 }
 
-/** Lucide outline icons with a consistent rounded stroke across the app. */
 function IconBase({ name, size = 24, color, fill = false, style }: Props) {
   const { c } = useTheme();
   const Glyph = resolveIcon(name);
@@ -78,7 +94,7 @@ function IconBase({ name, size = 24, color, fill = false, style }: Props) {
     <Glyph
       size={size}
       color={tint}
-      strokeWidth={2.15}
+      strokeWidth={1.85}
       strokeLinecap="round"
       strokeLinejoin="round"
       fill={fill ? tint : 'none'}
