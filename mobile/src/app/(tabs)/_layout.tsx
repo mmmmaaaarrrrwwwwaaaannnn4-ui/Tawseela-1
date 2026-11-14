@@ -12,15 +12,15 @@ function CartAccessory() {
   const { c } = useTheme();
 
   return (
-    <View style={{ width: '100%', alignItems: 'flex-start', paddingLeft: 12, paddingRight: 12, paddingVertical: placement === 'inline' ? 0 : 4 }}>
+    <View style={{ width: placement === 'inline' ? 48 : 68, height: placement === 'inline' ? 48 : 68, alignSelf: 'flex-start', alignItems: 'center', justifyContent: 'center', padding: 0 }}>
       <PressableScale
         onPress={() => router.navigate('/cart')}
         scaleTo={0.9}
         accessibilityRole="button"
         accessibilityLabel="السلة"
         style={{
-          width: placement === 'inline' ? 42 : 54,
-          height: placement === 'inline' ? 42 : 54,
+          width: placement === 'inline' ? 42 : 64,
+          height: placement === 'inline' ? 42 : 64,
           borderRadius: 27,
           alignItems: 'center',
           justifyContent: 'center',
