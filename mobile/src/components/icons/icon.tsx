@@ -234,7 +234,7 @@ function IconBase({ name, size = 24, color, fill = false, style }: {
       size={size}
       color={color ?? c.text1}
       strokeWidth={2.2}
-      fill={fill ? (color ?? c.text1) : 'none'}
+      fill="none"
       style={style}
     />
   );
