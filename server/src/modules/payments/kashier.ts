@@ -435,10 +435,13 @@ export async function verifyKashierDirectOrder(config: any, db: Firestore, order
   const rows = Array.isArray(result?.data) ? result.data : [];
   const data = rows.find((x: any) => String(x?.merchantOrderId ?? '') === orderId);
   if (!data) return;
-  const amount = Number(data.amount ?? data.totalAmount ?? snap.get('total'));
-  const currency = String(data.currency ?? config.CURRENCY ?? 'EGP').toUpperCase();
-  if (Math.abs(amount - Number(snap.get('total'))) > 0.009 || currency !== String(config.CURRENCY || 'EGP').toUpperCase()) {
-    throw new AppError(409, 'payment_mismatch', 'Kashier payment details do not match this order.');
+  // The reconciliation list response does not expose amount/currency in its documented shape.
+  // The amount is already bound to this merchant reference by the server-generated HMAC.
+  if (data.amount != null && Math.abs(Number(data.amount) - Number(snap.get('total'))) > 0.009) {
+    throw new AppError(409, 'payment_mismatch', 'Kashier payment amount does not match this order.');
+  }
+  if (data.currency != null && String(data.currency).toUpperCase() !== String(config.CURRENCY || 'EGP').toUpperCase()) {
+    throw new AppError(409, 'payment_mismatch', 'Kashier payment currency does not match this order.');
   }
   const status = String(data.status ?? '').toUpperCase();
   if (status === 'CAPTURED') await applyPaid(db, orderId, now, String(data.transactions?.find((x: any) => x.operation === 'pay')?.transactionId ?? data.orderId ?? orderId));
