@@ -27,7 +27,7 @@ function BottomBar({ state }: { state: { index: number; routes: { key: string; n
       <View style={styles.dockRow}>
         <View style={styles.mainBarShadow}>
           <GlassView
-            glassEffectStyle="regular"
+            glassEffectStyle="clear"
             isInteractive
             colorScheme={glassColorScheme}
             style={[
@@ -55,8 +55,7 @@ function BottomBar({ state }: { state: { index: number; routes: { key: string; n
                     {focused ? (
                       <GlassView
                         pointerEvents="none"
-                        glassEffectStyle="regular"
-                        tintColor={isDark ? '#6A2830' : '#F1E5E7'}
+                        glassEffectStyle={{ style: 'clear', animate: true, animationDuration: 0.35 }}
                         colorScheme={glassColorScheme}
                         style={styles.selectedGlass}
                       />
