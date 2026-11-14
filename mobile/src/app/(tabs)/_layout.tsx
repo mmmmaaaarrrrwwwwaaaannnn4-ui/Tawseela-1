@@ -96,7 +96,7 @@ function BottomBar({ state, navigation }: BottomTabBarProps) {
                 },
               ]}
             >
-              <Icon name="shopping_bag" size={27} color={c.accent} />
+              <Icon name="add_shopping_cart" size={29} color={c.accent} />
             </GlassView>
           </Pressable>
         </View>
