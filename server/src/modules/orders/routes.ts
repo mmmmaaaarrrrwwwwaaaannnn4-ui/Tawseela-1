@@ -4,7 +4,7 @@ import { z } from 'zod';
 
 import { AppError } from '../../lib/errors';
 import { requireUser } from '../../plugins/auth';
-import { createKashierDirectIntent, initiateKashierWallet, reconcileKashierWallet, requireKashier, verifyKashierSession } from '../payments/kashier';
+import { createKashierDirectIntent, initiateKashierWallet, reconcileKashierWallet, requireKashier, verifyKashierSession, verifyKashierDirectOrder } from '../payments/kashier';
 import { cancelUnpaid, createOrder, getOrderFor, inKitchen, listOrders, rateOrder, reportIssue } from './service';
 
 const secured = { security: [{ firebase: [] }] };
@@ -140,6 +140,8 @@ const orderRoutes: FastifyPluginAsyncZod = async (app) => {
       const storedOrder = await db.collection('orders').doc(order.id).get();
       if (order.payment.method === 'wallet') {
         await reconcileKashierWallet(config, db, order.id, user.uid, now());
+      } else if (storedOrder.get('payment.provider') === 'kashier_direct') {
+        await verifyKashierDirectOrder(config, db, order.id, now());
       } else if (storedOrder.get('payment.kashierSessionId')) {
         await verifyKashierSession(config, db, order.id, now());
       }
