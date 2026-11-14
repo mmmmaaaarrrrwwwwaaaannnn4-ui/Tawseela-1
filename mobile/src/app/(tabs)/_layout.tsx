@@ -34,7 +34,7 @@ function CartAccessory() {
           elevation: 8,
         }}
       >
-        <Icon name="shopping_cart" size={25} color={c.accent} />
+        <Icon name="shopping_bag" size={25} color={c.accent} />
         {placement === 'inline' ? null : <Txt s={10} w={700} color={c.accentText}>السلة</Txt>}
       </PressableScale>
     </View>
