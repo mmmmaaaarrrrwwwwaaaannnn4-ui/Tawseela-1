@@ -186,7 +186,7 @@ function Checkout() {
             <PressableScale onPress={() => { set({ payM: 2 }); setPaymentSheet(false); }} scaleTo={0.98}
               style={[styles.choice, sel(s.payM === 2)]}>
               <Icon name="payments" size={22} color={s.payM === 2 ? c.accent : c.text1} />
-              <Txt s={13} w={700} textAlign="center">الدفع النقدي عند الاستلام</Txt>
+              <Txt s={13} w={700} align="center">الدفع النقدي عند الاستلام</Txt>
               <Radio on={s.payM === 2} />
             </PressableScale>
             <PressableScale onPress={() => setPaymentSheet(true)} scaleTo={0.98}
