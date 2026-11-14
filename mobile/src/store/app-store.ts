@@ -124,7 +124,9 @@ export interface Remote {
   createCategory: (name: string) => Promise<ApiCategory>;
   patchCategory: (id: string, p: { on?: boolean; img?: string }) => Promise<ApiCategory>;
   reorder: (kind: 'categories' | 'banners' | 'sections', ids: string[]) => Promise<void>;
+  createBrand: (b: Omit<ApiBrand, 'id' | 'order'>) => Promise<ApiBrand>;
   patchBrand: (id: string, p: Partial<Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img' | 'on'>>) => Promise<ApiBrand>;
+  deleteBrand: (id: string) => Promise<void>;
   patchBanner: (id: string, p: { on?: boolean }) => Promise<unknown>;
   patchSection: (k: HomeSectionKey, p: { on?: boolean }) => Promise<unknown>;
   patchDeal: (p: Partial<Deal>) => Promise<Deal>;
@@ -299,7 +301,9 @@ interface Actions {
   moveCat: (i: number, d: number) => void;
   addCat: (name: string) => Promise<boolean>;
   toggleBrand: (id: string) => void;
+  createBrand: (b: Omit<Brand, 'id'>) => Promise<boolean>;
   saveBrand: (b: Brand) => Promise<boolean>;
+  deleteBrand: (id: string) => Promise<boolean>;
   toggleSection: (k: HomeSectionKey) => void;
   moveSection: (i: number, d: number) => void;
   toggleBanner: (id: string) => void;
@@ -997,6 +1001,32 @@ export const useApp = create<AppStore>()(
             fail: 'Kitchen not updated',
             catalog: true,
           });
+        },
+        createBrand: async (b) => {
+          try {
+            const created = await server().createBrand(b);
+            set((s) => ({ brands: [...s.brands, created] }));
+            server().catalogChanged();
+            toast('Kitchen added', created.name, 'storefront');
+            return true;
+          } catch (e) {
+            toast('Kitchen not added', server().errorMessage(e), 'error');
+            return false;
+          }
+        },
+        deleteBrand: async (id) => {
+          const brand = get().brands.find((x) => x.id === id);
+          if (!brand) return false;
+          try {
+            await server().deleteBrand(id);
+            set((s) => ({ brands: s.brands.filter((x) => x.id !== id) }));
+            server().catalogChanged();
+            toast('Kitchen deleted', brand.name, 'delete');
+            return true;
+          } catch (e) {
+            toast('Kitchen not deleted', server().errorMessage(e), 'error');
+            return false;
+          }
         },
         saveBrand: async (b) => {
           const res = await write({
