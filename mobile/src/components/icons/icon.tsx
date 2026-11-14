@@ -2,10 +2,9 @@ import { memo } from 'react';
 import type { ComponentType } from 'react';
 import type { StyleProp, ViewStyle } from 'react-native';
 import * as Lucide from 'lucide-react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import { useTheme } from '@/theme/theme';
-import { GLYPHS, type IconName } from './glyphs';
+import type { IconName } from './glyphs';
 
 export type { IconName };
 
@@ -40,7 +39,7 @@ const ICON_ALIASES: Partial<Record<IconName, keyof typeof Lucide>> = {
   directions: 'Navigation', door_front: 'DoorOpen', download: 'Download', eco: 'Sprout', edit: 'Pencil',
   edit_note: 'FilePenLine', edit_square: 'SquarePen', error: 'CircleAlert', event: 'Calendar',
   event_busy: 'CalendarX', event_seat: 'Armchair', expand_more: 'ChevronDown', favorite: 'Heart',
-  front_hand: 'Hand', group: 'Users', group_add: 'UserPlus', help: 'CircleHelp', history: 'History',
+  front_hand: 'Hand', function: 'FunctionSquare', label: 'Tag', light: 'Sun', group: 'Users', group_add: 'UserPlus', help: 'CircleHelp', history: 'History',
   home: 'House', inbox: 'Inbox', info: 'Info', inventory_2: 'Package', ios_share: 'Share',
   keyboard_arrow_down: 'ChevronDown', keyboard_arrow_up: 'ChevronUp', kitchen: 'ChefHat',
   language: 'Languages', light: 'Sun', light_mode: 'Sun', link: 'Link', local_offer: 'Tag',
@@ -76,16 +75,7 @@ function IconBase({ name, size = 24, color, fill = false, style }: Props) {
   const { c } = useTheme();
   const Glyph = resolveIcon(name);
   const tint = color ?? c.text1;
-  if (!Glyph) {
-    const paths = GLYPHS[name];
-    const path = paths?.[fill ? 1 : 0] ?? paths?.[0];
-    if (!path) return null;
-    return (
-      <Svg width={size} height={size} viewBox="0 -960 960 960" style={style}>
-        <Path d={path} fill={tint} />
-      </Svg>
-    );
-  }
+  if (!Glyph) return null;
   return (
     <Glyph
       size={size}
