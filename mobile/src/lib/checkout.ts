@@ -5,7 +5,6 @@ import { useSession } from '@/store/session';
 
 import { api, ApiError, errorMessage, newIdempotencyKey, request } from './api';
 import { round2 } from './pricing';
-import * as Linking from 'expo-linking';
 import { syncCatalog, syncMe } from './sync';
 
 /*
@@ -59,7 +58,7 @@ let last: { sig: string; key: string } | null = null;
  */
 export type CardDetails = { number: string; name: string; month: string; year: string; cvv: string };
 
-export async function placeOrder(card?: CardDetails, walletPhone?: string): Promise<CheckoutResult> {
+export async function placeOrder(card?: CardDetails, walletPhone?: string, openThreeDS?: (url: string) => Promise<void>): Promise<CheckoutResult> {
   const req = buildOrderRequest();
   if (!req.items.length) return { ok: false, message: 'Your cart is empty.' };
   // the same key while the request is unchanged: a retry returns the same order
@@ -166,7 +165,10 @@ export async function placeOrder(card?: CardDetails, walletPhone?: string): Prom
       return { ok: false, message: gateway?.messages?.ar || gateway?.messages?.en || 'تعذر إتمام الدفع. راجع بيانات البطاقة وحاول مرة أخرى.' };
     }
     const redirectUrl = gateway?.response?.authentication?.redirectUrl;
-    if (typeof redirectUrl === 'string' && redirectUrl.startsWith('https://')) await Linking.openURL(redirectUrl);
+    if (typeof redirectUrl === 'string' && redirectUrl.startsWith('https://')) {
+      if (!openThreeDS) return { ok: false, message: 'يلزم إكمال تحقق البنك داخل التطبيق قبل تأكيد الدفع.' };
+      await openThreeDS(redirectUrl);
+    }
 
     // Only the signed payment confirmation can mark this order as paid. The app response is not trusted.
     for (let i = 0; i < 45; i++) {
