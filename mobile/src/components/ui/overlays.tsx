@@ -45,10 +45,11 @@ interface SheetProps {
   /** 'modal' — bg surface, 90% max height (Add address/card…); 'glass' — filter sheet. */
   variant?: 'modal' | 'glass';
   scroll?: boolean;
+  fullScreen?: boolean;
 }
 
 /** Bottom sheet with scrim, grabber and springy slide (`translateY(105%) → none`). */
-export function Sheet({ visible, onClose, title, subtitle, header, footer, children, variant = 'modal', scroll = true }: SheetProps) {
+export function Sheet({ visible, onClose, title, subtitle, header, footer, children, variant = 'modal', scroll = true, fullScreen = false }: SheetProps) {
   const { c } = useTheme();
   const { height } = useWindowDimensions();
   const { insets } = useChrome();
@@ -81,7 +82,7 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
       hide.remove();
     };
   }, []);
-  const maxHeight = Math.min(height * 0.9, height - kb - insets.top - 8);
+  const maxHeight = fullScreen ? height - kb : Math.min(height * 0.9, height - kb - insets.top - 8);
 
   useEffect(() => {
     if (visible) {
@@ -143,7 +144,7 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
                 {body}
               </Glass>
             ) : (
-              <View style={[styles.sheet, { backgroundColor: c.bg }]}>
+              <View style={[styles.sheet, fullScreen && styles.fullScreenSheet, { backgroundColor: c.bg, paddingTop: fullScreen ? insets.top + 8 : 10, borderTopLeftRadius: fullScreen ? 0 : 32, borderTopRightRadius: fullScreen ? 0 : 32 }]}>
                 <View style={styles.head}>
                   <Grabber />
                   {header ?? (
@@ -317,6 +318,7 @@ const styles = StyleSheet.create({
   kav: { flex: 1, justifyContent: 'flex-end' },
   sheetShadow: { shadowColor: '#1A1A1A', shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: -24 }, elevation: 24 },
   sheet: { flexShrink: 1, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden', paddingTop: 10 },
+  fullScreenSheet: { flex: 1, borderTopLeftRadius: 0, borderTopRightRadius: 0 },
   head: { paddingHorizontal: 20, paddingBottom: 12 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
   footer: { paddingTop: 10, paddingHorizontal: 20, borderTopWidth: 1 },
