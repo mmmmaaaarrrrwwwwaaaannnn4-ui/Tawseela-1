@@ -81,7 +81,7 @@ export function CardSheet({
     >
       <View style={styles.content}>
         <PressableScale onPress={toggleFlip} scaleTo={0.995} style={styles.cardWrap}>
-          <View style={{ height: 210 }}>
+          <View style={{ height: 176 }}>
             <Animated.View style={[StyleSheet.absoluteFill, styles.cardShadow, front]}>
               <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
                 <View style={styles.chipRow}>
@@ -236,17 +236,21 @@ export function CardSheet({
           <View style={styles.dividerFlex} />
         </View>
         <View style={styles.providerRow}>
-          {providers.map((p, i) => (
-            <PressableScale key={p.key} onPress={() => {}} style={[styles.providerTile, { backgroundColor: p.bg }]}>
-              {i === 4 ? <WalletProviderLogo provider="توصيلة" width={54} height={55} /> : null}
-            </PressableScale>
-          ))}
-          <Image
-            pointerEvents="none"
-            source={require('../../assets/payments/payment-provider-logos.png')}
-            resizeMode="stretch"
-            style={styles.providerSprite}
-          />
+          <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#F4ECFB' }]}>
+            <Image source={require('../../assets/payments/insta pay.PNG')} resizeMode="contain" style={styles.providerImage} />
+          </PressableScale>
+          <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#FFF4E8' }]}>
+            <Image source={require('../../assets/payments/orange cash.PNG')} resizeMode="contain" style={styles.providerImage} />
+          </PressableScale>
+          <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#F2ECFA' }]}>
+            <Image source={require('../../assets/payments/we pay.PNG')} resizeMode="contain" style={styles.providerImage} />
+          </PressableScale>
+          <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#FFF0F1' }]}>
+            <Image source={require('../../assets/payments/اتصلات كاش.PNG')} resizeMode="contain" style={styles.providerImage} />
+          </PressableScale>
+          <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#FFF0F0' }]}>
+            <Image source={require('../../assets/branding/tawsela-card-logo.png')} resizeMode="contain" style={styles.providerImage} />
+          </PressableScale>
         </View>
       </View>
     </Sheet>
@@ -282,7 +286,7 @@ const styles = StyleSheet.create({
   otherMethodsTitle: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 5 },
   dividerFlex: { height: 1, flex: 1, backgroundColor: '#BFC3CA' },
   providerRow: { position: 'relative', flexDirection: 'row', gap: 4, justifyContent: 'space-between' },
-  providerSprite: { position: 'absolute', left: 0, top: 0, width: '80%', height: 76 },
+  providerImage: { width: '82%', height: '82%' },
   providerTile: { flex: 1, minWidth: 0, height: 76, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   confirmButton: { height: 62, borderRadius: 22, backgroundColor: '#FFF176', alignItems: 'center', justifyContent: 'center' },
   magneticStripe: { position: 'absolute', left: 0, right: 0, top: 28, height: 42, backgroundColor: '#151515' },
