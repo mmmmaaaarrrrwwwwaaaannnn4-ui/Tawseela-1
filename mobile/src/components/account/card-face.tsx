@@ -3,7 +3,7 @@ import type { ReactNode } from 'react';
 import { Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, G, LinearGradient as SvgGradient, Path, Rect, Stop } from 'react-native-svg';
 
-const TAWSELA_LOGO = require('@/assets/branding/tawsela_logo.png');
+const TAWSELA_LOGO = require('../../assets/branding/tawsela_logo.png');
 
 const TAWSELA_CARD_GRADIENT = ['#0C7D58', '#056244', '#014835', '#012B20', '#011B14'] as const;
 export { TAWSELA_CARD_GRADIENT };
