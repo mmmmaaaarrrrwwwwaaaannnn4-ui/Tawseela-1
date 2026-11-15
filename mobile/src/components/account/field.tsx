@@ -20,6 +20,7 @@ interface FieldProps extends Omit<TextInputProps, 'style'> {
   weight?: 500 | 600 | 700;
   letterSpacing?: number;
   bg?: string;
+  focusColor?: string;
   style?: StyleProp<ViewStyle>;
   ref?: Ref<TextInputInstance>;
 }
@@ -37,6 +38,7 @@ export function Field({
   weight = 500,
   letterSpacing,
   bg,
+  focusColor,
   style,
   onFocus,
   onBlur,
@@ -45,7 +47,7 @@ export function Field({
 }: FieldProps) {
   const { c } = useTheme();
   const [focus, setFocus] = useState(false);
-  const border = error ? c.err : focus ? c.accent : c.line;
+  const border = error ? c.err : focus ? (focusColor ?? c.accent) : c.line;
   return (
     <View style={[styles.wrap, style]}>
       <TextInput
