@@ -205,7 +205,7 @@ function Checkout() {
               <Txt s={15} w={700}>{walletProvider || 'محفظة الموبايل'}</Txt>
               <TextInput value={walletPhone} onChangeText={(v) => setWalletPhone(v.replace(/[^0-9]/g, '').slice(0, 11))}
                 placeholder="01XXXXXXXXX" keyboardType="phone-pad" maxLength={11}
-                style={[styles.note, { minHeight: 52, borderColor: c.line, backgroundColor: c.surface1, color: c.text1 }]} />
+                style={[styles.note, { minHeight: 52, borderColor: c.line, backgroundColor: c.surface1, color: c.text1, fontFamily: family(400) }]} />
             </Card>
           ) : null}
           {(s.payM === 0 || s.payM === 1) ? (
@@ -223,7 +223,7 @@ function Checkout() {
               )) : (
                 <Txt s={13} color={c.text2}>لا توجد بطاقة محفوظة حتى الآن.</Txt>
               )}
-              {s.cards.length ? <TextInput value={savedCardCvv} onChangeText={(v) => setSavedCardCvv(v.replace(/[^0-9]/g, '').slice(0, 4))} placeholder="رمز الأمان CVV" keyboardType="number-pad" secureTextEntry maxLength={4} style={[styles.note, { minHeight: 50, borderColor: c.line, backgroundColor: c.surface1, color: c.text1 }]} /> : null}
+              {s.cards.length ? <TextInput value={savedCardCvv} onChangeText={(v) => setSavedCardCvv(v.replace(/[^0-9]/g, '').slice(0, 4))} placeholder="رمز الأمان CVV" keyboardType="number-pad" secureTextEntry maxLength={4} style={[styles.note, { minHeight: 50, borderColor: c.line, backgroundColor: c.surface1, color: c.text1, fontFamily: family(400) }]} /> : null}
               <AccentButton label={s.cards.length ? 'إدارة البطاقات' : 'إضافة فيزا أو ماستركارد'} onPress={() => router.push('/payments')} icon="add_card" />
             </Card>
           ) : null}
