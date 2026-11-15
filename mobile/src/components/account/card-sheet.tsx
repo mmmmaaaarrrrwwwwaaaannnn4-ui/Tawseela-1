@@ -182,7 +182,6 @@ export function CardSheet({
       onSaveWallet?.(wallet.label, normalizeEgyptPhone(walletPhone), walletName.trim(), saveWallet);
       return;
     }
-    if (!validNumber || !validExp || !validCvv || !n.name.trim()) return;
     onSave();
   };
 
@@ -380,7 +379,7 @@ export function CardSheet({
           </Animated.View>
         ) : (
           <Animated.View style={[styles.walletForm, formTransition]}>
-            <Txt s={17} w={800} color="#111111" textAlign="right">بيانات {wallet.label}</Txt>
+            <Txt s={17} w={800} color="#111111" align="right">بيانات {wallet.label}</Txt>
             <View style={styles.formGroup}>
               <Field
                 value={formatEgyptPhone(walletPhone)}
