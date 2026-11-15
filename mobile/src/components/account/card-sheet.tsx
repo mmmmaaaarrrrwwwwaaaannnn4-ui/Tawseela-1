@@ -3,6 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Icon } from '@/components/icons/icon';
+import { PaymentNetworkLogo } from './brand-logos';
 import { AccentButton } from '@/components/ui/buttons';
 import { Eyebrow } from '@/components/ui/layout';
 import { Sheet } from '@/components/ui/overlays';
@@ -76,9 +77,7 @@ export function CardSheet({
           <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
             <View style={styles.between}>
               <CardChip />
-              <Txt s={16} w={800} ls={0.12} color={CARD_INK}>
-                {d ? b.name : 'CARD'}
-              </Txt>
+              <PaymentNetworkLogo brand={d ? b.name : 'CARD'} width={58} height={28} />
             </View>
             <Txt s={21} w={600} ls={0.14} tabular color="#FFFFFF">
               {shown}
@@ -88,12 +87,12 @@ export function CardSheet({
                 <Txt s={9.5} w={600} ls={0.1} color="rgba(253,250,235,0.72)">
                   CARD HOLDER
                 </Txt>
-                <Txt s={13} w={600} ls={0.08} color="#FFFFFF" numberOfLines={1}>
+                <Txt s={13} w={600} ls={0.08} color={CARD_INK} numberOfLines={1}>
                   {n.name.trim() || 'NAME ON CARD'}
                 </Txt>
               </View>
               <View style={{ gap: 2, alignItems: 'flex-end' }}>
-                <Txt s={9.5} w={600} ls={0.1} color="rgba(255,255,255,0.65)">
+                <Txt s={9.5} w={600} ls={0.1} color="rgba(253,250,235,0.72)">
                   EXPIRES
                 </Txt>
                 <Txt s={13} w={600} ls={0.08} color="#FFFFFF">
