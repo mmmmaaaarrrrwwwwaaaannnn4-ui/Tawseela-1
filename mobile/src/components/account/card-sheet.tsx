@@ -3,7 +3,7 @@ import { StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Icon } from '@/components/icons/icon';
-import { PaymentNetworkLogo } from './brand-logos';
+import { PaymentNetworkLogo, WalletProviderLogo } from './brand-logos';
 import { AccentButton } from '@/components/ui/buttons';
 import { Eyebrow } from '@/components/ui/layout';
 import { Sheet } from '@/components/ui/overlays';
@@ -68,38 +68,34 @@ export function CardSheet({
     <Sheet
       visible={visible}
       onClose={onClose}
-      title="Add a card"
-      subtitle="أضف بطاقة الدفع الخاصة بك"
-      footer={<AccentButton label="Save card" icon="lock" iconFill iconSize={19} onPress={onSave} />}
+      title="إضافة بطاقة جديدة"
+      subtitle="أدخل بيانات بطاقتك البنكية بأمان"
+      footer={<AccentButton label="تأكيد وإضافة البطاقة" icon="lock" iconFill iconSize={19} onPress={onSave} />}
     >
       <View style={{ height: 196 }}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.shadow, front]}>
           <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
-            <View style={[styles.between, { justifyContent: 'flex-start', gap: 12 }]}>
+            <View style={[styles.between, { justifyContent: 'flex-start', gap: 12, marginTop: 34 }]}>
               <CardChip />
-              <Icon name="contactless" size={24} color={CARD_INK} />
+              <Icon name="contactless" size={27} color={CARD_INK} />
             </View>
-            <Txt s={21} w={600} ls={0.14} tabular color="#FFFFFF">
+            <Txt s={18} w={600} ls={0.13} tabular color="#FFFFFF">
               {shown}
             </Txt>
             <View style={[styles.between, { alignItems: 'flex-end' }]}>
-              <View style={{ gap: 2, flexShrink: 1 }}>
-                <Txt s={9.5} w={600} ls={0.1} color="rgba(253,250,235,0.72)">
-                  CARD HOLDER
-                </Txt>
-                <Txt s={13} w={600} ls={0.08} color={CARD_INK} numberOfLines={1}>
-                  {n.name.trim() || 'NAME ON CARD'}
+              <View style={{ gap: 3, flexShrink: 1 }}>
+                <Txt s={9} w={500} color="rgba(253,250,235,0.76)">اسم حامل البطاقة</Txt>
+                <Txt s={12} w={600} color={CARD_INK} numberOfLines={1}>
+                  {n.name.trim() || 'الاسم كما هو على البطاقة'}
                 </Txt>
               </View>
-              <View style={{ gap: 2, alignItems: 'flex-end' }}>
-                <Txt s={9.5} w={600} ls={0.1} color="rgba(253,250,235,0.72)">
-                  EXPIRES
+              <View style={{ gap: 3, alignItems: 'flex-start' }}>
+                <Txt s={9} w={500} color="rgba(253,250,235,0.76)">MM/YY</Txt>
+                <Txt s={12} w={600} color="#FFFFFF">
+                  {n.exp || '••/••'}
                 </Txt>
-                <Txt s={13} w={600} ls={0.08} color="#FFFFFF">
-                  {n.exp || 'MM/YY'}
-                </Txt>
-                <PaymentNetworkLogo brand={d ? b.name : 'CARD'} width={42} height={20} />
               </View>
+              <PaymentNetworkLogo brand={d ? b.name : 'MASTERCARD'} width={42} height={24} />
             </View>
           </CardSurface>
         </Animated.View>
@@ -119,7 +115,7 @@ export function CardSheet({
       </View>
 
       <View style={{ gap: 8 }}>
-        <Eyebrow>Card number</Eyebrow>
+        <Eyebrow>رقم البطاقة</Eyebrow>
         <Field
           icon="credit_card"
           value={n.num}
@@ -131,19 +127,19 @@ export function CardSheet({
                 .replace(/(.{4})(?=.)/g, '$1 '),
             })
           }
-          placeholder="1234 5678 9012 3456"
+          placeholder="0000 0000 0000 0000"
           keyboardType="number-pad"
           autoComplete="cc-number"
           error={showErrors && d.length < 15}
         />
       </View>
       <View style={{ gap: 8 }}>
-        <Eyebrow>Name on card</Eyebrow>
+        <Eyebrow>اسم حامل البطاقة</Eyebrow>
         <Field
           icon="person"
           value={n.name}
           onChangeText={(v) => onChange({ name: v.toUpperCase() })}
-          placeholder="As printed on the card"
+          placeholder="الاسم كما هو مكتوب على البطاقة"
           autoComplete="name"
           autoCapitalize="characters"
           error={showErrors && !n.name.trim()}
@@ -151,7 +147,7 @@ export function CardSheet({
       </View>
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
-          <Eyebrow>Expiry</Eyebrow>
+          <Eyebrow>الشهر / السنة</Eyebrow>
           <Field
             icon="calendar_month"
             value={n.exp}
@@ -166,7 +162,7 @@ export function CardSheet({
           />
         </View>
         <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
-          <Eyebrow>CVV</Eyebrow>
+          <Eyebrow>رمز الأمان CVV</Eyebrow>
           <Field
             icon="lock"
             value={n.cvv}
@@ -181,16 +177,36 @@ export function CardSheet({
         </View>
       </View>
       <View style={{ gap: 8 }}>
-        <Eyebrow>Nickname (optional)</Eyebrow>
-        <Field icon="sell" value={n.nick} onChangeText={(nick) => onChange({ nick })} placeholder="e.g. Work card" />
+        <Eyebrow>اسم مختصر للبطاقة (اختياري)</Eyebrow>
+        <Field icon="sell" value={n.nick} onChangeText={(nick) => onChange({ nick })} placeholder="مثال: بطاقتي الأساسية" />
       </View>
       <View style={{ borderRadius: 20, borderWidth: 1, borderColor: c.line, backgroundColor: c.surface1, overflow: 'hidden' }}>
-        <ToggleRow icon="verified" title="Use as default payment" on={n.def} minHeight={60} last onPress={() => onChange({ def: !n.def })} />
+        <ToggleRow icon="verified" title="تعيين كطريقة الدفع الأساسية" on={n.def} minHeight={60} last onPress={() => onChange({ def: !n.def })} />
+      </View>
+      <View style={{ gap: 9 }}>
+        <Eyebrow>شبكات البطاقات المدعومة</Eyebrow>
+        <View style={styles.networks}>
+          <PaymentNetworkLogo brand="MADA" width={34} height={27} />
+          <PaymentNetworkLogo brand="VISA" width={38} height={25} />
+          <PaymentNetworkLogo brand="AMEX" width={34} height={25} />
+          <PaymentNetworkLogo brand="MASTERCARD" width={34} height={25} />
+          <PaymentNetworkLogo brand="DISCOVER" width={42} height={24} />
+        </View>
+      </View>
+      <View style={{ gap: 9 }}>
+        <Eyebrow>طرق دفع أخرى</Eyebrow>
+        <View style={styles.wallets}>
+          <WalletProviderLogo provider="InstaPay" width={44} height={38} />
+          <WalletProviderLogo provider="Orange Cash" width={44} height={38} />
+          <WalletProviderLogo provider="WE Pay" width={44} height={38} />
+          <WalletProviderLogo provider="Etisalat Cash" width={44} height={38} />
+          <WalletProviderLogo provider="Vodafone Cash" width={44} height={38} />
+        </View>
       </View>
       <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
         <Icon name="shield_lock" size={18} fill color={c.ok} />
         <Txt s={12} w={500} lh={1.5} color={c.text3} style={{ flex: 1 }}>
-          لا تشارك بيانات بطاقتك مع أي شخص. لا يتم حفظ رقم البطاقة أو رمز الأمان داخل التطبيق.
+          توصيلة تحمي معلومات بطاقتك وتستخدم اتصالًا آمنًا لمعالجة الدفع. لا يتم حفظ رقم البطاقة أو رمز الأمان على جهازك.
         </Txt>
       </View>
     </Sheet>
@@ -200,6 +216,8 @@ export function CardSheet({
 const styles = StyleSheet.create({
   shadow: { borderRadius: 26, shadowColor: '#1A1A1A', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 22 }, elevation: 10 },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  networks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 7 },
+  wallets: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 7, padding: 9, borderRadius: 16, backgroundColor: '#F3F3F8' },
   strip: { position: 'absolute', left: 0, right: 0, top: 28, height: 42, backgroundColor: '#111111' },
   cvv: {
     position: 'absolute',
