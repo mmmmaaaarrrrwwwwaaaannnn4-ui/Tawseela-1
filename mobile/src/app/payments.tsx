@@ -104,8 +104,7 @@ export default function PaymentsScreen() {
       const result: any = await response.json().catch(() => ({}));
       const token = result?.response?.paymentMethod?.card?.cardToken ?? result?.response?.paymentMethod?.card?.cardDataToken;
       if (!response.ok || result?.status !== 'SUCCESS' || typeof token !== 'string') throw new Error(result?.messages?.ar || result?.messages?.en || 'تعذر تأكيد البطاقة. راجع البيانات وحاول مرة أخرى.');
-      const cardFingerprint = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, digits);
-      await api.post('/v1/me/cards', { cardToken: token }, { idempotencyKey: `saved-card-${cardFingerprint}` });
+      await api.post('/v1/me/cards', { cardToken: token }, { idempotencyKey: `saved-card-${Crypto.randomUUID()}` });
       const saved = await api.get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards');
       const next = saved.cards.map((x) => { const b = cardBrandOf(x.number.replace(/\D/g, '')); return { id: x.id, brand: x.brand || b.name, num: x.number, exp: x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '', bg: b.bg, nick: '', name: x.name }; });
       const currentDefault = useApp.getState().defCard;
