@@ -14,6 +14,12 @@ import { ensureUser, readUserTx, toMe, userRef } from './service';
 const secured = { security: [{ firebase: [] }] };
 const errors = { 400: ApiError, 401: ApiError, 403: ApiError, 404: ApiError, 409: ApiError };
 
+/** Persist and return only a masked PAN; the full card number and CVV never enter Firestore. */
+const maskCardNumber = (value: unknown) => {
+  const digits = String(value ?? '').replace(/\\D/g, '');
+  return digits.length >= 4 ? '•••• •••• •••• ' + digits.slice(-4) : '••••';
+};
+
 const meRoutes: FastifyPluginAsyncZod = async (app) => {
   const { db, auth, now, config } = app.deps;
 
@@ -81,7 +87,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
       cards: [...byToken.values()].map((card: any) => ({
         id: String(card.cardToken),
         token: String(card.cardToken),
-        number: String(card.number || ''),
+        number: maskCardNumber(card.number),
         name: String(card.nameOnCard || card.name || ''),
         expiry: card.expiry ? { month: String(card.expiry.month || ''), year: String(card.expiry.year || '') } : null,
         brand: String(card.brand || card.scheme || 'CARD'),
@@ -97,7 +103,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     const body: any = await response.json().catch(() => ({}));
     const card = body?.response?.paymentMethod?.card;
     if (!response.ok || !card?.cardToken || card.cardToken !== req.body.cardToken) throw new AppError(400, 'card_token_invalid', 'Kashier could not verify this saved card.');
-    await userRef(db, user.uid).set({ paymentMethods: { cards: { [req.body.cardToken]: { token: req.body.cardToken, number: String(card.number || ''), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD'), savedAt: now() } } } }, { merge: true });
+    await userRef(db, user.uid).set({ paymentMethods: { cards: { [req.body.cardToken]: { token: req.body.cardToken, number: maskCardNumber(card.number), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD'), savedAt: now() } } } }, { merge: true });
     return { saved: true, card: { id: String(card.cardToken), number: String(card.number || ''), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD') } };
   });
 
