@@ -24,14 +24,14 @@ export function CardSurface({
   style,
   logo,
 }: {
-  bg?: readonly string[];
+  bg?: readonly [string, string, ...string[]];
   children?: ReactNode;
   style?: StyleProp<ViewStyle>;
   logo?: 'front' | 'back';
 }) {
   return (
     <View style={[styles.card, style]}>
-      <LinearGradient colors={[...bg]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
+      <LinearGradient colors={bg} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
       <View style={styles.orb} />
       {logo ? <CardLogo side={logo} /> : null}
       {children}
