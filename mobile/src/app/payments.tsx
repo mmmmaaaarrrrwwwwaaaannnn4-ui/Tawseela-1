@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import * as Crypto from 'expo-crypto';
 import { router } from 'expo-router';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
@@ -23,7 +24,7 @@ import { fixed } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme';
 
 const OTHER: { l: string; icon: IconName; s: string; m: number }[] = [
-  { l: 'Kashier card', icon: 'credit_card', s: 'Pay with a saved bank card', m: 0 },
+  { l: 'Credit or debit card', icon: 'credit_card', s: 'Pay with a saved bank card', m: 0 },
   { l: 'Cash on delivery', icon: 'payments', s: 'Pay the courier at the door', m: 2 },
 ];
 
@@ -84,18 +85,19 @@ export default function PaymentsScreen() {
       });
       const result: any = await response.json().catch(() => ({}));
       const token = result?.response?.paymentMethod?.card?.cardToken ?? result?.response?.paymentMethod?.card?.cardDataToken;
-      if (!response.ok || result?.status !== 'SUCCESS' || typeof token !== 'string') throw new Error(result?.messages?.ar || result?.messages?.en || 'Kashier did not return a saved card token.');
-      await api.post('/v1/me/cards', { cardToken: token });
+      if (!response.ok || result?.status !== 'SUCCESS' || typeof token !== 'string') throw new Error(result?.messages?.ar || result?.messages?.en || 'تعذر تأكيد البطاقة. راجع البيانات وحاول مرة أخرى.');
+      const cardFingerprint = await Crypto.digestStringAsync(Crypto.CryptoDigestAlgorithm.SHA256, digits);
+      await api.post('/v1/me/cards', { cardToken: token }, { idempotencyKey: `saved-card-${cardFingerprint}` });
       const saved = await api.get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards');
       const next = saved.cards.map((x) => { const b = cardBrandOf(x.number.replace(/\D/g, '')); return { id: x.id, brand: x.brand || b.name, num: x.number, exp: x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '', bg: b.bg, nick: '', name: x.name }; });
       useApp.setState({ cards: next, defCard: token, payM: 1 });
       setIdx(Math.max(0, next.findIndex((x) => x.id === token)));
       setErr(false); setFlip(false); setOpen(false);
-      useApp.getState().showToast('تم حفظ البطاقة', 'تم حفظ رمز البطاقة لدى Kashier بنجاح.', 'check_circle');
+      useApp.getState().showToast('تم حفظ البطاقة', 'تقدر تستخدمها في الدفع بعد كده.', 'check_circle');
       router.replace('/checkout');
     } catch (error) {
       setErr(true);
-      useApp.getState().showToast('تعذر حفظ البطاقة', error instanceof Error ? error.message : 'حاول مرة أخرى.', 'error');
+      useApp.getState().showToast('تعذر حفظ البطاقة', 'راجع بيانات البطاقة أو حاول مرة أخرى بعد قليل.', 'error');
     } finally { setSaving(false); }
   };
 
