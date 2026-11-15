@@ -241,9 +241,11 @@ export default function PaymentsScreen() {
           flipped={flip}
           onFlip={setFlip}
           onSave={() => void saveCard()}
+          saving={saving}
           onSaveWallet={(provider, phone, name, save) => {
             // Kashier wallet R2P is order-scoped; this screen has no order/payment amount.
             // Do not persist wallet PII or report a successful add without a provider token.
+            void provider;
             void phone;
             void name;
             useApp.getState().showToast(
