@@ -16,6 +16,7 @@ import { Reveal, RevealScope } from '@/components/ui/reveal';
 import { Txt } from '@/components/ui/txt';
 import { defaultSize, extrasOf, sizesOf } from '@/data/menu';
 import { useAddToCart } from '@/hooks/use-cart-actions';
+import { useNow } from '@/hooks/use-simulation';
 import { useStatusBar } from '@/hooks/use-status-bar';
 import { money } from '@/lib/format';
 import { unitOf } from '@/lib/pricing';
@@ -37,6 +38,21 @@ function DishDetail() {
   const { width } = useWindowDimensions();
   const { id } = useLocalSearchParams<{ id: string }>();
   const dish = useApp((s) => s.dishOf(String(id)));
+  const brand = useApp((s) => s.brands.find(b => b.id === dish.brand));
+  const now = useNow(true, 30_000);
+  const kitchenOpen = (() => {
+    if (!brand) return true;
+    if (brand.manualStatus === 'open') return true;
+    if (brand.manualStatus === 'closed') return false;
+    const parts = new Intl.DateTimeFormat('en-US',{timeZone:'Africa/Cairo',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(now));
+    const get = (t:string) => parts.find(p=>p.type===t)?.value ?? '';
+    const keys: Record<string,string> = {Sat:'sat',Sun:'sun',Mon:'mon',Tue:'tue',Wed:'wed',Thu:'thu',Fri:'fri'};
+    const day = keys[get('weekday')]; const clock = `${get('hour')}:${get('minute')}`;
+    const overnight = brand.openTime > brand.closeTime;
+    const week = ['sun','mon','tue','wed','thu','fri','sat'];
+    const scheduled = overnight && clock < brand.closeTime ? week[(week.indexOf(day)+6)%7] : day;
+    return brand.workDays.length === 0 || (brand.workDays.includes(scheduled as typeof brand.workDays[number]) && (overnight ? clock >= brand.openTime || clock < brand.closeTime : clock >= brand.openTime && clock < brand.closeTime));
+  })();
   const sizes = sizesOf(dish.cat);
   const extras = extrasOf(dish.cat);
   const [size, setSize] = useState(defaultSize(dish.cat));
@@ -96,6 +112,8 @@ function DishDetail() {
               </View>
             ) : null}
           </Reveal>
+
+          {brand ? <View style={{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:6,backgroundColor:kitchenOpen?'rgba(37,150,90,0.12)':'rgba(190,65,55,0.10)',paddingHorizontal:10,paddingVertical:6,borderRadius:10}}><View style={{width:7,height:7,borderRadius:4,backgroundColor:kitchenOpen?'#25965A':'#BE4137'}}/><Txt s={12} w={700} color={kitchenOpen?'#21834F':'#B13E35'}>{brand.name} · {kitchenOpen?'مفتوح الآن':'مغلق الآن'}</Txt></View> : null}
 
           <Reveal i={1} style={styles.titleRow}>
             <Txt s={32} w={600} lh={1.02} ls={-0.03} style={{ flex: 1 }}>
