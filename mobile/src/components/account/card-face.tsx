@@ -90,7 +90,7 @@ export function CardChip() {
 }
 
 const styles = StyleSheet.create({
-  card: { height: 210, borderRadius: 20, padding: 22, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(155,244,207,0.62)' },
+  card: { height: 176, borderRadius: 20, padding: 22, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(155,244,207,0.62)' },
   logoFront: { position: 'absolute', top: 18, right: 16, width: 142, height: 56 },
   logoBack: { position: 'absolute', right: 18, bottom: 2, width: 118, height: 46, opacity: 0.18 },
 });
