@@ -84,7 +84,8 @@ export default function PaymentsScreen() {
       await api.post('/v1/me/cards', { cardToken: token }, { idempotencyKey: `saved-card-${cardFingerprint}` });
       const saved = await api.get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards');
       const next = saved.cards.map((x) => { const b = cardBrandOf(x.number.replace(/\D/g, '')); return { id: x.id, brand: x.brand || b.name, num: x.number, exp: x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '', bg: b.bg, nick: '', name: x.name }; });
-      useApp.setState({ cards: next, defCard: token, payM: 1 });
+      const currentDefault = useApp.getState().defCard;
+      useApp.setState({ cards: next, defCard: draft.def ? token : (next.some((x) => x.id === currentDefault) ? currentDefault : (next[0]?.id ?? '')), payM: 1 });
       setIdx(Math.max(0, next.findIndex((x) => x.id === token)));
       setErr(false); setFlip(false); setOpen(false);
       useApp.getState().showToast('تم حفظ البطاقة', 'تقدر تستخدمها في الدفع بعد كده.', 'check_circle');
@@ -216,6 +217,19 @@ export default function PaymentsScreen() {
           flipped={flip}
           onFlip={setFlip}
           onSave={() => void saveCard()}
+          onSaveWallet={(provider, phone, name, save) => {
+            // Kashier wallet R2P is order-scoped; this screen has no order/payment amount.
+            // Do not persist wallet PII or report a successful add without a provider token.
+            void phone;
+            void name;
+            useApp.getState().showToast(
+              save ? 'حفظ المحفظة غير متاح حاليًا' : 'الدفع بالمحفظة متاح عند إتمام الطلب',
+              save
+                ? 'بوابة Kashier الحالية لا توفر Token لحفظ المحافظ كوسيلة دفع دائمة.'
+                : 'اختَر المحفظة من صفحة إتمام الطلب حتى يتم إنشاء عملية دفع مرتبطة بطلب فعلي.',
+              'info',
+            );
+          }}
           onClose={() => {
             setOpen(false);
             setFlip(false);
