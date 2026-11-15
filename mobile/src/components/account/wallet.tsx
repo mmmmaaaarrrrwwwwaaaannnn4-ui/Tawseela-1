@@ -7,7 +7,7 @@ import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
 import type { Card } from '@/data/types';
 
-import { CardChip, CardSurface } from './card-face';
+import { CARD_INK, CardChip, CardSurface, TAWSELA_CARD_GRADIENT } from './card-face';
 
 /** Stacked, swipeable card wallet (`wallet` in the design). */
 export function Wallet({
@@ -95,13 +95,13 @@ function WalletCard({
   return (
     <Animated.View pointerEvents={Math.abs(off) > 1 ? 'none' : 'auto'} style={[StyleSheet.absoluteFill, styles.shadow, { zIndex: 10 - Math.abs(off) }, st]}>
       <PressableScale scaleTo={0.98} onPress={onPress} accessibilityLabel={`${card.brand} ${card.num}`}>
-        <CardSurface bg={card.bg}>
+        <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
           <View style={styles.between}>
             <View style={{ gap: 2 }}>
-              <Txt s={11} w={600} ls={0.08} upper color="rgba(255,255,255,0.75)">
+              <Txt s={11} w={600} ls={0.08} upper color="rgba(253,250,235,0.78)">
                 {card.nick || 'Card'}
               </Txt>
-              <Txt s={16} w={800} ls={0.12} color="#FFFFFF">
+              <Txt s={16} w={800} ls={0.12} color={CARD_INK}>
                 {card.brand}
               </Txt>
             </View>
@@ -142,5 +142,5 @@ const styles = StyleSheet.create({
   wallet: { height: 196, marginHorizontal: 32 },
   shadow: { borderRadius: 26, shadowColor: '#1A1A1A', shadowOpacity: 0.28, shadowRadius: 20, shadowOffset: { width: 0, height: 22 }, elevation: 10 },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  def: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 9, backgroundColor: 'rgba(255,255,255,0.22)' },
+  def: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 9, backgroundColor: 'rgba(253,250,235,0.18)' },
 });
