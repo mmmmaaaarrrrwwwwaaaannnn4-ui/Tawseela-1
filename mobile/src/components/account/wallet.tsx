@@ -119,30 +119,23 @@ function WalletCard({
         <View style={{ height: 196 }}>
           <Animated.View style={[StyleSheet.absoluteFill, frontStyle]}>
             <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
-              <View style={styles.between}>
-                <View style={{ gap: 2 }}>
-                  <Txt s={11} w={600} ls={0.08} upper color="rgba(253,250,235,0.78)">
-                    {card.nick || 'Card'}
-                  </Txt>
-                  <PaymentNetworkLogo brand={card.brand} width={58} height={28} />
-                </View>
-                {isDef ? (
-                  <View style={styles.def}>
-                    <Txt s={10} w={700} ls={0.08} upper color="#FFFFFF">Default</Txt>
-                  </View>
-                ) : null}
-              </View>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 38 }}>
                 <CardChip />
-                <View style={{ opacity: 0.85 }}>
-                  <Icon name="contactless" size={24} color="#FFFFFF" />
-                </View>
+                <Icon name="contactless" size={29} color="#FDF9E9" />
+                {isDef ? <View style={[styles.def, { marginLeft: 'auto' }]}><Txt s={9} w={700} color="#FFFFFF">أساسية</Txt></View> : null}
               </View>
-              <View style={{ gap: 8 }}>
-                <Txt s={20} w={600} ls={0.16} color="#FFFFFF">•••• {card.num}</Txt>
-                <View style={[styles.between, { opacity: 0.85 }]}>
-                  <Txt s={11.5} w={600} ls={0.08} color="#FFFFFF">{holder}</Txt>
-                  <Txt s={11.5} w={600} ls={0.08} color="#FFFFFF">EXP {card.exp}</Txt>
+              <View style={{ gap: 13, marginTop: 'auto' }}>
+                <Txt s={18} w={600} ls={0.13} color="#FFFFFF" tabular>{card.num || '••••  ••••  ••••  ••••'}</Txt>
+                <View style={[styles.between, { alignItems: 'flex-end' }]}>
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Txt s={9} w={500} color="rgba(253,250,235,0.76)">اسم حامل البطاقة</Txt>
+                    <Txt s={12} w={600} color="#FFFFFF" numberOfLines={1}>{holder}</Txt>
+                  </View>
+                  <View style={{ gap: 3, alignItems: 'flex-start' }}>
+                    <Txt s={9} w={500} color="rgba(253,250,235,0.76)">MM/YY</Txt>
+                    <Txt s={12} w={600} color="#FFFFFF">{card.exp || '••/••'}</Txt>
+                  </View>
+                  <PaymentNetworkLogo brand={card.brand} width={46} height={28} />
                 </View>
               </View>
             </CardSurface>
