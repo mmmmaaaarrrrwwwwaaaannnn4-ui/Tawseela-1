@@ -242,18 +242,21 @@ export default function PaymentsScreen() {
           onSave={() => void saveCard()}
           saving={saving}
           onSaveWallet={(provider, phone, name, save) => {
-            // Kashier wallet R2P is order-scoped; this screen has no order/payment amount.
-            // Do not persist wallet PII or report a successful add without a provider token.
-            void provider;
-            void phone;
-            void name;
-            useApp.getState().showToast(
-              save ? 'حفظ المحفظة غير متاح حاليًا' : 'الدفع بالمحفظة متاح عند إتمام الطلب',
-              save
-                ? 'بوابة Kashier الحالية لا توفر Token لحفظ المحافظ كوسيلة دفع دائمة.'
-                : 'اختَر المحفظة من صفحة إتمام الطلب حتى يتم إنشاء عملية دفع مرتبطة بطلب فعلي.',
-              'info',
-            );
+            if (!save) {
+              useApp.getState().showToast('لم يتم حفظ المحفظة', 'فعّل خيار حفظ المحفظة لاستخدامها لاحقًا.', 'info');
+              return;
+            }
+            void api.post<{ saved: boolean; wallet: { id: string; provider: string; phone: string; name: string; isDefault: boolean } | null }>('/v1/me/wallets', {
+              provider: provider === 'InstaPay' ? 'insta' : provider === 'Orange Cash' ? 'orange' : provider === 'WE Pay' ? 'we' : provider === 'Etisalat Cash' ? 'etisalat' : 'vodafone',
+              phone,
+              name,
+              isDefault: true,
+            }).then(() => {
+              useApp.getState().showToast('تم حفظ المحفظة', 'اتحفظت بأمان على حسابك في Firebase.', 'check_circle');
+              setOpen(false);
+            }).catch((error) => {
+              useApp.getState().showToast('تعذر حفظ المحفظة', error instanceof Error ? error.message : 'حاول مرة أخرى.', 'error');
+            });
           }}
           onClose={() => {
             setOpen(false);
