@@ -134,7 +134,7 @@ export function CardSheet({
 
         <View style={styles.formGroup}>
           <View style={[styles.numberField, showErrors && d.length < 15 ? styles.invalidField : null]}>
-            <Icon name="camera_alt" size={24} color="#858585" />
+            <Icon name="photo_camera" size={24} color="#858585" />
             <View style={{ flex: 1 }}>
               <Field
                 value={n.num}
