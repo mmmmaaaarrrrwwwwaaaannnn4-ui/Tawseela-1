@@ -116,7 +116,7 @@ function WalletCard({
   return (
     <Animated.View pointerEvents={Math.abs(off) > 1 ? 'none' : 'auto'} style={[StyleSheet.absoluteFill, styles.shadow, { zIndex: 10 - Math.abs(off) }, st]}>
       <PressableScale scaleTo={0.99} onPress={toggleFlip} accessibilityLabel={`${card.brand} ${card.num}. ${flipped ? 'Show front' : 'Show back'}`}>
-        <View style={{ height: 196 }}>
+        <View style={{ height: 210 }}>
           <Animated.View style={[StyleSheet.absoluteFill, frontStyle]}>
             <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 38 }}>
@@ -166,8 +166,8 @@ function WalletCard({
 }
 
 const styles = StyleSheet.create({
-  wallet: { height: 196, marginHorizontal: 32 },
-  shadow: { borderRadius: 26, shadowColor: '#1A1A1A', shadowOpacity: 0.28, shadowRadius: 20, shadowOffset: { width: 0, height: 22 }, elevation: 10 },
+  wallet: { height: 210, marginHorizontal: 22 },
+  shadow: { borderRadius: 20, shadowColor: '#1A1A1A', shadowOpacity: 0.28, shadowRadius: 20, shadowOffset: { width: 0, height: 22 }, elevation: 10 },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   def: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 9, backgroundColor: 'rgba(253,250,235,0.18)' },
   backStripe: { position: 'absolute', top: 28, left: 0, right: 0, height: 42, backgroundColor: '#111111' },
