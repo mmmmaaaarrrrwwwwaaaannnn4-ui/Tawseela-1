@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import * as Crypto from 'expo-crypto';
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { blankCard, CardSheet } from '@/components/account/card-sheet';
@@ -35,6 +35,16 @@ function luhnValidCardNumber(value: string) {
   return value.length > 0 && sum % 10 === 0;
 }
 
+type SavedWallet = { id: string; provider: 'insta' | 'orange' | 'we' | 'etisalat' | 'vodafone'; phone: string; name: string; isDefault: boolean };
+
+const WALLET_INFO = {
+  insta: { label: 'InstaPay', logo: require('../../assets/payments/instapay.png') },
+  orange: { label: 'Orange Cash', logo: require('../../assets/payments/orange-cash.png') },
+  we: { label: 'WE Pay', logo: require('../../assets/payments/we-pay.png') },
+  etisalat: { label: 'Etisalat Cash', logo: require('../../assets/payments/etisalat-cash.png') },
+  vodafone: { label: 'Vodafone Cash', logo: require('../../assets/payments/vodafone-cash.png') },
+} as const;
+
 function validCardExpiry(value: string) {
   if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(value)) return false;
   const month = Number(value.slice(0, 2));
@@ -59,6 +69,18 @@ export default function PaymentsScreen() {
   const [err, setErr] = useState(false);
   const [flip, setFlip] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savedWallets, setSavedWallets] = useState<SavedWallet[]>([]);
+  const [walletsLoading, setWalletsLoading] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    setWalletsLoading(true);
+    api.get<{ wallets: SavedWallet[] }>('/v1/me/wallets')
+      .then((result) => { if (active) setSavedWallets(Array.isArray(result.wallets) ? result.wallets : []); })
+      .catch(() => { if (active) setSavedWallets([]); })
+      .finally(() => { if (active) setWalletsLoading(false); });
+    return () => { active = false; };
+  }, []);
 
   useEffect(() => {
     useApp.setState({ cards: [], defCard: '' });
@@ -202,6 +224,28 @@ export default function PaymentsScreen() {
             </View>
           )}
 
+          <View style={{ paddingHorizontal: 20, paddingTop: 20, gap: 12 }}>
+            <View style={styles.historyHead}><Txt s={19} w={800} color="#111111">المحافظ المحفوظة</Txt><Txt s={12} color="#777777">{savedWallets.length} وسيلة</Txt></View>
+            {walletsLoading ? <Txt s={13} color="#888888" align="right">جاري تحميل المحافظ...</Txt> : null}
+            {!walletsLoading && savedWallets.length === 0 ? <Txt s={13} color="#888888" align="right">لا توجد محافظ محفوظة حتى الآن.</Txt> : null}
+            {savedWallets.map((wallet) => {
+              const info = WALLET_INFO[wallet.provider];
+              return (
+                <View key={wallet.id} style={styles.savedWalletRow}>
+                  <Image source={info.logo} resizeMode="contain" style={styles.savedWalletLogo} />
+                  <View style={{ flex: 1, gap: 3 }}>
+                    <Txt s={14} w={700} color="#183D30">{info.label}</Txt>
+                    <Txt s={13} color="#777777" tabular>{wallet.phone.replace(/(\\d{3})\\d{4}(\\d{4})/, '$1 •••• $2')}</Txt>
+                    <Txt s={11} color="#888888">{wallet.name}{wallet.isDefault ? ' · افتراضية' : ''}</Txt>
+                  </View>
+                  <PressableScale onPress={() => { void api.delete(`/v1/me/wallets/${encodeURIComponent(wallet.id)}`).then(async () => { const fresh = await api.get<{ wallets: SavedWallet[] }>('/v1/me/wallets'); setSavedWallets(fresh.wallets ?? []); }).catch((error) => useApp.getState().showToast('تعذر حذف المحفظة', error instanceof Error ? error.message : 'حاول مرة أخرى.', 'error')); }} style={styles.walletDelete}>
+                    <Icon name="delete" size={19} color="#D04444" />
+                  </PressableScale>
+                </View>
+              );
+            })}
+          </View>
+
           <View style={{ height: 28, backgroundColor: "#F1F2F5" }} />
           <View style={{ paddingHorizontal: 20, gap: 8, paddingTop: 22 }}>
             <View style={styles.historyHead}><Txt s={20} w={800} color="#111111">المعاملات الأخيرة</Txt><Txt s={14} color="#777777">عرض الكل ‹</Txt></View>
@@ -251,8 +295,10 @@ export default function PaymentsScreen() {
               phone,
               name,
               isDefault: true,
-            }).then(() => {
-              useApp.getState().showToast('تم حفظ المحفظة', 'اتحفظت بأمان على حسابك في Firebase.', 'check_circle');
+            }).then(async () => {
+              const fresh = await api.get<{ wallets: SavedWallet[] }>('/v1/me/wallets');
+              setSavedWallets(fresh.wallets ?? []);
+              useApp.getState().showToast('تم حفظ المحفظة', 'اتحفظت وظهرت ضمن وسائل الدفع المحفوظة.', 'check_circle');
               setOpen(false);
             }).catch((error) => {
               useApp.getState().showToast('تعذر حفظ المحفظة', error instanceof Error ? error.message : 'حاول مرة أخرى.', 'error');
@@ -282,5 +328,8 @@ const styles = StyleSheet.create({
   addCardButton: { marginTop: 12, width: '72%', minHeight: 54, borderRadius: 18, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   historyHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 54 },
   emptyHistory: { minHeight: 210, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  savedWalletRow: { minHeight: 82, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 14, paddingVertical: 10, backgroundColor: '#FFFFFF', borderRadius: 16, borderWidth: 1, borderColor: '#E6EAE8' },
+  savedWalletLogo: { width: 62, height: 48 },
+  walletDelete: { width: 38, height: 38, borderRadius: 12, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF2F2' },
   pay: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
 });
