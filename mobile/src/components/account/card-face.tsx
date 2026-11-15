@@ -1,20 +1,23 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Defs, G, LinearGradient as SvgGradient, Path, Rect, Stop } from 'react-native-svg';
+
+const TAWSELA_LOGO = require('@/assets/branding/tawsela_logo.png');
 
 const TAWSELA_CARD_GRADIENT = ['#0C7D58', '#056244', '#014835', '#012B20', '#011B14'] as const;
 export { TAWSELA_CARD_GRADIENT };
 export const CARD_INK = '#FDFAEB';
 
-/** Compact Tawsela wordmark treatment for the card face and reverse. */
+/** Original transparent Tawsela logo extracted from the supplied Flip Card reference file. */
 export function CardLogo({ side = 'front' }: { side?: 'front' | 'back' }) {
   return (
-    <View pointerEvents="none" style={side === 'front' ? styles.logoFront : styles.logoBack}>
-      <Text numberOfLines={1} adjustsFontSizeToFit style={side === 'front' ? styles.logoTextFront : styles.logoTextBack}>
-        توصيلة
-      </Text>
-    </View>
+    <Image
+      pointerEvents="none"
+      source={TAWSELA_LOGO}
+      resizeMode="contain"
+      style={side === 'front' ? styles.logoFront : styles.logoBack}
+    />
   );
 }
 
@@ -66,8 +69,6 @@ export function CardChip() {
 const styles = StyleSheet.create({
   card: { height: 196, borderRadius: 26, padding: 20, overflow: 'hidden', justifyContent: 'space-between' },
   orb: { position: 'absolute', right: -40, top: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: 'rgba(255,255,255,0.08)' },
-  logoFront: { position: 'absolute', top: 15, right: 16, width: '38%', height: 34, justifyContent: 'center', alignItems: 'flex-end' },
-  logoBack: { position: 'absolute', left: '-5%', bottom: -22, width: '110%', height: 100, justifyContent: 'center', opacity: 0.20 },
-  logoTextFront: { color: '#DFFF00', fontSize: 25, fontWeight: '900', letterSpacing: -1 },
-  logoTextBack: { color: '#FDFAEB', fontSize: 76, fontWeight: '900', letterSpacing: -3 },
+  logoFront: { position: 'absolute', top: 15, right: 16, width: '36%', aspectRatio: 1000 / 390 },
+  logoBack: { position: 'absolute', left: '-5%', bottom: -22, width: '110%', aspectRatio: 1000 / 390, opacity: 0.20 },
 });
