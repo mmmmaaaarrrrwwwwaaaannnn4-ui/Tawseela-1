@@ -42,7 +42,7 @@ const PROVIDERS: {
   { key: 'orange', label: 'Orange Cash', short: 'أورنج كاش', gradient: ['#F58220', '#FFB33B'], tile: '#FFF4E8', logo: require('../../assets/payments/orange-cash.png') },
   { key: 'we', label: 'WE Pay', short: 'WE Pay', gradient: ['#4C247D', '#8A45B5'], tile: '#F2ECFA', logo: require('../../assets/payments/we-pay.png') },
   { key: 'etisalat', label: 'Etisalat Cash', short: 'اتصالات كاش', gradient: ['#007C52', '#16B982'], tile: '#EAF7F0', logo: require('../../assets/payments/etisalat-cash.png') },
-  { key: 'vodafone', label: 'Vodafone Cash', short: 'فودافون كاش', gradient: ['#C90018', '#F2293B'], tile: '#FFF0F1', logo: require('../../assets/payments/Vodafone chash0.PNG') },
+  { key: 'vodafone', label: 'Vodafone Cash', short: 'فودافون كاش', gradient: ['#C90018', '#F2293B'], tile: '#FFF0F1', logo: require('../../assets/payments/vodafone-cash.png') },
 ];
 
 function luhnValid(value: string) {
