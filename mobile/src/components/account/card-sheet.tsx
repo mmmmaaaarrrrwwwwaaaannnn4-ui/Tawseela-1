@@ -138,6 +138,12 @@ export function CardSheet({
             <View style={{ flex: 1 }}>
               <Field
                 value={n.num}
+                bg="#F4F4F8"
+                height={54}
+                radius={15}
+                borderWidth={0}
+                textAlign="right"
+                writingDirection="rtl"
                 onChangeText={(v) => onChange({ num: v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})(?=.)/g, '$1 ') })}
                 placeholder="يُرجى إدخال رقم البطاقة المصرفية"
                 keyboardType="number-pad"
