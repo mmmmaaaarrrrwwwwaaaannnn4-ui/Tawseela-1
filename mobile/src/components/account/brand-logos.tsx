@@ -1,4 +1,4 @@
-import { Circle, Path, Rect, Svg } from 'react-native-svg';
+import { Circle, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
 import { Text, View, StyleSheet } from 'react-native';
 
 type BrandProps = { brand: string; width?: number; height?: number };
@@ -13,10 +13,10 @@ export function PaymentNetworkLogo({ brand, width = 58, height = 28 }: BrandProp
     return <Svg width={width} height={height} viewBox="0 0 48 30"><Circle cx="18" cy="15" r="13" fill="#EB001B"/><Circle cx="30" cy="15" r="13" fill="#F79E1B"/><Path d="M24 5.2a13 13 0 0 1 0 19.6 13 13 0 0 1 0-19.6Z" fill="#FF5F00"/></Svg>;
   }
   if (key.includes('AMEX')) {
-    return <Svg width={width} height={height} viewBox="0 0 64 40"><Rect x="1" y="1" width="62" height="38" rx="5" fill="#176FC1"/><Path d="M8 13h48M8 20h48M8 27h48" stroke="#FFFFFF" strokeWidth="2"/><Path d="M14 8h36v24H14z" fill="none" stroke="#FFFFFF" strokeWidth="1.5"/></Svg>;
+    return <Svg width={width} height={height} viewBox="0 0 64 40"><Rect x="1" y="1" width="62" height="38" rx="5" fill="#176FC1"/><SvgText x="32" y="25" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="900" letterSpacing="-0.7">AMEX</SvgText><Path d="M4 11h56M4 29h56" stroke="#FFFFFF" strokeWidth="1.2" opacity={0.9}/></Svg>;
   }
   if (key.includes('MADA')) {
-    return <View style={[styles.mada,{width,height}]}><Text style={styles.madaDots}>● ●</Text><Text style={styles.madaText}>مدى</Text></View>;
+    return <View style={[styles.mada,{width,height}]}><View style={styles.madaMark}><View style={styles.madaDotGreen}/><View style={styles.madaDotBlue}/></View><Text style={styles.madaText}>مدى</Text></View>;
   }
   if (key.includes('DISCOVER')) {
     return <View style={[styles.discover,{width,height}]}><Text style={styles.discoverText}>DISCOVER</Text><View style={styles.discoverArc}/></View>;
@@ -58,7 +58,9 @@ const styles = StyleSheet.create({
   orangeText:{fontSize:9,fontWeight:'900',color:'#111111',lineHeight:10},
   cashText:{fontSize:9,fontWeight:'900',color:'#E51D2A',lineHeight:10},
   mada:{alignItems:'center',justifyContent:'center',gap:0},
-  madaDots:{fontSize:10,color:'#0B9D66',letterSpacing:-2},
+  madaMark:{flexDirection:'row',alignItems:'center',gap:2},
+  madaDotGreen:{width:10,height:10,borderRadius:3,backgroundColor:'#0B9D66'},
+  madaDotBlue:{width:10,height:10,borderRadius:3,backgroundColor:'#176FC1'},
   madaText:{fontSize:10,fontWeight:'900',color:'#087A55'},
   insta:{fontSize:12,fontWeight:'900',fontStyle:'italic',color:'#5B2589',lineHeight:13},
   instaPay:{fontSize:12,fontWeight:'900',fontStyle:'italic',color:'#F18B24',lineHeight:13},
