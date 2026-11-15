@@ -9,7 +9,7 @@ import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
 import { accentGradient } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme';
-import { family } from '@/theme/typography';
+import { familyForText } from '@/theme/typography';
 import { arText } from '@/lib/ar';
 
 /* ------------------------------------------------------------------ form state */
