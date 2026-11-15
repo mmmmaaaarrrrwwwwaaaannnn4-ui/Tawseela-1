@@ -1007,7 +1007,7 @@ export const useApp = create<AppStore>()(
         },
         createBrand: async (b) => {
           try {
-            const created = await server().createBrand(b);
+            const created = await server().createBrand({ ...b, manualStatus: b.manualStatus ?? 'auto' });
             set((s) => ({ brands: [...s.brands, { ...created, icon: created.icon as IconName }] }));
             server().catalogChanged();
             toast('Kitchen added', created.name, 'storefront');
