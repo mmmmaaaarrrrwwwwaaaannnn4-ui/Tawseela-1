@@ -154,6 +154,12 @@ export function CardSheet({
           <View style={styles.smallField}>
             <Field
               value={n.cvv}
+              bg="#F4F4F8"
+              height={54}
+              radius={15}
+              borderWidth={0}
+              textAlign="right"
+              writingDirection="rtl"
               onChangeText={(v) => onChange({ cvv: v.replace(/\D/g, '').slice(0, 4) })}
               onFocus={() => onFlip(true)}
               onBlur={() => onFlip(false)}
@@ -166,6 +172,12 @@ export function CardSheet({
           <View style={styles.smallField}>
             <Field
               value={n.exp}
+              bg="#F4F4F8"
+              height={54}
+              radius={15}
+              borderWidth={0}
+              textAlign="right"
+              writingDirection="rtl"
               onChangeText={(v) => { let x = v.replace(/\D/g, '').slice(0, 4); if (x.length > 2) x = x.slice(0, 2) + '/' + x.slice(2); onChange({ exp: x }); }}
               placeholder="الشهر / السنة"
               keyboardType="number-pad"
@@ -177,6 +189,12 @@ export function CardSheet({
         <View style={styles.formGroup}>
           <Field
             value={n.name}
+            bg="#F4F4F8"
+            height={54}
+            radius={15}
+            borderWidth={0}
+            textAlign="right"
+            writingDirection="rtl"
             onChangeText={(v) => onChange({ name: v.toUpperCase() })}
             placeholder="يُرجى إدخال الاسم الموجود على البطاقة"
             autoComplete="name"
@@ -233,7 +251,7 @@ export function CardSheet({
 
 const styles = StyleSheet.create({
   content: { gap: 13, paddingBottom: 8 },
-  header: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 10, paddingHorizontal: 20, paddingBottom: 10 },
+  header: { minHeight: 46, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'flex-start', gap: 10, paddingHorizontal: 20, paddingBottom: 10 },
   backButton: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   cardWrap: { marginHorizontal: 22, marginTop: 4, marginBottom: 2 },
   cardShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.28, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
