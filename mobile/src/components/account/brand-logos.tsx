@@ -30,19 +30,19 @@ export function WalletProviderLogo({ provider, width = 48, height = 42 }: { prov
   if (key.includes('insta')) {
     return <View style={[styles.wordLogo,{width,height}]}><Text style={styles.insta}>INSTA</Text><Text style={styles.instaPay}>PAY</Text></View>;
   }
-  if (key.includes('cash') || key.includes('tawseela') || key.includes('توصيلة')) {
+  if (key.includes('tawseela') || key.includes('توصيلة')) {
     return <View style={[styles.providerWrap,{width,height,gap:1}]}><Svg width={width} height={height*0.68} viewBox="0 0 48 34"><Rect x={8} y={1} width={28} height={30} rx={4} fill="none" stroke="#E51D2A" strokeWidth={2.4}/><Path d="M13 7h18M13 24h18M18 16h8" stroke="#E51D2A" strokeWidth={2.1} strokeLinecap="round"/><Path d="M20 12c5-5 11-2 13 3-4 0-7 2-9 6" fill="none" stroke="#E51D2A" strokeWidth={2.2}/></Svg><Text style={styles.cashText}>توصيلة</Text></View>;
   }
   if (key.includes('orange')) {
-    return <View style={[styles.providerWrap,{width,height}]}><Svg width={width} height={height} viewBox="0 0 48 42"><Rect x="3" y="2" width="42" height="38" rx="7" fill="#F58220"/><Path d="M10 29h28v3H10zm0-7h28v3H10zm0-7h28v3H10z" fill="#FFFFFF"/></Svg></View>;
+    return <View style={[styles.providerWrap,{width,height,gap:0}]}><Svg width={width*0.68} height={height*0.52} viewBox="0 0 48 36"><Path d="M5 28L25 8H12V2h27v27h-6V16L13 36Z" fill="#101010"/><Path d="M26 8h13v21h-6V16L20 32l-5-5Z" fill="#F58220"/></Svg><Text style={styles.orangeText}>Orange</Text><Text style={styles.orangeText}>Money</Text></View>;
   }
   if (key.includes('vodafone')) {
     return <View style={[styles.providerWrap,{width,height}]}><Svg width={width} height={height} viewBox="0 0 48 42"><Circle cx="24" cy="21" r="19" fill="#E60000"/><Path d="M30.8 5.8c.65 0 1.3.06 1.75.18-3.6.75-5.8 4.1-5.78 7.75 0 .08.01.18.02.27 5.8 1.42 8.4 4.9 8.4 9.75 0 4.85-3.75 10.15-10.2 10.15-5.2 0-10.6-4.45-10.6-11.55 0-4.75 2.6-9.3 5.85-11.95 3.2-2.55 7.05-4.6 10.56-4.6Z" fill="#FFFFFF"/></Svg></View>;
   }
   if (key.includes('etisalat')) {
-    return <View style={[styles.wordLogo,{width,height}]}><Text style={styles.etisalat}>e&amp;</Text></View>;
+    return <View style={[styles.wordLogo,{width,height,gap:0}]}><Text style={styles.etisalat}>e&amp;</Text><Text style={styles.etisalatSub}>etisalat and</Text></View>;
   }
-  return <View style={[styles.wordLogo,{width,height}]}><Text style={styles.we}>WE</Text><View style={styles.weUnderline}/></View>;
+  return <View style={[styles.wordLogo,{width,height,gap:0}]}><Text style={styles.we}>we</Text><View style={styles.wePay}><Text style={styles.wePayText}>Pay</Text></View></View>;
 }
 
 const styles = StyleSheet.create({
@@ -53,7 +53,9 @@ const styles = StyleSheet.create({
   unknownText:{fontSize:10,fontWeight:'900',color:'#183D32'},
   providerWrap:{alignItems:'center',justifyContent:'center'},
   wordLogo:{alignItems:'center',justifyContent:'center'},
-  etisalat:{fontSize:27,fontWeight:'900',letterSpacing:-2,color:'#E60012'},
+  etisalat:{fontSize:27,fontWeight:'900',letterSpacing:-2,color:'#E60012',lineHeight:28},
+  etisalatSub:{fontSize:8,fontWeight:'800',color:'#E60012',lineHeight:10},
+  orangeText:{fontSize:9,fontWeight:'900',color:'#111111',lineHeight:10},
   cashText:{fontSize:9,fontWeight:'900',color:'#E51D2A',lineHeight:10},
   mada:{alignItems:'center',justifyContent:'center',gap:0},
   madaDots:{fontSize:10,color:'#0B9D66',letterSpacing:-2},
@@ -61,5 +63,6 @@ const styles = StyleSheet.create({
   insta:{fontSize:12,fontWeight:'900',fontStyle:'italic',color:'#5B2589',lineHeight:13},
   instaPay:{fontSize:12,fontWeight:'900',fontStyle:'italic',color:'#F18B24',lineHeight:13},
   we:{fontSize:25,fontWeight:'500',letterSpacing:-2,color:'#8A8A8A'},
-  weUnderline:{width:35,height:13,borderRadius:5,backgroundColor:'#6B2D91',marginTop:-2},
+  wePay:{minWidth:34,height:15,borderRadius:4,backgroundColor:'#6B2D91',alignItems:'center',justifyContent:'center',paddingHorizontal:4,marginTop:-2},
+  wePayText:{fontSize:11,fontWeight:'700',fontStyle:'italic',color:'#FFFFFF',lineHeight:13},
 });
