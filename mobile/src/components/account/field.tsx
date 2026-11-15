@@ -72,7 +72,7 @@ export function Field({
             backgroundColor: bg ?? c.surface1,
             color: c.text1,
             paddingLeft: icon ? padLeft : 16,
-            fontFamily: family(weight),
+            fontFamily: familyForText(rest.value ?? rest.defaultValue ?? rest.placeholder, weight),
             fontSize,
             letterSpacing: letterSpacing ? letterSpacing * fontSize : undefined,
           },
