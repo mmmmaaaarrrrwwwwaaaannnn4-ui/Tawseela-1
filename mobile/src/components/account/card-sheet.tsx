@@ -284,7 +284,7 @@ export function CardSheet({
         {!wallet ? (
           <Animated.View style={bankPreview}>
             <View style={styles.networkHeader}>
-              <Image source={require('../../assets/payments/Meeza .PNG')} resizeMode="contain" style={styles.meezaLogo} />
+              <Image source={require('../../assets/payments/meeza.png')} resizeMode="contain" style={styles.meezaLogo} />
               <PaymentNetworkLogo brand="VISA" width={43} height={31} />
               <PaymentNetworkLogo brand="AMEX" width={40} height={32} />
               <PaymentNetworkLogo brand="MASTERCARD" width={42} height={30} />
