@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Image, StyleSheet, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, View, useWindowDimensions } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
@@ -100,7 +100,7 @@ function isEgyptPhone(value: string) {
 
 /** Existing add-payment-method sheet, rebuilt around the supplied reference layout. */
 export function CardSheet({
-  visible, value, onChange, showErrors, flipped, onFlip, onSave, onSaveWallet, onClose,
+  visible, value, onChange, showErrors, flipped, onFlip, onSave, onSaveWallet, saving = false, onClose,
 }: {
   visible: boolean;
   value: NewCard;
@@ -110,6 +110,7 @@ export function CardSheet({
   onFlip: (v: boolean) => void;
   onSave: () => void;
   onSaveWallet?: (provider: string, phone: string, name: string, save: boolean) => void;
+  saving?: boolean;
   onClose: () => void;
 }) {
   const n = value;
@@ -200,8 +201,8 @@ export function CardSheet({
         </View>
       }
       footer={
-        <PressableScale onPress={confirm} style={styles.confirmButton} scaleTo={0.985}>
-          <Txt s={19} w={700} color="#777777">تأكيد</Txt>
+        <PressableScale onPress={confirm} disabled={saving} style={styles.confirmButton} scaleTo={0.985}>
+          {saving ? <ActivityIndicator color="#777777" /> : <Txt s={19} w={700} color="#777777">تأكيد</Txt>}
         </PressableScale>
       }
     >
