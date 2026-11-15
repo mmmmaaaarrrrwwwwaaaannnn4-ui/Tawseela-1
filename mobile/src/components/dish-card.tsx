@@ -12,6 +12,7 @@ import { Reveal } from '@/components/ui/reveal';
 import { Txt } from '@/components/ui/txt';
 import type { Dish } from '@/data/types';
 import { useQuickAdd } from '@/hooks/use-cart-actions';
+import { useNow } from '@/hooks/use-simulation';
 import { money } from '@/lib/format';
 import { useApp } from '@/store/app-store';
 import { fixed } from '@/theme/tokens';
@@ -123,6 +124,21 @@ export const openDish = (id: string) => router.push({ pathname: '/dish/[id]', pa
 /** Grid product card — Popular tonight, Menu and Saved. */
 export function DishCard({ dish, compact }: { dish: Dish; /** Saved tab variant: no tag/rating row */ compact?: boolean }) {
   const { c } = useTheme();
+  const brand = useApp(s => s.brands.find(b => b.id === dish.brand));
+  const now = useNow(true, 30_000);
+  const kitchenOpen = (() => {
+    if (!brand) return true;
+    if (brand.manualStatus === 'open') return true;
+    if (brand.manualStatus === 'closed') return false;
+    const parts = new Intl.DateTimeFormat('en-US',{timeZone:'Africa/Cairo',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date(now));
+    const get = (t:string) => parts.find(p=>p.type===t)?.value ?? '';
+    const keys: Record<string,string> = {Sat:'sat',Sun:'sun',Mon:'mon',Tue:'tue',Wed:'wed',Thu:'thu',Fri:'fri'};
+    const day = keys[get('weekday')]; const clock = `${get('hour')}:${get('minute')}`;
+    const overnight = brand.openTime > brand.closeTime;
+    const week = ['sun','mon','tue','wed','thu','fri','sat'];
+    const scheduled = overnight && clock < brand.closeTime ? week[(week.indexOf(day)+6)%7] : day;
+    return brand.workDays.length === 0 || (brand.workDays.includes(scheduled as typeof brand.workDays[number]) && (overnight ? clock >= brand.openTime || clock < brand.closeTime : clock >= brand.openTime && clock < brand.closeTime));
+  })();
   return (
     <PressableScale onPress={() => openDish(dish.id)} scaleTo={0.98} style={[styles.card, { backgroundColor: c.surface1, borderColor: c.line }]}>
       <View style={[styles.media, { backgroundColor: c.surface2 }]}>
@@ -140,6 +156,7 @@ export function DishCard({ dish, compact }: { dish: Dish; /** Saved tab variant:
         ) : null}
       </View>
       <View style={{ gap: 4, paddingHorizontal: 5 }}>
+        {brand ? <View style={{alignSelf:'flex-start',flexDirection:'row',alignItems:'center',gap:5,backgroundColor:kitchenOpen?'rgba(37,150,90,0.12)':'rgba(190,65,55,0.10)',paddingHorizontal:7,paddingVertical:3,borderRadius:8}}><View style={{width:6,height:6,borderRadius:3,backgroundColor:kitchenOpen?'#25965A':'#BE4137'}}/><Txt s={10.5} w={700} color={kitchenOpen?'#21834F':'#B13E35'}>{brand.name} · {kitchenOpen?'مفتوح الآن':'مغلق الآن'}</Txt></View> : null}
         <Txt s={14.5} w={700} lh={1.25} numberOfLines={2} style={{ minHeight: 36 }}>
           {dish.name}
         </Txt>
