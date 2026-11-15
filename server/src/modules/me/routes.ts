@@ -120,7 +120,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
   // Customer-owned wallet contacts are stored in users/{uid}, never in Kashier.
   const walletInput = z.object({
     provider: z.enum(['insta', 'orange', 'we', 'etisalat', 'vodafone']),
-    phone: z.string().regex(/^01[0125]\\d{8}$/, 'Enter a valid Egyptian mobile number.'),
+    phone: z.string().regex(/^01[0125]\d{8}$/, 'Enter a valid Egyptian mobile number.'),
     name: z.string().trim().min(2).max(100),
     isDefault: z.boolean().optional().default(false),
   });
