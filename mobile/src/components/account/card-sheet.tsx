@@ -75,9 +75,9 @@ export function CardSheet({
       <View style={{ height: 196 }}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.shadow, front]}>
           <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
-            <View style={styles.between}>
+            <View style={[styles.between, { justifyContent: 'flex-start', gap: 12 }]}>
               <CardChip />
-              <PaymentNetworkLogo brand={d ? b.name : 'CARD'} width={58} height={28} />
+              <Icon name="contactless" size={24} color={CARD_INK} />
             </View>
             <Txt s={21} w={600} ls={0.14} tabular color="#FFFFFF">
               {shown}
@@ -98,6 +98,7 @@ export function CardSheet({
                 <Txt s={13} w={600} ls={0.08} color="#FFFFFF">
                   {n.exp || 'MM/YY'}
                 </Txt>
+                <PaymentNetworkLogo brand={d ? b.name : 'CARD'} width={42} height={20} />
               </View>
             </View>
           </CardSurface>
