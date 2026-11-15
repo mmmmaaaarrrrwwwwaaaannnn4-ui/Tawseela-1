@@ -309,7 +309,7 @@ export function SearchField({
         placeholder={arText(placeholder)}
         placeholderTextColor={c.text3}
         selectionColor={c.accent}
-        style={{ flex: 1, minWidth: 0, fontFamily: /[\u0600-\u06FF]/.test(placeholder) ? undefined : family(500), fontSize: 14.5, color: c.text1, paddingVertical: 0 }}
+        style={{ flex: 1, minWidth: 0, fontFamily: familyForText(value || placeholder, 500), fontSize: 14.5, color: c.text1, paddingVertical: 0 }}
       />
     </View>
   );
