@@ -41,10 +41,11 @@ export const STATUS = ['New', 'Preparing', 'On the way', 'Delivered', 'Cancelled
 export const BOOKING_STATUS = ['Booked', 'Seated', 'Cancelled'] as const;
 
 /** Detects card brand + gradient from the leading digits (`brandOf`). */
-export function cardBrandOf(digits: string): { name: string; bg: readonly [string, string]; scheme: 'VISA' | 'MASTERCARD' | 'AMEX' | 'DISCOVER' | 'CARD' } {
+export function cardBrandOf(digits: string): { name: string; bg: readonly [string, string]; scheme: 'VISA' | 'MASTERCARD' | 'AMEX' | 'MEEZA' | 'DISCOVER' | 'CARD' } {
   const first2 = Number(digits.slice(0, 2));
   const first3 = Number(digits.slice(0, 3));
   const first4 = Number(digits.slice(0, 4));
+  if (/^50780[3-6]/.test(digits)) return { name: 'MEEZA', scheme: 'MEEZA', bg: ['#0C7D58', '#014835'] };
   if (digits.startsWith('4')) return { name: 'VISA', scheme: 'VISA', bg: ['#0C7D58', '#014835'] };
   if ((first2 >= 51 && first2 <= 55) || (first4 >= 2221 && first4 <= 2720)) return { name: 'MASTERCARD', scheme: 'MASTERCARD', bg: ['#0C7D58', '#014835'] };
   if (/^(34|37)/.test(digits)) return { name: 'AMEX', scheme: 'AMEX', bg: ['#0C7D58', '#014835'] };
