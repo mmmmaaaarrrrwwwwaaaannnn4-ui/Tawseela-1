@@ -185,7 +185,7 @@ const adminCatalogRoutes: FastifyPluginAsyncZod = async (app) => {
 
   /* ---------- kitchens and banners ---------- */
 
-  app.post('/brands', { schema: { summary: 'Create a kitchen', body: z.object({ name: Brand.shape.name, tag: Brand.shape.tag, icon: Brand.shape.icon, img: Brand.shape.img, on: Brand.shape.on.default(true), lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), address: Brand.shape.address, phone: Brand.shape.phone, description: Brand.shape.description, workDays: Brand.shape.workDays, openTime: Brand.shape.openTime, closeTime: Brand.shape.closeTime, deliveryFee: Brand.shape.deliveryFee, prepTime: Brand.shape.prepTime }), response: { 201: Brand, ...errors } } }, async (req, reply) => {
+  app.post('/brands', { schema: { summary: 'Create a kitchen', body: z.object({ name: Brand.shape.name, tag: Brand.shape.tag, icon: Brand.shape.icon, img: Brand.shape.img, on: Brand.shape.on.default(true), lat: z.number().min(-90).max(90), lng: z.number().min(-180).max(180), address: Brand.shape.address, phone: Brand.shape.phone, description: Brand.shape.description, workDays: Brand.shape.workDays, openTime: Brand.shape.openTime, closeTime: Brand.shape.closeTime, manualStatus: Brand.shape.manualStatus.default('auto'), deliveryFee: Brand.shape.deliveryFee, prepTime: Brand.shape.prepTime }), response: { 201: Brand, ...errors } } }, async (req, reply) => {
     const all = await col(COL.brands).get();
     if (all.docs.some((d) => String(d.get('name')).toLowerCase() === req.body.name.toLowerCase())) throw conflict('duplicate', 'A kitchen with this name already exists.');
     let id = slug(req.body.name);
