@@ -160,6 +160,7 @@ export function CardSheet({
           <View style={styles.smallField}>
             <Field
               value={n.cvv}
+              icon="error"
               bg="#F4F4F8"
               height={54}
               radius={15}
@@ -178,6 +179,7 @@ export function CardSheet({
           <View style={styles.smallField}>
             <Field
               value={n.exp}
+              icon="error"
               bg="#F4F4F8"
               height={54}
               radius={15}
