@@ -5,13 +5,13 @@ import { ScrollView, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
 import { blankCard, CardSheet } from '@/components/account/card-sheet';
-import { IconTile, SelectRow } from '@/components/account/rows';
+import { IconTile } from '@/components/account/rows';
 import { Wallet } from '@/components/account/wallet';
-import { Icon, type IconName } from '@/components/icons/icon';
+import { Icon } from '@/components/icons/icon';
 import { PaymentNetworkLogo } from '@/components/account/brand-logos';
 import { AccentFill } from '@/components/ui/buttons';
 import { PagerDots } from '@/components/ui/controls';
-import { Eyebrow, ListCard, ScreenHeader, useChrome } from '@/components/ui/layout';
+import { ListCard, ScreenHeader, useChrome } from '@/components/ui/layout';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Reveal, RevealScope } from '@/components/ui/reveal';
 import { Txt } from '@/components/ui/txt';
@@ -21,13 +21,7 @@ import { api } from '@/lib/api';
 import { cardBrandOf } from '@/data/seed';
 import { payLabel, selectMyOrders, useApp, type NewCard } from '@/store/app-store';
 import { useSession } from '@/store/session';
-import { fixed } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme';
-
-const OTHER: { l: string; icon: IconName; s: string; m: number }[] = [
-  { l: 'Credit or debit card', icon: 'credit_card', s: 'Pay with a saved bank card', m: 0 },
-  { l: 'Cash on delivery', icon: 'payments', s: 'Pay the courier at the door', m: 2 },
-];
 
 export default function PaymentsScreen() {
   const { c } = useTheme();
@@ -104,22 +98,21 @@ export default function PaymentsScreen() {
 
   return (
     <RevealScope>
-      <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: chrome.underHeader, paddingBottom: 40, gap: 18 }}>
+      <View style={{ flex: 1, backgroundColor: '#FFFFFF' }}>
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: chrome.underHeader, paddingBottom: 40, gap: 0 }}>
           <View style={styles.walletHero}>
-            <Txt s={22} w={700} color="#111111">المحفظة</Txt>
+            <View style={styles.heroMint} />
             <View style={styles.balanceCard}>
-              <Txt s={14} w={500} color="#555555">الرصيد</Txt>
-              <Txt s={30} w={700} color="#111111" tabular>{money(credit)}</Txt>
+              <Txt s={15} w={500} color="#333333">الرصيد ⓘ</Txt>
+              <Txt s={34} w={700} color="#111111" tabular>{money(credit)}</Txt>
             </View>
           </View>
           <View style={styles.titleRow}>
-            <Txt s={18} w={700}>
-              طرق الدفع الخاصة بي
-            </Txt>
-            <Txt s={12} w={500} color={c.text3}>
-              {curIsDef ? 'بطاقتك الأساسية' : defLabel}
-            </Txt>
+            <Txt s={20} w={800} color="#111111">طرق الدفع الخاصة بي</Txt>
+            <PressableScale onPress={startCard} style={styles.manageLink}>
+              <Txt s={14} w={500} color="#777777">إدارة</Txt>
+              <Icon name="chevron_left" size={18} color="#777777" />
+            </PressableScale>
           </View>
 
           {cards.length ? (
@@ -170,7 +163,7 @@ export default function PaymentsScreen() {
               </View>
             </>
           ) : (
-            <View style={[styles.firstCard, { backgroundColor: '#F3F4F8', borderColor: '#F3F4F8' }]}>
+            <View style={[styles.firstCard, { backgroundColor: '#F4F5F9', borderColor: '#F4F5F9' }]}>
               <View style={styles.networks}>
                 <PaymentNetworkLogo brand="MADA" width={40} height={35} />
                 <PaymentNetworkLogo brand="VISA" width={42} height={31} />
@@ -178,58 +171,18 @@ export default function PaymentsScreen() {
                 <PaymentNetworkLogo brand="MASTERCARD" width={40} height={31} />
                 <PaymentNetworkLogo brand="DISCOVER" width={42} height={31} />
               </View>
-              <Txt s={14} w={500} color="#666666" align="center">لم تضف طريقة دفع بعد؟</Txt>
-              <Txt s={13} color="#666666" align="center">اضغط لإضافة بطاقة دفع جديدة.</Txt>
+              <Txt s={14} w={500} color="#777777" align="center">لم تضف طريقة دفع بعد؟</Txt>
+              <Txt s={13} color="#777777" align="center">انقر لإضافة طريقة دفع.</Txt>
               <PressableScale scaleTo={0.97} onPress={startCard} style={styles.addCardButton}>
                 <Txt s={15} w={700} color="#111111">إضافة طريقة دفع</Txt>
               </PressableScale>
             </View>
           )}
 
-          <View style={styles.credit}>
-            <View style={styles.creditTile}>
-              <Icon name="redeem" size={23} fill color="#FFFFFF" />
-            </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Txt s={12} w={600} color={fixed.paperA(0.7)}>
-                رصيد توصيله
-              </Txt>
-              <Txt s={24} w={600} lh={1.05} color={fixed.paper}>
-                {money(credit)}
-              </Txt>
-              <Txt s={11.5} color={fixed.paperA(0.6)}>
-                يُستخدم تلقائيًا عند إتمام الطلب
-              </Txt>
-            </View>
-            <PressableScale scaleTo={0.95} onPress={() => useApp.getState().addGiftCard()} style={styles.gift}>
-              <Txt s={12.5} w={700} color={fixed.paper}>
-                Add gift card
-              </Txt>
-            </PressableScale>
-          </View>
+          <View style={{ height: 28, backgroundColor: "#F1F2F5" }} />
+          <View style={{ paddingHorizontal: 20, gap: 8, paddingTop: 22 }}>
+            <View style={styles.historyHead}><Txt s={20} w={800} color="#111111">المعاملات الأخيرة</Txt><Txt s={14} color="#777777">عرض الكل ‹</Txt></View>
 
-          <View style={{ paddingHorizontal: 20, gap: 8 }}>
-            <Eyebrow>طرق دفع أخرى</Eyebrow>
-            {OTHER.map((o) => (
-              <SelectRow
-                key={o.l}
-                on={payM === o.m}
-                onPress={() => useApp.getState().setCheckout({ payM: o.m })}
-                minHeight={64}
-                left={<IconTile icon={o.icon} />}
-              >
-                <Txt s={14.5} w={700}>
-                  {o.l}
-                </Txt>
-                <Txt s={12} color={c.text3}>
-                  {o.s}
-                </Txt>
-              </SelectRow>
-            ))}
-          </View>
-
-          <View style={{ paddingHorizontal: 20, gap: 8 }}>
-            <Eyebrow>المعاملات الأخيرة</Eyebrow>
             <ListCard radius={20}>
               {history.map((o, i) => {
                 const refund = o.step === 4;
@@ -253,12 +206,7 @@ export default function PaymentsScreen() {
             </ListCard>
           </View>
 
-          <View style={styles.secure}>
-            <Icon name="lock" size={17} fill color={c.ok} />
-            <Txt s={12} w={500} lh={1.5} color={c.text3} style={{ flex: 1 }}>
-              بيانات بطاقتك محمية ولا يتم حفظ رقم البطاقة أو رمز الأمان على جهازك.
-            </Txt>
-          </View>
+
         </ScrollView>
         <ScreenHeader title="المحفظة" />
         <CardSheet
@@ -280,26 +228,17 @@ export default function PaymentsScreen() {
 }
 
 const styles = StyleSheet.create({
-  walletHero: { backgroundColor: '#FFE500', paddingHorizontal: 20, paddingTop: 14, paddingBottom: 24, gap: 18, borderBottomRightRadius: 28, overflow: 'hidden' },
-  balanceCard: { minHeight: 118, borderRadius: 24, backgroundColor: '#FFFFFF', paddingHorizontal: 20, paddingVertical: 16, alignItems: 'flex-end', justifyContent: 'center', gap: 6 },
-  titleRow: { paddingHorizontal: 20, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
+  walletHero: { height: 300, backgroundColor: '#FFE51A', paddingHorizontal: 20, paddingTop: 16, paddingBottom: 24, justifyContent: 'flex-end', overflow: 'hidden' },
+  heroMint: { position: 'absolute', right: -85, top: -62, width: 190, height: 430, backgroundColor: '#15C99A', borderRadius: 95, transform: [{ rotate: '34deg' }] },
+  balanceCard: { minHeight: 132, borderRadius: 26, backgroundColor: '#FFFFFF', paddingHorizontal: 22, paddingVertical: 18, alignItems: 'flex-end', justifyContent: 'center', gap: 10 },
+  titleRow: { minHeight: 78, paddingHorizontal: 22, paddingTop: 18, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: '#FFFFFF' },
+  manageLink: { flexDirection: 'row', alignItems: 'center', gap: 2 },
   actions: { flexDirection: 'row', gap: 8, paddingHorizontal: 20 },
   action: { flex: 1, height: 64, borderRadius: 20, alignItems: 'center', justifyContent: 'center', gap: 4 },
-  firstCard: { marginHorizontal: 20, minHeight: 220, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 18 },
-  networks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, backgroundColor: '#FFFFFF', borderRadius: 30, paddingHorizontal: 10, paddingVertical: 8, marginBottom: 8 },
+  firstCard: { marginHorizontal: 18, minHeight: 246, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center', gap: 8, padding: 18 },
+  networks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 5, backgroundColor: '#FFFFFF', borderRadius: 28, paddingHorizontal: 8, paddingVertical: 7, marginBottom: 8 },
   addCardButton: { marginTop: 12, width: '72%', minHeight: 54, borderRadius: 18, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-  credit: { marginHorizontal: 20, padding: 16, borderRadius: 22, backgroundColor: fixed.ink, flexDirection: 'row', alignItems: 'center', gap: 14 },
-  creditTile: { width: 46, height: 46, borderRadius: 15, backgroundColor: fixed.orange, alignItems: 'center', justifyContent: 'center' },
-  gift: {
-    height: 38,
-    paddingHorizontal: 12,
-    borderRadius: 19,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.22)',
-    backgroundColor: 'rgba(255,255,255,0.08)',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  historyHead: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 54 },
+  emptyHistory: { minHeight: 210, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   pay: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14 },
-  secure: { marginHorizontal: 20, flexDirection: 'row', alignItems: 'center', gap: 10 },
 });
