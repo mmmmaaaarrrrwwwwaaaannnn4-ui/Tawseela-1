@@ -11,7 +11,7 @@ import { cardBrandOf } from '@/data/seed';
 import type { NewCard } from '@/store/app-store';
 import { useTheme } from '@/theme/theme';
 
-import { CardChip, CardSurface } from './card-face';
+import { CARD_INK, CardChip, CardSurface, TAWSELA_CARD_GRADIENT } from './card-face';
 import { Field } from './field';
 import { ToggleRow } from './rows';
 
@@ -73,10 +73,10 @@ export function CardSheet({
     >
       <View style={{ height: 196 }}>
         <Animated.View style={[StyleSheet.absoluteFill, styles.shadow, front]}>
-          <CardSurface bg={b.bg}>
+          <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
             <View style={styles.between}>
               <CardChip />
-              <Txt s={16} w={800} ls={0.12} color="#FFFFFF">
+              <Txt s={16} w={800} ls={0.12} color={CARD_INK}>
                 {d ? b.name : 'CARD'}
               </Txt>
             </View>
@@ -85,7 +85,7 @@ export function CardSheet({
             </Txt>
             <View style={[styles.between, { alignItems: 'flex-end' }]}>
               <View style={{ gap: 2, flexShrink: 1 }}>
-                <Txt s={9.5} w={600} ls={0.1} color="rgba(255,255,255,0.65)">
+                <Txt s={9.5} w={600} ls={0.1} color="rgba(253,250,235,0.72)">
                   CARD HOLDER
                 </Txt>
                 <Txt s={13} w={600} ls={0.08} color="#FFFFFF" numberOfLines={1}>
@@ -104,14 +104,14 @@ export function CardSheet({
           </CardSurface>
         </Animated.View>
         <Animated.View style={[StyleSheet.absoluteFill, styles.shadow, back]}>
-          <CardSurface bg={b.bg} style={{ padding: 0 }}>
+          <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="back" style={{ padding: 0 }}>
             <View style={styles.strip} />
             <View style={styles.cvv}>
               <Txt s={16} w={700} ls={0.2} color="#1C1C1C">
                 {n.cvv ? '•'.repeat(n.cvv.length) : '•••'}
               </Txt>
             </View>
-            <Txt s={11} w={500} color="rgba(255,255,255,0.7)" style={styles.hint}>
+            <Txt s={11} w={500} color="rgba(253,250,235,0.72)" style={styles.hint}>
               The 3–4 digits on the back of your card
             </Txt>
           </CardSurface>
