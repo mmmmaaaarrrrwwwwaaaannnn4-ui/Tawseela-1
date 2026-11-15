@@ -40,7 +40,7 @@ function GroupCard({ rows }: { rows: MenuRow[] }) {
           style={styles.menuRow}
           accessibilityRole="button"
         >
-          <Icon name={row.icon} size={24} color={c.text} />
+          <Icon name={row.icon} size={24} color={c.text1} />
 
           <View style={styles.rowText}>
             <Txt s={17} w={600} style={styles.rtlText} numberOfLines={1}>
