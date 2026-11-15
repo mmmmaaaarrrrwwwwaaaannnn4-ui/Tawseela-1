@@ -144,7 +144,7 @@ export function Area({
           paddingHorizontal: padH,
           paddingTop: padV,
           paddingBottom: padV,
-          fontFamily: family(weight),
+          fontFamily: familyForText(rest.value ?? rest.defaultValue ?? rest.placeholder, weight),
           fontSize,
           lineHeight: lh,
         },
