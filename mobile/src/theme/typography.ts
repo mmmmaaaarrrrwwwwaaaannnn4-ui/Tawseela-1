@@ -60,3 +60,8 @@ export const montserratFamily: Record<300 | 400 | 600 | 700, string> = {
   600: 'MontserratSemiBold',
   700: 'MontserratBold',
 };
+
+export function familyForText(sample: unknown, weight: Weight): string {
+  const value = typeof sample === 'string' ? sample : '';
+  return /[\\u0600-\\u06FF]/.test(value) ? arabicFamily(weight) : family(weight);
+}
