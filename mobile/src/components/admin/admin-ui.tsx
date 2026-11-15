@@ -18,7 +18,7 @@ import { cnt, initials, money, orderTime } from '@/lib/format';
 import { useApp } from '@/store/app-store';
 import type { Palette } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme';
-import { family, familyForText } from '@/theme/typography';
+import { familyForText } from '@/theme/typography';
 
 const EASE = Easing.bezier(0.22, 1, 0.36, 1);
 
