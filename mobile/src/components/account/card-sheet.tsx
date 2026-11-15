@@ -4,9 +4,9 @@ import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from '
 
 import { Icon } from '@/components/icons/icon';
 import { PaymentNetworkLogo, WalletProviderLogo } from './brand-logos';
-import { AccentButton } from '@/components/ui/buttons';
 import { Eyebrow } from '@/components/ui/layout';
 import { Sheet } from '@/components/ui/overlays';
+import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
 import { cardBrandOf } from '@/data/seed';
 import type { NewCard } from '@/store/app-store';
@@ -14,22 +14,21 @@ import { useTheme } from '@/theme/theme';
 
 import { CARD_INK, CardChip, CardSurface, TAWSELA_CARD_GRADIENT } from './card-face';
 import { Field } from './field';
-import { ToggleRow } from './rows';
 
 export const blankCard = (name = ''): NewCard => ({ num: '', name: name.toUpperCase(), exp: '', cvv: '', nick: '', def: true });
-
 const FLIP = Easing.bezier(0.34, 1.2, 0.64, 1);
 
-/** “Add a card” sheet with a live card preview that flips to the CVV side (`nC` in the design). */
+const SECURITY = [
+  'تلتزم توصيلة بمعيار أمان بيانات بطاقات الدفع (PCI DSS) عند معالجة بيانات بطاقات المستخدمين.',
+  'معلومات البطاقة آمنة، ولن تتم مشاركتها مع أي طرف.',
+  'جميع البيانات مشفّرة.',
+  'لا تبيع توصيلة معلومات بطاقتك بتاتًا.',
+  'في حال حدوث عملية تفويض مسبق، سيتم إعادة المبلغ على الفور.',
+];
+
+/** Full-screen card-entry page based on the supplied reference screenshot and Flip Card HTML. */
 export function CardSheet({
-  visible,
-  value,
-  onChange,
-  showErrors,
-  flipped,
-  onFlip,
-  onSave,
-  onClose,
+  visible, value, onChange, showErrors, flipped, onFlip, onSave, onClose,
 }: {
   visible: boolean;
   value: NewCard;
@@ -44,192 +43,224 @@ export function CardSheet({
   const n = value;
   const d = n.num.replace(/\D/g, '');
   const b = cardBrandOf(d);
-  const shown = (d + '•'.repeat(Math.max(0, 16 - d.length)))
-    .slice(0, 16)
-    .replace(/(.{4})/g, '$1 ')
-    .trim();
+  const shown = (d + '•'.repeat(Math.max(0, 16 - d.length))).slice(0, 16).replace(/(.{4})/g, '$1 ').trim();
   const okExp = /^(0[1-9]|1[0-2])\/\d{2}$/.test(n.exp);
   const okCvv = /^\d{3,4}$/.test(n.cvv);
-
   const r = useSharedValue(flipped ? 180 : 0);
-  useEffect(() => {
-    r.set(withTiming(flipped ? 180 : 0, { duration: 700, easing: FLIP }));
-  }, [flipped, r]);
-  const front = useAnimatedStyle(() => ({
-    opacity: r.value < 90 ? 1 : 0,
-    transform: [{ perspective: 1000 }, { rotateY: `${r.value}deg` }],
-  }));
-  const back = useAnimatedStyle(() => ({
-    opacity: r.value >= 90 ? 1 : 0,
-    transform: [{ perspective: 1000 }, { rotateY: `${r.value - 180}deg` }],
-  }));
+  useEffect(() => { r.set(withTiming(flipped ? 180 : 0, { duration: 700, easing: FLIP })); }, [flipped, r]);
+  const front = useAnimatedStyle(() => ({ opacity: r.value < 90 ? 1 : 0, transform: [{ perspective: 1100 }, { rotateY: `${r.value}deg` }] }));
+  const back = useAnimatedStyle(() => ({ opacity: r.value >= 90 ? 1 : 0, transform: [{ perspective: 1100 }, { rotateY: `${r.value - 180}deg` }] }));
+  const toggleFlip = () => onFlip(!flipped);
+  const providers = [
+    { key: 'insta', label: 'InstaPay', bg: '#F4ECFB' },
+    { key: 'orange', label: 'Orange Money', bg: '#FFF4E8' },
+    { key: 'we', label: 'WE Pay', bg: '#F2ECFA' },
+    { key: 'etisalat', label: 'Etisalat', bg: '#FFF0F1' },
+    { key: 'cash', label: 'توصيلة', bg: '#FFF0F0' },
+  ];
 
   return (
     <Sheet
       visible={visible}
       onClose={onClose}
-      title="إضافة بطاقة جديدة"
-      subtitle="أدخل بيانات بطاقتك البنكية بأمان"
-      footer={<AccentButton label="تأكيد وإضافة البطاقة" icon="lock" iconFill iconSize={19} onPress={onSave} />}
+      fullScreen
+      scroll
+      header={
+        <View style={styles.header}>
+          <PressableScale onPress={onClose} style={styles.backButton}>
+            <Icon name="chevron_right" size={25} color="#171717" />
+          </PressableScale>
+          <Txt s={22} w={700} color="#111111">إضافة بطاقة جديدة</Txt>
+        </View>
+      }
+      footer={
+        <PressableScale onPress={onSave} style={styles.confirmButton} scaleTo={0.985}>
+          <Txt s={19} w={700} color="#777777">تأكيد</Txt>
+        </PressableScale>
+      }
     >
-      <View style={{ height: 196 }}>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.shadow, front]}>
-          <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
-            <View style={[styles.between, { justifyContent: 'flex-start', gap: 12, marginTop: 34 }]}>
-              <CardChip />
-              <Icon name="contactless" size={27} color={CARD_INK} />
-            </View>
-            <Txt s={18} w={600} ls={0.13} tabular color="#FFFFFF">
-              {shown}
-            </Txt>
-            <View style={[styles.between, { alignItems: 'flex-end' }]}>
-              <View style={{ gap: 3, flexShrink: 1 }}>
-                <Txt s={9} w={500} color="rgba(253,250,235,0.76)">اسم حامل البطاقة</Txt>
-                <Txt s={12} w={600} color={CARD_INK} numberOfLines={1}>
-                  {n.name.trim() || 'الاسم كما هو على البطاقة'}
-                </Txt>
-              </View>
-              <View style={{ gap: 3, alignItems: 'flex-start' }}>
-                <Txt s={9} w={500} color="rgba(253,250,235,0.76)">MM/YY</Txt>
-                <Txt s={12} w={600} color="#FFFFFF">
-                  {n.exp || '••/••'}
-                </Txt>
-              </View>
-              <PaymentNetworkLogo brand={d ? b.name : 'MASTERCARD'} width={42} height={24} />
-            </View>
-          </CardSurface>
-        </Animated.View>
-        <Animated.View style={[StyleSheet.absoluteFill, styles.shadow, back]}>
-          <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="back" style={{ padding: 0 }}>
-            <View style={styles.strip} />
-            <View style={styles.cvv}>
-              <Txt s={16} w={700} ls={0.2} color="#1C1C1C">
-                {n.cvv ? '•'.repeat(n.cvv.length) : '•••'}
-              </Txt>
-            </View>
-            <Txt s={11} w={500} color="rgba(253,250,235,0.72)" style={styles.hint}>
-              The 3–4 digits on the back of your card
-            </Txt>
-          </CardSurface>
-        </Animated.View>
-      </View>
+      <View style={styles.content}>
+        <PressableScale onPress={toggleFlip} scaleTo={0.995} style={styles.cardWrap}>
+          <View style={{ height: 210 }}>
+            <Animated.View style={[StyleSheet.absoluteFill, styles.cardShadow, front]}>
+              <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
+                <View style={styles.chipRow}>
+                  <CardChip />
+                  <Icon name="contactless" size={34} color={CARD_INK} />
+                </View>
+                <View style={styles.cardBottom}>
+                  <Txt s={18} w={700} ls={0.12} tabular color="#FFFFFF">{shown}</Txt>
+                  <View style={styles.cardMeta}>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Txt s={10} w={500} color="rgba(255,255,255,0.78)">اسم حامل البطاقة</Txt>
+                      <Txt s={13} w={700} color="#FFFFFF" numberOfLines={1}>{n.name.trim() || 'اسم حامل البطاقة'}</Txt>
+                    </View>
+                    <View style={{ gap: 3, minWidth: 66 }}>
+                      <Txt s={10} w={500} color="rgba(255,255,255,0.78)">MM/YY</Txt>
+                      <Txt s={13} w={700} color="#FFFFFF">{n.exp || '••/••'}</Txt>
+                    </View>
+                    <PaymentNetworkLogo brand={d ? b.name : 'MASTERCARD'} width={50} height={30} />
+                  </View>
+                </View>
+              </CardSurface>
+            </Animated.View>
+            <Animated.View style={[StyleSheet.absoluteFill, styles.cardShadow, back]}>
+              <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="back" style={{ padding: 0 }}>
+                <View style={styles.magneticStripe} />
+                <View style={styles.signatureRow}>
+                  <View style={styles.signatureArea}>
+                    <Txt s={9} w={600} color="#FFFFFF">توقيع حامل البطاقة</Txt>
+                    <View style={styles.signaturePaper}><Txt s={12} w={500} color="#193D31">{n.name || 'AUTHORIZED SIGNATURE'}</Txt></View>
+                  </View>
+                  <View style={styles.cvvArea}>
+                    <Txt s={9} w={700} color="#FFFFFF">CVV</Txt>
+                    <View style={styles.cvvPaper}><Txt s={15} w={700} color="#1A1A1A">{n.cvv ? '•'.repeat(n.cvv.length) : '•••'}</Txt></View>
+                  </View>
+                </View>
+                <Txt s={9} w={500} color="rgba(255,255,255,0.72)" style={styles.backHint}>اضغط على البطاقة للعودة إلى الوجه الأمامي</Txt>
+              </CardSurface>
+            </Animated.View>
+          </View>
+        </PressableScale>
 
-      <View style={{ gap: 8 }}>
-        <Eyebrow>رقم البطاقة</Eyebrow>
-        <Field
-          icon="credit_card"
-          value={n.num}
-          onChangeText={(v) =>
-            onChange({
-              num: v
-                .replace(/\D/g, '')
-                .slice(0, 16)
-                .replace(/(.{4})(?=.)/g, '$1 '),
-            })
-          }
-          placeholder="0000 0000 0000 0000"
-          keyboardType="number-pad"
-          autoComplete="cc-number"
-          error={showErrors && d.length < 15}
-        />
-      </View>
-      <View style={{ gap: 8 }}>
-        <Eyebrow>اسم حامل البطاقة</Eyebrow>
-        <Field
-          icon="person"
-          value={n.name}
-          onChangeText={(v) => onChange({ name: v.toUpperCase() })}
-          placeholder="الاسم كما هو مكتوب على البطاقة"
-          autoComplete="name"
-          autoCapitalize="characters"
-          error={showErrors && !n.name.trim()}
-        />
-      </View>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
-          <Eyebrow>الشهر / السنة</Eyebrow>
+        <View style={styles.networkHeader}>
+          <PaymentNetworkLogo brand="MADA" width={42} height={35} />
+          <PaymentNetworkLogo brand="VISA" width={43} height={31} />
+          <PaymentNetworkLogo brand="AMEX" width={40} height={32} />
+          <PaymentNetworkLogo brand="MASTERCARD" width={42} height={30} />
+          <PaymentNetworkLogo brand="VISA" width={42} height={30} />
+        </View>
+        <View style={styles.divider} />
+
+        <View style={styles.formGroup}>
+          <View style={[styles.numberField, showErrors && d.length < 15 ? styles.invalidField : null]}>
+            <Icon name="camera_alt" size={24} color="#858585" />
+            <View style={{ flex: 1 }}>
+              <Field
+                value={n.num}
+                onChangeText={(v) => onChange({ num: v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})(?=.)/g, '$1 ') })}
+                placeholder="يُرجى إدخال رقم البطاقة المصرفية"
+                keyboardType="number-pad"
+                autoComplete="cc-number"
+                error={false}
+              />
+            </View>
+            <Icon name="credit_card" size={24} color="#A5A5A5" />
+          </View>
+          {showErrors && d.length < 15 ? <Txt s={12} color="#F04432" align="right">رقم البطاقة لا يمكن أن يكون فارغًا أو غير مكتمل</Txt> : null}
+        </View>
+
+        <View style={styles.rowFields}>
+          <View style={styles.smallField}>
+            <Field
+              value={n.cvv}
+              onChangeText={(v) => onChange({ cvv: v.replace(/\D/g, '').slice(0, 4) })}
+              onFocus={() => onFlip(true)}
+              onBlur={() => onFlip(false)}
+              placeholder="CVV/CVC"
+              keyboardType="number-pad"
+              secureTextEntry
+              error={showErrors && !okCvv}
+            />
+          </View>
+          <View style={styles.smallField}>
+            <Field
+              value={n.exp}
+              onChangeText={(v) => { let x = v.replace(/\D/g, '').slice(0, 4); if (x.length > 2) x = x.slice(0, 2) + '/' + x.slice(2); onChange({ exp: x }); }}
+              placeholder="الشهر / السنة"
+              keyboardType="number-pad"
+              error={showErrors && !okExp}
+            />
+          </View>
+        </View>
+
+        <View style={styles.formGroup}>
           <Field
-            icon="calendar_month"
-            value={n.exp}
-            onChangeText={(v) => {
-              let x = v.replace(/\D/g, '').slice(0, 4);
-              if (x.length > 2) x = x.slice(0, 2) + '/' + x.slice(2);
-              onChange({ exp: x });
-            }}
-            placeholder="MM/YY"
-            keyboardType="number-pad"
-            error={showErrors && !okExp}
+            value={n.name}
+            onChangeText={(v) => onChange({ name: v.toUpperCase() })}
+            placeholder="يُرجى إدخال الاسم الموجود على البطاقة"
+            autoComplete="name"
+            autoCapitalize="characters"
+            error={showErrors && !n.name.trim()}
           />
         </View>
-        <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
-          <Eyebrow>رمز الأمان CVV</Eyebrow>
-          <Field
-            icon="lock"
-            value={n.cvv}
-            onChangeText={(v) => onChange({ cvv: v.replace(/\D/g, '').slice(0, 4) })}
-            onFocus={() => onFlip(true)}
-            onBlur={() => onFlip(false)}
-            placeholder="123"
-            keyboardType="number-pad"
-            secureTextEntry
-            error={showErrors && !okCvv}
-          />
+
+        <PressableScale onPress={() => onChange({ def: !n.def })} style={styles.defaultRow}>
+          <View style={[styles.switch, n.def && styles.switchOn]}><View style={[styles.switchKnob, n.def && styles.switchKnobOn]} /></View>
+          <Txt s={16} w={700} color="#171717">تعيين كطريقة الدفع الأساسية</Txt>
+        </PressableScale>
+
+        <View style={styles.security}>
+          <View style={styles.securityTitle}>
+            <Icon name="verified_user" size={22} fill color="#00A878" />
+            <Txt s={15} w={700} color="#00A878">تحمي توصيلة معلومات بطاقتك</Txt>
+          </View>
+          {SECURITY.map((line) => (
+            <View key={line} style={styles.securityLine}>
+              <Icon name="check" size={15} color="#00A878" />
+              <Txt s={12.5} w={500} lh={1.45} color="#8A8A8A" style={{ flex: 1 }}>{line}</Txt>
+            </View>
+          ))}
+          <View style={styles.securityBadges}>
+            {['SafeKey', 'ID Check', 'VISA SECURE', 'PCI DSS'].map((x) => (
+              <View key={x} style={styles.securityBadge}><Txt s={9} w={700} color={x === 'VISA SECURE' ? '#173C9B' : '#7B7B7B'}>{x}</Txt></View>
+            ))}
+          </View>
         </View>
-      </View>
-      <View style={{ gap: 8 }}>
-        <Eyebrow>اسم مختصر للبطاقة (اختياري)</Eyebrow>
-        <Field icon="sell" value={n.nick} onChangeText={(nick) => onChange({ nick })} placeholder="مثال: بطاقتي الأساسية" />
-      </View>
-      <View style={{ borderRadius: 20, borderWidth: 1, borderColor: c.line, backgroundColor: c.surface1, overflow: 'hidden' }}>
-        <ToggleRow icon="verified" title="تعيين كطريقة الدفع الأساسية" on={n.def} minHeight={60} last onPress={() => onChange({ def: !n.def })} />
-      </View>
-      <View style={{ gap: 9 }}>
-        <Eyebrow>شبكات البطاقات المدعومة</Eyebrow>
-        <View style={styles.networks}>
-          <PaymentNetworkLogo brand="MADA" width={34} height={27} />
-          <PaymentNetworkLogo brand="VISA" width={38} height={25} />
-          <PaymentNetworkLogo brand="AMEX" width={34} height={25} />
-          <PaymentNetworkLogo brand="MASTERCARD" width={34} height={25} />
-          <PaymentNetworkLogo brand="DISCOVER" width={42} height={24} />
+
+        <View style={styles.otherMethodsTitle}>
+          <View style={styles.dividerFlex} />
+          <Txt s={19} w={800} color="#111111">طرق دفع أخرى</Txt>
+          <View style={styles.dividerFlex} />
         </View>
-      </View>
-      <View style={{ gap: 9 }}>
-        <Eyebrow>طرق دفع أخرى</Eyebrow>
-        <View style={styles.wallets}>
-          <WalletProviderLogo provider="InstaPay" width={44} height={38} />
-          <WalletProviderLogo provider="Orange Cash" width={44} height={38} />
-          <WalletProviderLogo provider="WE Pay" width={44} height={38} />
-          <WalletProviderLogo provider="Etisalat Cash" width={44} height={38} />
-          <WalletProviderLogo provider="Vodafone Cash" width={44} height={38} />
+        <View style={styles.providerRow}>
+          {providers.map((p) => (
+            <PressableScale key={p.key} onPress={() => {}} style={[styles.providerTile, { backgroundColor: p.bg }]}>
+              <WalletProviderLogo provider={p.label} width={54} height={55} />
+            </PressableScale>
+          ))}
         </View>
-      </View>
-      <View style={{ flexDirection: 'row', gap: 10, alignItems: 'center' }}>
-        <Icon name="shield_lock" size={18} fill color={c.ok} />
-        <Txt s={12} w={500} lh={1.5} color={c.text3} style={{ flex: 1 }}>
-          توصيلة تحمي معلومات بطاقتك وتستخدم اتصالًا آمنًا لمعالجة الدفع. لا يتم حفظ رقم البطاقة أو رمز الأمان على جهازك.
-        </Txt>
       </View>
     </Sheet>
   );
 }
 
 const styles = StyleSheet.create({
-  shadow: { borderRadius: 26, shadowColor: '#1A1A1A', shadowOpacity: 0.3, shadowRadius: 20, shadowOffset: { width: 0, height: 22 }, elevation: 10 },
-  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  networks: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10, paddingVertical: 7 },
-  wallets: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 7, padding: 9, borderRadius: 16, backgroundColor: '#F3F3F8' },
-  strip: { position: 'absolute', left: 0, right: 0, top: 28, height: 42, backgroundColor: '#111111' },
-  cvv: {
-    position: 'absolute',
-    left: 20,
-    right: 20,
-    top: 92,
-    height: 38,
-    borderRadius: 8,
-    backgroundColor: 'rgba(255,255,255,0.9)',
-    alignItems: 'flex-end',
-    justifyContent: 'center',
-    paddingHorizontal: 14,
-  },
-  hint: { position: 'absolute', left: 20, bottom: 18 },
+  content: { gap: 13, paddingBottom: 8 },
+  header: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-start', gap: 10, paddingHorizontal: 20, paddingBottom: 10 },
+  backButton: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  cardWrap: { marginHorizontal: 22, marginTop: 4, marginBottom: 2 },
+  cardShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.28, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 36 },
+  cardBottom: { gap: 14, marginTop: 'auto', paddingBottom: 2 },
+  cardMeta: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+  networkHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 4 },
+  divider: { height: 1, backgroundColor: '#E8E8E8', marginHorizontal: 4 },
+  formGroup: { gap: 7 },
+  numberField: { minHeight: 58, borderRadius: 15, backgroundColor: '#F4F4F8', flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 13, borderWidth: 1.5, borderColor: '#F4F4F8' },
+  invalidField: { borderColor: '#F04432', backgroundColor: '#FFFDFD' },
+  rowFields: { flexDirection: 'row', gap: 9 },
+  smallField: { flex: 1, minWidth: 0 },
+  defaultRow: { minHeight: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 4 },
+  switch: { width: 48, height: 28, borderRadius: 20, backgroundColor: '#D9D9D9', padding: 3, justifyContent: 'center' },
+  switchOn: { backgroundColor: '#FFD91A' },
+  switchKnob: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF' },
+  switchKnobOn: { alignSelf: 'flex-end' },
+  security: { gap: 8, paddingTop: 2 },
+  securityTitle: { flexDirection: 'row', alignItems: 'center', gap: 7 },
+  securityLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
+  securityBadges: { flexDirection: 'row', justifyContent: 'flex-end', gap: 6, paddingTop: 3 },
+  securityBadge: { minWidth: 53, height: 29, paddingHorizontal: 5, borderWidth: 1, borderColor: '#DDDDDD', borderRadius: 5, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  otherMethodsTitle: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 5 },
+  dividerFlex: { height: 1, flex: 1, backgroundColor: '#BFC3CA' },
+  providerRow: { flexDirection: 'row', gap: 4, justifyContent: 'space-between' },
+  providerTile: { flex: 1, minWidth: 0, height: 76, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  confirmButton: { height: 62, borderRadius: 22, backgroundColor: '#FFF176', alignItems: 'center', justifyContent: 'center' },
+  magneticStripe: { position: 'absolute', left: 0, right: 0, top: 28, height: 42, backgroundColor: '#151515' },
+  signatureRow: { position: 'absolute', left: 20, right: 20, top: 92, flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
+  signatureArea: { flex: 1, gap: 5 },
+  signaturePaper: { height: 34, borderRadius: 4, backgroundColor: '#F8F7F0', justifyContent: 'center', paddingHorizontal: 10 },
+  cvvArea: { width: 60, gap: 5 },
+  cvvPaper: { height: 34, borderRadius: 4, backgroundColor: '#F8F7F0', alignItems: 'center', justifyContent: 'center' },
+  backHint: { position: 'absolute', left: 20, bottom: 16 },
 });
