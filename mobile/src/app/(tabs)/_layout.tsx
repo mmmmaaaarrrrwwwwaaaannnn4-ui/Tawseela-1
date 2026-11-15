@@ -2,7 +2,11 @@ import { NativeTabs } from 'expo-router/native-tabs';
 
 export default function TabsLayout() {
   return (
-    <NativeTabs tintColor="#E5FF00" disableTransparentOnScrollEdge>
+    <NativeTabs
+      tintColor="#0D2818"
+      iconColor="#0D2818"
+      disableTransparentOnScrollEdge
+    >
       <NativeTabs.Trigger name="cart" prominent>
         <NativeTabs.Trigger.Icon sf={{ default: 'cart', selected: 'cart.fill' }} md={{ default: 'shopping_cart', selected: 'shopping_cart' }} />
         <NativeTabs.Trigger.Label>السلة</NativeTabs.Trigger.Label>
