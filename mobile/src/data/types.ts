@@ -52,6 +52,7 @@ export interface Brand {
   workDays: ('sat' | 'sun' | 'mon' | 'tue' | 'wed' | 'thu' | 'fri')[];
   openTime: string;
   closeTime: string;
+  manualStatus: 'auto' | 'open' | 'closed';
   deliveryFee: number | null;
   prepTime: number;
 }
