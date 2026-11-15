@@ -30,6 +30,9 @@ export function WalletProviderLogo({ provider, width = 48, height = 42 }: { prov
   if (key.includes('insta')) {
     return <View style={[styles.wordLogo,{width,height}]}><Text style={styles.insta}>INSTA</Text><Text style={styles.instaPay}>PAY</Text></View>;
   }
+  if (key.includes('cash') || key.includes('tawseela') || key.includes('توصيلة')) {
+    return <View style={[styles.providerWrap,{width,height,gap:1}]}><Svg width={width} height={height*0.68} viewBox="0 0 48 34"><Rect x={8} y={1} width={28} height={30} rx={4} fill="none" stroke="#E51D2A" strokeWidth={2.4}/><Path d="M13 7h18M13 24h18M18 16h8" stroke="#E51D2A" strokeWidth={2.1} strokeLinecap="round"/><Path d="M20 12c5-5 11-2 13 3-4 0-7 2-9 6" fill="none" stroke="#E51D2A" strokeWidth={2.2}/></Svg><Text style={styles.cashText}>توصيلة</Text></View>;
+  }
   if (key.includes('orange')) {
     return <View style={[styles.providerWrap,{width,height}]}><Svg width={width} height={height} viewBox="0 0 48 42"><Rect x="3" y="2" width="42" height="38" rx="7" fill="#F58220"/><Path d="M10 29h28v3H10zm0-7h28v3H10zm0-7h28v3H10z" fill="#FFFFFF"/></Svg></View>;
   }
@@ -51,11 +54,12 @@ const styles = StyleSheet.create({
   providerWrap:{alignItems:'center',justifyContent:'center'},
   wordLogo:{alignItems:'center',justifyContent:'center'},
   etisalat:{fontSize:27,fontWeight:'900',letterSpacing:-2,color:'#E60012'},
+  cashText:{fontSize:9,fontWeight:'900',color:'#E51D2A',lineHeight:10},
   mada:{alignItems:'center',justifyContent:'center',gap:0},
   madaDots:{fontSize:10,color:'#0B9D66',letterSpacing:-2},
   madaText:{fontSize:10,fontWeight:'900',color:'#087A55'},
   insta:{fontSize:12,fontWeight:'900',fontStyle:'italic',color:'#5B2589',lineHeight:13},
   instaPay:{fontSize:12,fontWeight:'900',fontStyle:'italic',color:'#F18B24',lineHeight:13},
-  we:{fontSize:25,fontWeight:'900',letterSpacing:-2,color:'#6B2D91'},
-  weUnderline:{width:30,height:3,borderRadius:2,backgroundColor:'#6B2D91',marginTop:-2},
+  we:{fontSize:25,fontWeight:'500',letterSpacing:-2,color:'#8A8A8A'},
+  weUnderline:{width:35,height:13,borderRadius:5,backgroundColor:'#6B2D91',marginTop:-2},
 });
