@@ -5,6 +5,7 @@ import { useShallow } from 'zustand/react/shallow';
 import { WebView } from 'react-native-webview';
 
 import { Icon, type IconName } from '@/components/icons/icon';
+import { PaymentNetworkLogo, WalletProviderLogo } from '@/components/account/brand-logos';
 import { AccentButton, LinkButton } from '@/components/ui/buttons';
 import { Radio } from '@/components/ui/controls';
 import { Card, Divider, FloatingBar, ScreenHeader, SummaryRow, TotalRow, useChrome } from '@/components/ui/layout';
@@ -101,10 +102,10 @@ function Checkout() {
   };
 
   const walletOptions = [
-    { name: 'Orange Cash', color: '#F58220', mark: 'O' },
-    { name: 'Vodafone Cash', color: '#E60000', mark: 'V' },
-    { name: 'Etisalat Cash', color: '#087B43', mark: 'e&' },
-    { name: 'WE Pay', color: '#6B2D91', mark: 'WE' },
+    { name: 'Orange Cash' },
+    { name: 'Vodafone Cash' },
+    { name: 'Etisalat Cash' },
+    { name: 'WE Pay' },
   ];
   const sel = (on: boolean) => ({ borderColor: on ? c.accent : c.line, backgroundColor: on ? c.accentSoft : c.surface1 });
 
@@ -273,19 +274,19 @@ function Checkout() {
           <View style={styles.sheetHandle} />
           <Txt s={19} w={700}>اختار طريقة الدفع</Txt>
           <PressableScale style={styles.sheetRow} onPress={() => { set({ payM: 0 }); setWalletProvider(''); setPaymentSheet(false); }}>
-            <View style={[styles.brandMark, { backgroundColor: '#111111' }]}><Txt color="#FFFFFF" w={800}>Pay</Txt></View>
-            <View style={{ flex: 1 }}><Txt s={15} w={700}>بطاقة محفوظة</Txt><Txt s={12} color={c.text3}>الدفع باستخدام بطاقة محفوظة عبر Kashier</Txt></View>
+            <PaymentNetworkLogo brand={s.cards.find((card) => card.id === s.defCard)?.brand ?? 'CARD'} width={48} height={34} />
+            <View style={{ flex: 1 }}><Txt s={15} w={700}>بطاقة محفوظة</Txt><Txt s={12} color={c.text3}>الدفع باستخدام بطاقة محفوظة</Txt></View>
             <Radio on={s.payM === 0} />
           </PressableScale>
           {walletOptions.map((w) => (
             <PressableScale key={w.name} style={styles.sheetRow} onPress={() => { set({ payM: 3 }); setWalletProvider(w.name); setPaymentSheet(false); }}>
-              <View style={[styles.brandMark, { backgroundColor: w.color }]}><Txt color="#FFFFFF" w={800}>{w.mark}</Txt></View>
+              <WalletProviderLogo provider={w.name} width={48} height={42} />
               <View style={{ flex: 1 }}><Txt s={15} w={700}>{w.name}</Txt></View>
               <Radio on={s.payM === 3 && walletProvider === w.name} />
             </PressableScale>
           ))}
           <PressableScale style={styles.sheetRow} onPress={() => { set({ payM: 1 }); setPaymentSheet(false); router.push('/payments'); }}>
-            <View style={[styles.brandMark, { backgroundColor: '#E8E8E8' }]}><Icon name="credit_card" size={22} /></View>
+            <PaymentNetworkLogo brand="VISA" width={48} height={34} />
             <View style={{ flex: 1 }}><Txt s={15} w={700}>إضافة فيزا</Txt><Txt s={12} color={c.text3}>Visa أو Mastercard</Txt></View>
             <Icon name="chevron_right" size={20} color={c.text3} />
           </PressableScale>
