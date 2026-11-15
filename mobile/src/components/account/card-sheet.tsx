@@ -212,6 +212,49 @@ export function CardSheet({
         <View style={styles.divider} />
 
         {!wallet ? (
+          <Animated.View style={[styles.cardWrap, { height: cardHeight }, bankPreview]}>
+            <Animated.View style={[StyleSheet.absoluteFill, front]}>
+              <CardSurface bg={TAWSELA_CARD_GRADIENT} style={styles.previewCard} logo="front">
+                <View style={styles.chipRow}>
+                  <CardChip />
+                  <Icon name="contactless" size={30} color={CARD_INK} />
+                </View>
+                <View style={styles.cardBottom}>
+                  <Txt s={19} w={600} ls={0.12} color={CARD_INK} tabular>{cardPreview}</Txt>
+                  <View style={styles.cardMeta}>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Txt s={9} color="rgba(253,250,235,0.72)">اسم حامل البطاقة</Txt>
+                      <Txt s={13} w={700} color={CARD_INK} numberOfLines={1}>{n.name || 'اسم حامل البطاقة'}</Txt>
+                    </View>
+                    <View style={{ gap: 3, alignItems: 'flex-start' }}>
+                      <Txt s={9} color="rgba(253,250,235,0.72)">MM/YY</Txt>
+                      <Txt s={13} w={700} color={CARD_INK}>{n.exp || '••/••'}</Txt>
+                    </View>
+                    {knownBrand ? <PaymentNetworkLogo brand={b.name} width={44} height={28} /> : null}
+                  </View>
+                </View>
+              </CardSurface>
+            </Animated.View>
+            <Animated.View style={[StyleSheet.absoluteFill, back]}>
+              <CardSurface bg={TAWSELA_CARD_GRADIENT} style={[styles.previewCard, { padding: 0 }]} logo="back">
+                <View style={styles.magneticStripe} />
+                <View style={styles.signatureRow}>
+                  <View style={styles.signatureArea}>
+                    <Txt s={9} w={700} ls={0.08} upper color={CARD_INK}>Authorized signature</Txt>
+                    <View style={styles.signaturePaper}><Txt s={13} w={600} color="#153D31">{n.name || ' '}</Txt></View>
+                  </View>
+                  <View style={styles.cvvArea}>
+                    <Txt s={9} w={700} ls={0.08} upper color={CARD_INK}>CVV</Txt>
+                    <View style={styles.cvvPaper}><Txt s={13} w={700} color="#153D31">{n.cvv ? '•'.repeat(n.cvv.length) : '•••'}</Txt></View>
+                  </View>
+                </View>
+                <Txt s={8} color="rgba(253,250,235,0.6)" style={styles.backHint}>AUTHORIZED SIGNATURE</Txt>
+              </CardSurface>
+            </Animated.View>
+          </Animated.View>
+        ) : null}
+
+        {!wallet ? (
           <Animated.View style={formTransition}>
             <View style={styles.formGroup}>
               <View style={styles.numberFieldWrap}>
@@ -383,7 +426,8 @@ const styles = StyleSheet.create({
   content: { gap: 13, paddingBottom: 8 },
   header: { minHeight: 46, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'flex-start', gap: 10, paddingHorizontal: 20, paddingBottom: 10 },
   backButton: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
-  cardWrap: { marginHorizontal: -4, marginTop: 4, marginBottom: 2 },
+  cardWrap: { marginHorizontal: -4, marginTop: 4, marginBottom: 8, position: 'relative' },
+  previewCard: { height: '100%', borderRadius: 20, padding: 20, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(155,244,207,0.62)' },
   cardShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.28, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
   walletShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.24, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: '12%' },
