@@ -1,6 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import type { ReactNode } from 'react';
-import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
+import { Image, StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 import Svg, { Circle, Defs, G, LinearGradient as SvgGradient, Path, Rect, Stop } from 'react-native-svg';
 
 export const TAWSELA_CARD_GRADIENT = ['#087A56', '#00583F', '#003D2D', '#00251B'] as const;
@@ -9,16 +9,12 @@ export const CARD_INK = '#FFFDF3';
 /** The exact supplied Tawsela transparent logo is used on both card faces. */
 export function CardLogo({ side = 'front' }: { side?: 'front' | 'back' }) {
   return (
-    <View pointerEvents="none" style={[styles.logo, side === 'front' ? styles.logoFront : styles.logoBack]}>
-      <Svg width={42} height={34} viewBox="0 0 64 48">
-        <G fill="none" stroke="#F01828" strokeWidth={3.5} strokeLinecap="round" strokeLinejoin="round">
-          <Path d="M5 10h20M2 18h17M7 26h13M22 29h10l7-11h9l7 8h-9M31 18l5-8h9l5 8" />
-          <Circle cx={27} cy={34} r={5} fill="#F01828" stroke="none" />
-          <Circle cx={52} cy={34} r={5} fill="#F01828" stroke="none" />
-        </G>
-      </Svg>
-      <Text style={styles.logoText}>توصيلة</Text>
-    </View>
+    <Image
+      pointerEvents="none"
+      source={require('../../assets/branding/tawsela-card-logo.png')}
+      resizeMode="contain"
+      style={side === 'front' ? styles.logoFront : styles.logoBack}
+    />
   );
 }
 
@@ -95,8 +91,6 @@ export function CardChip() {
 
 const styles = StyleSheet.create({
   card: { height: 210, borderRadius: 20, padding: 22, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(155,244,207,0.62)' },
-  logo: { position: 'absolute', flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 2 },
-  logoFront: { top: 18, right: 16, width: 150, height: 44 },
-  logoBack: { right: 18, bottom: 2, width: 118, height: 36, opacity: 0.18 },
-  logoText: { color: '#FFFDF3', fontSize: 27, fontWeight: '900', letterSpacing: -1.2 },
+  logoFront: { position: 'absolute', top: 18, right: 16, width: 142, height: 56 },
+  logoBack: { position: 'absolute', right: 18, bottom: 2, width: 118, height: 46, opacity: 0.18 },
 });
