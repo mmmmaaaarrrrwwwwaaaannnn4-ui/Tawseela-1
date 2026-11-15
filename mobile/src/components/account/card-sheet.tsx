@@ -284,7 +284,7 @@ export function CardSheet({
         {!wallet ? (
           <Animated.View style={bankPreview}>
             <View style={styles.networkHeader}>
-              <PaymentNetworkLogo brand="MEEZA" width={42} height={35} />
+              <Image source={require('../../assets/payments/Meeza .PNG')} resizeMode="contain" style={styles.meezaLogo} />
               <PaymentNetworkLogo brand="VISA" width={43} height={31} />
               <PaymentNetworkLogo brand="AMEX" width={40} height={32} />
               <PaymentNetworkLogo brand="MASTERCARD" width={42} height={30} />
@@ -446,9 +446,10 @@ export function CardSheet({
             </View>
           ))}
           <View style={styles.securityBadges}>
-            {['SafeKey', 'ID Check', 'VISA SECURE', 'PCI DSS'].map((x) => (
-              <View key={x} style={styles.securityBadge}><Txt s={9} w={700} color={x === 'VISA SECURE' ? '#173C9B' : '#7B7B7B'}>{x}</Txt></View>
-            ))}
+            <View style={styles.securityBadge}><Image source={require('../../assets/payments/amex-safekey.jpg')} resizeMode="contain" style={styles.securityBadgeImage} /></View>
+            <View style={styles.securityBadge}><Image source={require('../../assets/payments/mastercard-identity-check.png')} resizeMode="contain" style={styles.securityBadgeImage} /></View>
+            <View style={styles.securityBadge}><Image source={require('../../assets/payments/visa-secure.jpg')} resizeMode="contain" style={styles.securityBadgeImage} /></View>
+            <View style={styles.securityBadge}><Txt s={9} w={700} color="#7B7B7B">PCI DSS</Txt></View>
           </View>
         </View>
 
@@ -495,7 +496,9 @@ const styles = StyleSheet.create({
   securityTitle: { flexDirection: 'row', alignItems: 'center', gap: 7 },
   securityLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
   securityBadges: { flexDirection: 'row', justifyContent: 'flex-end', gap: 6, paddingTop: 3 },
-  securityBadge: { minWidth: 53, height: 29, paddingHorizontal: 5, borderWidth: 1, borderColor: '#DDDDDD', borderRadius: 5, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  securityBadge: { minWidth: 53, height: 32, paddingHorizontal: 5, borderWidth: 1, borderColor: '#DDDDDD', borderRadius: 5, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  securityBadgeImage: { width: 66, height: 25 },
+  meezaLogo: { width: 42, height: 35 },
   otherMethodsTitle: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 5 },
   dividerFlex: { height: 1, flex: 1, backgroundColor: '#BFC3CA' },
   providerRow: { flexDirection: 'row', gap: 4, justifyContent: 'space-between' },
