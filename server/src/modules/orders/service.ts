@@ -159,15 +159,19 @@ async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInpu
   const clock = `${part('hour')}:${part('minute')}`;
   for (const id of kitchenIds) {
     const brand = brandSnap.docs.find((doc) => doc.id === id);
-    const days = brand?.get('workDays');
-    if (Array.isArray(days) && days.length > 0) {
+    const manualStatus = brand?.get('manualStatus') ?? 'auto';
+    if (manualStatus === 'closed') throw conflict('kitchen_closed', 'One of the kitchens in your cart is currently closed.');
+    if (manualStatus !== 'open') {
+      const days = brand?.get('workDays');
+      if (Array.isArray(days) && days.length > 0) {
       const openTime = String(brand?.get('openTime') ?? '09:00');
       const closeTime = String(brand?.get('closeTime') ?? '23:00');
       const overnight = openTime > closeTime;
       const weekdays = ['sun', 'mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
       const scheduledDay = overnight && clock < closeTime ? weekdays[(weekdays.indexOf(today) + 6) % 7] : today;
       const inHours = overnight ? clock >= openTime || clock < closeTime : clock >= openTime && clock < closeTime;
-      if (!days.includes(scheduledDay) || !inHours) throw conflict('kitchen_closed', 'One of the kitchens in your cart is currently closed.');
+        if (!days.includes(scheduledDay) || !inHours) throw conflict('kitchen_closed', 'One of the kitchens in your cart is currently closed.');
+      }
     }
   }
 
