@@ -11,7 +11,7 @@ export function CardLogo({ side = 'front' }: { side?: 'front' | 'back' }) {
   return (
     <Image
       pointerEvents="none"
-      source={require('../../assets/branding/tawsela-card-logo.png')}
+      source={require('../../assets/payments/tawsela-card-logo.png')}
       resizeMode="contain"
       style={side === 'front' ? styles.logoFront : styles.logoBack}
     />
