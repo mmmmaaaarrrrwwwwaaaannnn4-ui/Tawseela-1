@@ -114,7 +114,7 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
         scrollY.current = e.nativeEvent.contentOffset.y;
       }}
       scrollEventThrottle={64}
-      style={{ flexGrow: 0, flexShrink: 1 }}
+      style={fullScreen ? styles.fullScreenScroll : { flexGrow: 0, flexShrink: 1 }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 16, gap: 14 }}
       keyboardShouldPersistTaps="handled"
       showsVerticalScrollIndicator={false}
@@ -132,7 +132,14 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
           <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
         </Animated.View>
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
-          <Animated.View style={[styles.sheetShadow, { maxHeight }, sheetStyle]}>
+          <Animated.View
+            style={[
+              styles.sheetShadow,
+              fullScreen ? styles.fullScreenShadow : null,
+              { maxHeight, ...(fullScreen ? { height: maxHeight, width: '100%' } : {}) },
+              sheetStyle,
+            ]}
+          >
             {variant === 'glass' ? (
               <Glass
                 variant="strong"
@@ -317,6 +324,8 @@ export function useFlyToCart() {
 const styles = StyleSheet.create({
   kav: { flex: 1, justifyContent: 'flex-end' },
   sheetShadow: { shadowColor: '#1A1A1A', shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: -24 }, elevation: 24 },
+  fullScreenShadow: { width: '100%', flex: 1 },
+  fullScreenScroll: { flex: 1 },
   sheet: { flexShrink: 1, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden', paddingTop: 10 },
   fullScreenSheet: { flex: 1, borderTopLeftRadius: 0, borderTopRightRadius: 0 },
   head: { paddingHorizontal: 20, paddingBottom: 12 },
