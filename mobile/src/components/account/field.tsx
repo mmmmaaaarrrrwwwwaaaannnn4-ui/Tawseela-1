@@ -3,7 +3,7 @@ import { StyleSheet, TextInput, View, type StyleProp, type TextInputInstance, ty
 
 import { Icon, type IconName } from '@/components/icons/icon';
 import { useTheme } from '@/theme/theme';
-import { family } from '@/theme/typography';
+import { familyForText, type Weight } from '@/theme/typography';
 
 interface FieldProps extends Omit<TextInputProps, 'style'> {
   icon?: IconName;
