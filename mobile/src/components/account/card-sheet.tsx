@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { Image, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Icon } from '@/components/icons/icon';
@@ -214,11 +214,17 @@ export function CardSheet({
           <View style={styles.dividerFlex} />
         </View>
         <View style={styles.providerRow}>
-          {providers.map((p) => (
+          {providers.map((p, i) => (
             <PressableScale key={p.key} onPress={() => {}} style={[styles.providerTile, { backgroundColor: p.bg }]}>
-              <WalletProviderLogo provider={p.label} width={54} height={55} />
+              {i === 4 ? <WalletProviderLogo provider="توصيلة" width={54} height={55} /> : null}
             </PressableScale>
           ))}
+          <Image
+            pointerEvents="none"
+            source={require('../../assets/payments/payment-provider-logos.png')}
+            resizeMode="stretch"
+            style={styles.providerSprite}
+          />
         </View>
       </View>
     </Sheet>
@@ -253,7 +259,8 @@ const styles = StyleSheet.create({
   securityBadge: { minWidth: 53, height: 29, paddingHorizontal: 5, borderWidth: 1, borderColor: '#DDDDDD', borderRadius: 5, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
   otherMethodsTitle: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 5 },
   dividerFlex: { height: 1, flex: 1, backgroundColor: '#BFC3CA' },
-  providerRow: { flexDirection: 'row', gap: 4, justifyContent: 'space-between' },
+  providerRow: { position: 'relative', flexDirection: 'row', gap: 4, justifyContent: 'space-between' },
+  providerSprite: { position: 'absolute', left: 0, top: 0, width: '80%', height: 76 },
   providerTile: { flex: 1, minWidth: 0, height: 76, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   confirmButton: { height: 62, borderRadius: 22, backgroundColor: '#FFF176', alignItems: 'center', justifyContent: 'center' },
   magneticStripe: { position: 'absolute', left: 0, right: 0, top: 28, height: 42, backgroundColor: '#151515' },
