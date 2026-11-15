@@ -117,6 +117,65 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     return { deleted: true };
   });
 
+  // Customer-owned wallet contacts are stored in users/{uid}, never in Kashier.
+  const walletInput = z.object({
+    provider: z.enum(['insta', 'orange', 'we', 'etisalat', 'vodafone']),
+    phone: z.string().regex(/^01[0125]\\d{8}$/, 'Enter a valid Egyptian mobile number.'),
+    name: z.string().trim().min(2).max(100),
+    isDefault: z.boolean().optional().default(false),
+  });
+
+  app.get('/me/wallets', { schema: { tags: ['payments'], summary: 'List this customer’s saved wallet contacts', ...secured } }, async (req) => {
+    const user = requireUser(req);
+    const snap = await userRef(db, user.uid).get();
+    const stored = snap.get('paymentMethods.wallets');
+    const wallets = stored && typeof stored === 'object' && !Array.isArray(stored)
+      ? Object.entries(stored as Record<string, any>).filter(([id, value]) => id && value && typeof value === 'object' && value.id === id).map(([, value]) => value)
+      : [];
+    return { wallets: wallets.map((w: any) => ({ id: String(w.id), provider: String(w.provider), phone: String(w.phone), name: String(w.name), isDefault: w.isDefault === true, createdAt: w.createdAt ?? null })) };
+  });
+
+  app.post('/me/wallets', { schema: { tags: ['payments'], summary: 'Save or update a wallet contact for this customer', ...secured, body: walletInput } }, async (req) => {
+    const user = requireUser(req);
+    const input = walletInput.parse(req.body);
+    const ref = userRef(db, user.uid);
+    const id = randomUUID();
+    const savedAt = now();
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const stored = snap.get('paymentMethods.wallets');
+      const wallets = stored && typeof stored === 'object' && !Array.isArray(stored) ? stored as Record<string, any> : {};
+      const same = Object.values(wallets).find((w: any) => w?.provider === input.provider && w?.phone === input.phone) as any;
+      const walletId = same?.id || id;
+      const next = Object.fromEntries(Object.entries(wallets).map(([key, value]: [string, any]) => [key, { ...value, ...(input.isDefault ? { isDefault: false } : {}) }]));
+      next[walletId] = { id: walletId, provider: input.provider, phone: input.phone, name: input.name, isDefault: input.isDefault || (!Object.keys(next).length), createdAt: same?.createdAt ?? savedAt, updatedAt: savedAt };
+      tx.set(ref, { paymentMethods: { wallets: next }, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    });
+    const latest = await ref.get();
+    const stored = latest.get('paymentMethods.wallets') || {};
+    const wallet = Object.values(stored).find((w: any) => w?.provider === input.provider && w?.phone === input.phone) as any;
+    return { saved: true, wallet: wallet ? { id: wallet.id, provider: wallet.provider, phone: wallet.phone, name: wallet.name, isDefault: wallet.isDefault === true } : null };
+  });
+
+  app.delete('/me/wallets/:id', { schema: { tags: ['payments'], summary: 'Delete one of this customer’s saved wallet contacts', ...secured, params: z.object({ id: z.string().uuid() }) } }, async (req) => {
+    const user = requireUser(req);
+    const ref = userRef(db, user.uid);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const stored = snap.get('paymentMethods.wallets');
+      const wallets = stored && typeof stored === 'object' && !Array.isArray(stored) ? { ...(stored as Record<string, any>) } : {};
+      if (!wallets[req.params.id]) throw notFound('Saved wallet');
+      const wasDefault = wallets[req.params.id]?.isDefault === true;
+      delete wallets[req.params.id];
+      if (wasDefault) {
+        const first = Object.keys(wallets)[0];
+        if (first) wallets[first] = { ...wallets[first], isDefault: true };
+      }
+      tx.set(ref, { paymentMethods: { wallets }, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    });
+    return { deleted: true };
+  });
+
   app.get('/me', { schema: { tags: ['me'], summary: 'The signed-in account: role, Fig Club points and tier, credit, vouchers, likes', ...secured, response: { 200: Me, ...errors } } }, async (req) => {
     const user = requireUser(req);
     return toMe(user, (await ensureUser(db, user)).data());
