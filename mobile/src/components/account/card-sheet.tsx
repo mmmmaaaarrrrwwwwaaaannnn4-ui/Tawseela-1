@@ -211,6 +211,70 @@ export function CardSheet({
       <View style={styles.content}>
         <View style={styles.divider} />
 
+        {wallet ? (
+          <Animated.View style={[styles.cardWrap, { height: cardHeight }, walletPreview]}>
+            <LinearGradient colors={[...wallet.gradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.walletCard, { height: '100%' }]}>
+              <View pointerEvents="none" style={[styles.walletGlow, { backgroundColor: 'rgba(255,255,255,0.13)' }]} />
+              <View style={styles.walletCardTop}>
+                <View style={styles.walletBrandPill}>
+                  <Image source={wallet.logo} resizeMode="contain" style={styles.walletLogo} />
+                </View>
+                <View style={styles.walletBrandText}>
+                  <Txt s={11} w={700} color="rgba(255,255,255,0.78)">محفظة إلكترونية</Txt>
+                  <Txt s={19} w={800} color="#FFFFFF">{wallet.label}</Txt>
+                </View>
+              </View>
+              <View style={styles.walletCardBottom}>
+                <Txt s={10} w={600} color="rgba(255,255,255,0.78)">رقم المحفظة</Txt>
+                <Txt s={22} w={800} color="#FFFFFF" tabular>{formatEgyptPhone(walletPhone) || '01X XXXX XXXX'}</Txt>
+                <Txt s={10} w={600} color="rgba(255,255,255,0.78)">اسم صاحب المحفظة</Txt>
+                <Txt s={16} w={700} color="#FFFFFF" numberOfLines={1}>{walletName.trim() || 'الاسم كما هو مسجل بالمحفظة'}</Txt>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        ) : (
+          <Animated.View style={[styles.cardWrap, { height: cardHeight }, bankPreview]}>
+            <Animated.View style={[StyleSheet.absoluteFill, front]}>
+              <CardSurface bg={TAWSELA_CARD_GRADIENT} style={styles.previewCard} logo="front">
+                <View style={styles.chipRow}>
+                  <CardChip />
+                  <Icon name="contactless" size={30} color={CARD_INK} />
+                </View>
+                <View style={styles.cardBottom}>
+                  <Txt s={19} w={600} ls={0.12} color={CARD_INK} tabular>{cardPreview}</Txt>
+                  <View style={styles.cardMeta}>
+                    <View style={{ flex: 1, gap: 3 }}>
+                      <Txt s={9} color="rgba(253,250,235,0.72)">اسم حامل البطاقة</Txt>
+                      <Txt s={13} w={700} color={CARD_INK} numberOfLines={1}>{n.name || 'اسم حامل البطاقة'}</Txt>
+                    </View>
+                    <View style={{ gap: 3, alignItems: 'flex-start' }}>
+                      <Txt s={9} color="rgba(253,250,235,0.72)">MM/YY</Txt>
+                      <Txt s={13} w={700} color={CARD_INK}>{n.exp || '••/••'}</Txt>
+                    </View>
+                    {knownBrand ? <PaymentNetworkLogo brand={b.name} width={44} height={28} /> : null}
+                  </View>
+                </View>
+              </CardSurface>
+            </Animated.View>
+            <Animated.View style={[StyleSheet.absoluteFill, back]}>
+              <CardSurface bg={TAWSELA_CARD_GRADIENT} style={[styles.previewCard, { padding: 0 }]} logo="back">
+                <View style={styles.magneticStripe} />
+                <View style={styles.signatureRow}>
+                  <View style={styles.signatureArea}>
+                    <Txt s={9} w={700} ls={0.08} upper color={CARD_INK}>Authorized signature</Txt>
+                    <View style={styles.signaturePaper}><Txt s={13} w={600} color="#153D31">{n.name || ' '}</Txt></View>
+                  </View>
+                  <View style={styles.cvvArea}>
+                    <Txt s={9} w={700} ls={0.08} upper color={CARD_INK}>CVV</Txt>
+                    <View style={styles.cvvPaper}><Txt s={13} w={700} color="#153D31">{n.cvv ? '•'.repeat(n.cvv.length) : '•••'}</Txt></View>
+                  </View>
+                </View>
+                <Txt s={8} color="rgba(253,250,235,0.6)" style={styles.backHint}>AUTHORIZED SIGNATURE</Txt>
+              </CardSurface>
+            </Animated.View>
+          </Animated.View>
+        )}
+
         {!wallet ? (
           <Animated.View style={[styles.cardWrap, { height: cardHeight }, bankPreview]}>
             <Animated.View style={[StyleSheet.absoluteFill, front]}>
