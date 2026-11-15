@@ -154,10 +154,12 @@ export function CardSheet({
   }, [visible, onFlip]);
 
   const front = useAnimatedStyle(() => ({
+    backfaceVisibility: 'hidden',
     opacity: r.value < 90 ? 1 : 0,
     transform: [{ perspective: 1100 }, { rotateY: r.value + 'deg' }],
   }));
   const back = useAnimatedStyle(() => ({
+    backfaceVisibility: 'hidden',
     opacity: r.value >= 90 ? 1 : 0,
     transform: [{ perspective: 1100 }, { rotateY: (r.value - 180) + 'deg' }],
   }));
