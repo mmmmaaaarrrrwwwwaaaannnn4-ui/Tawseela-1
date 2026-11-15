@@ -171,7 +171,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
         const first = Object.keys(wallets)[0];
         if (first) wallets[first] = { ...wallets[first], isDefault: true };
       }
-      tx.set(ref, { paymentMethods: { wallets }, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      tx.update(ref, { 'paymentMethods.wallets': wallets, updatedAt: FieldValue.serverTimestamp() });
     });
     return { deleted: true };
   });
