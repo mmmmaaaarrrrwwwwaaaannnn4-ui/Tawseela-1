@@ -16,7 +16,7 @@ const errors = { 400: ApiError, 401: ApiError, 403: ApiError, 404: ApiError, 409
 
 /** Persist and return only a masked PAN; the full card number and CVV never enter Firestore. */
 const maskCardNumber = (value: unknown) => {
-  const digits = String(value ?? '').replace(/\\D/g, '');
+  const digits = String(value ?? '').replace(/\D/g, '');
   return digits.length >= 4 ? '•••• •••• •••• ' + digits.slice(-4) : '••••';
 };
 
@@ -104,7 +104,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     const card = body?.response?.paymentMethod?.card;
     if (!response.ok || !card?.cardToken || card.cardToken !== req.body.cardToken) throw new AppError(400, 'card_token_invalid', 'Kashier could not verify this saved card.');
     await userRef(db, user.uid).set({ paymentMethods: { cards: { [req.body.cardToken]: { token: req.body.cardToken, number: maskCardNumber(card.number), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD'), savedAt: now() } } } }, { merge: true });
-    return { saved: true, card: { id: String(card.cardToken), number: String(card.number || ''), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD') } };
+    return { saved: true, card: { id: String(card.cardToken), number: maskCardNumber(card.number), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD') } };
   });
 
   app.delete('/me/cards/:token', { schema: { tags: ['payments'], summary: 'Delete a saved Kashier card token', ...secured, params: z.object({ token: z.string().min(8).max(200) }) } }, async (req) => {
