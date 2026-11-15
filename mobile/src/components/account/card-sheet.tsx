@@ -339,10 +339,7 @@ export function CardSheet({
               <View style={[styles.switch, saveWallet && styles.switchOn]}><View style={[styles.switchKnob, saveWallet && styles.switchKnobOn]} /></View>
               <Txt s={14} w={700} color="#171717">حفظ هذه المحفظة لاستخدامها لاحقًا</Txt>
             </PressableScale>
-            <View style={styles.walletNotice}>
-              <Icon name="info" size={17} color="#8A6A18" />
-              <Txt s={11.5} color="#7A6A42" style={{ flex: 1 }}>حفظ المحافظ كوسائل دفع دائمة غير مدعوم حاليًا من إعداد Kashier في المشروع. لن يتم حفظ رقم الهاتف أو إنشاء نجاح وهمي.</Txt>
-            </View>
+
           </Animated.View>
         )}
 
