@@ -15,6 +15,9 @@ export function PaymentNetworkLogo({ brand, width = 58, height = 28 }: BrandProp
   if (key.includes('AMEX')) {
     return <Svg width={width} height={height} viewBox="0 0 64 40"><Rect x="1" y="1" width="62" height="38" rx="5" fill="#176FC1"/><SvgText x="32" y="25" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="900" letterSpacing="-0.7">AMEX</SvgText><Path d="M4 11h56M4 29h56" stroke="#FFFFFF" strokeWidth="1.2" opacity={0.9}/></Svg>;
   }
+  if (key.includes('MEEZA')) {
+    return <View style={[styles.meeza,{width,height}]}><Text style={styles.meezaText}>ميزة</Text><Text style={styles.meezaLatin}>MEEZA</Text></View>;
+  }
   if (key.includes('MADA')) {
     return <View style={[styles.mada,{width,height}]}><View style={styles.madaMark}><View style={styles.madaDotGreen}/><View style={styles.madaDotBlue}/></View><Text style={styles.madaText}>مدى</Text></View>;
   }
@@ -57,6 +60,9 @@ const styles = StyleSheet.create({
   etisalatSub:{fontSize:8,fontWeight:'800',color:'#E60012',lineHeight:10},
   orangeText:{fontSize:9,fontWeight:'900',color:'#111111',lineHeight:10},
   cashText:{fontSize:9,fontWeight:'900',color:'#E51D2A',lineHeight:10},
+  meeza:{alignItems:'center',justifyContent:'center',gap:0},
+  meezaText:{fontSize:13,fontWeight:'900',color:'#087A55',lineHeight:14},
+  meezaLatin:{fontSize:7,fontWeight:'900',letterSpacing:0.6,color:'#176FC1'},
   mada:{alignItems:'center',justifyContent:'center',gap:0},
   madaMark:{flexDirection:'row',alignItems:'center',gap:2},
   madaDotGreen:{width:10,height:10,borderRadius:3,backgroundColor:'#0B9D66'},
