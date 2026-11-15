@@ -237,16 +237,16 @@ export function CardSheet({
         </View>
         <View style={styles.providerRow}>
           <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#F4ECFB' }]}>
-            <Image source={require('../../assets/payments/insta pay.PNG')} resizeMode="contain" style={styles.providerImage} />
+            <Image source={require('../../assets/payments/instapay.png')} resizeMode="contain" style={styles.providerImage} />
           </PressableScale>
           <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#FFF4E8' }]}>
-            <Image source={require('../../assets/payments/orange cash.PNG')} resizeMode="contain" style={styles.providerImage} />
+            <Image source={require('../../assets/payments/orange-cash.png')} resizeMode="contain" style={styles.providerImage} />
           </PressableScale>
           <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#F2ECFA' }]}>
-            <Image source={require('../../assets/payments/we pay.PNG')} resizeMode="contain" style={styles.providerImage} />
+            <Image source={require('../../assets/payments/we-pay.png')} resizeMode="contain" style={styles.providerImage} />
           </PressableScale>
           <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#FFF0F1' }]}>
-            <Image source={require('../../assets/payments/اتصلات كاش.PNG')} resizeMode="contain" style={styles.providerImage} />
+            <Image source={require('../../assets/payments/etisalat-cash.png')} resizeMode="contain" style={styles.providerImage} />
           </PressableScale>
           <PressableScale onPress={() => {}} style={[styles.providerTile, { backgroundColor: '#FFF0F0' }]}>
             <Image source={require('../../assets/branding/tawsela-card-logo.png')} resizeMode="contain" style={styles.providerImage} />
