@@ -110,7 +110,7 @@ export default function PaymentsScreen() {
       const currentDefault = useApp.getState().defCard;
       useApp.setState({ cards: next, defCard: draft.def ? token : (next.some((x) => x.id === currentDefault) ? currentDefault : (next[0]?.id ?? '')), payM: 1 });
       setIdx(Math.max(0, next.findIndex((x) => x.id === token)));
-      setErr(false); setFlip(false); setOpen(false);
+      setErr(false); setFlip(false); setOpen(false); setDraft(blankCard());
       useApp.getState().showToast('تم حفظ البطاقة', 'تقدر تستخدمها في الدفع بعد كده.', 'check_circle');
       router.replace('/checkout');
     } catch (error) {
@@ -258,6 +258,7 @@ export default function PaymentsScreen() {
           onClose={() => {
             setOpen(false);
             setFlip(false);
+            setDraft(blankCard());
           }}
         />
       </View>
