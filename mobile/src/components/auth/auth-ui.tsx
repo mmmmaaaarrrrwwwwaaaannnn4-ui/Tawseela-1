@@ -94,7 +94,7 @@ export function Field({ icon, height = 52, radius = 20, tone = 'soft', error, ri
             borderColor: border,
             borderWidth: tone === 'soft' ? 1.5 : 1,
             color: c.text1,
-            fontFamily: typeof rest.placeholder === 'string' && /[\u0600-\u06FF]/.test(rest.placeholder) ? undefined : family(500),
+            fontFamily: familyForText(rest.value ?? rest.defaultValue ?? rest.placeholder, 500),
             paddingLeft: tone === 'soft' ? 50 : 48,
             paddingRight: right ? 64 : 16,
           },
