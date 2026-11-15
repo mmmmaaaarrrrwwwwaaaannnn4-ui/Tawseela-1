@@ -23,6 +23,26 @@ import { selectMyOrders, useApp, type NewCard } from '@/store/app-store';
 import { useSession } from '@/store/session';
 import { useTheme } from '@/theme/theme';
 
+function luhnValidCardNumber(value: string) {
+  let sum = 0;
+  let double = false;
+  for (let i = value.length - 1; i >= 0; i -= 1) {
+    let digit = Number(value[i]);
+    if (double) { digit *= 2; if (digit > 9) digit -= 9; }
+    sum += digit;
+    double = !double;
+  }
+  return value.length > 0 && sum % 10 === 0;
+}
+
+function validCardExpiry(value: string) {
+  if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(value)) return false;
+  const month = Number(value.slice(0, 2));
+  const year = 2000 + Number(value.slice(3, 5));
+  const now = new Date();
+  return year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth() + 1);
+}
+
 export default function PaymentsScreen() {
   const { c } = useTheme();
   const chrome = useChrome();
@@ -60,9 +80,13 @@ export default function PaymentsScreen() {
   };
   const saveCard = async () => {
     const digits = draft.num.replace(/\D/g, '');
-    const validExpiry = /^(0[1-9]|1[0-2])\/\d{2}$/.test(draft.exp);
-    const validCvv = /^\d{3,4}$/.test(draft.cvv);
-    if (digits.length < 15 || !draft.name.trim() || !validExpiry || !validCvv) { setErr(true); return; }
+    const brand = cardBrandOf(digits).name;
+    const validLength = brand === 'AMEX' ? digits.length === 15
+      : brand === 'VISA' ? [13, 16, 19].includes(digits.length)
+      : ['MASTERCARD', 'MEEZA'].includes(brand) && digits.length === 16;
+    const validExpiry = validCardExpiry(draft.exp);
+    const validCvv = brand === 'AMEX' ? /^\d{4}$/.test(draft.cvv) : /^\d{3}$/.test(draft.cvv);
+    if (!validLength || !luhnValidCardNumber(digits) || !draft.name.trim() || !validExpiry || !validCvv) { setErr(true); return; }
     if (saving) return;
     setSaving(true);
     try {
