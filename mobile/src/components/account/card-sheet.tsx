@@ -302,8 +302,9 @@ export function CardSheet({
         {!wallet ? (
           <Animated.View style={formTransition}>
             <View style={styles.formGroup}>
-              <Field
-                value={n.num}
+              <View style={styles.numberFieldWrap}>
+                <Field
+                  value={n.num}
                 bg="#FFFFFF"
                 height={54}
                 radius={15}
@@ -314,8 +315,14 @@ export function CardSheet({
                 placeholder="رقم البطاقة"
                 keyboardType="number-pad"
                 autoComplete="cc-number"
-                error={showErrors && !validNumber}
-              />
+                  error={showErrors && !validNumber}
+                />
+                <View pointerEvents="none" style={styles.numberMiniBrands}>
+                  <PaymentNetworkLogo brand="AMEX" width={27} height={20} />
+                  <PaymentNetworkLogo brand="MASTERCARD" width={27} height={19} />
+                  <PaymentNetworkLogo brand="VISA" width={27} height={19} />
+                </View>
+              </View>
               {showErrors && !validNumber ? <Txt s={12} color="#F04432" align="right">رقم البطاقة غير صحيح. راجع الرقم وحاول مرة أخرى.</Txt> : null}
             </View>
 
@@ -333,6 +340,7 @@ export function CardSheet({
                   onFocus={() => onFlip(true)}
                   onBlur={() => onFlip(false)}
                   placeholder="CVV"
+                  icon="credit_card"
                   keyboardType="number-pad"
                   secureTextEntry
                   error={showErrors && !validCvv}
@@ -474,6 +482,8 @@ const styles = StyleSheet.create({
   networkHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, paddingVertical: 4 },
   divider: { height: 1, backgroundColor: '#E8E8E8', marginHorizontal: 4 },
   formGroup: { gap: 6 },
+  numberFieldWrap: { position: 'relative' },
+  numberMiniBrands: { position: 'absolute', left: 12, top: 0, bottom: 0, flexDirection: 'row', alignItems: 'center', gap: 3 },
   rowFields: { flexDirection: 'row', gap: 9 },
   smallField: { flex: 1, minWidth: 0, gap: 4 },
   defaultRow: { minHeight: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 4 },
