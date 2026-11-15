@@ -1035,7 +1035,7 @@ export const useApp = create<AppStore>()(
           const res = await write({
             keys: ['brands'],
             apply: (s) => ({ brands: s.brands.map((x) => (x.id === b.id ? { ...b } : x)) }),
-            call: (api) => api.patchBrand(b.id, { name: b.name, tag: b.tag, icon: b.icon, img: b.img, on: b.on, lat: b.lat, lng: b.lng, address: b.address, phone: b.phone, description: b.description, workDays: b.workDays, openTime: b.openTime, closeTime: b.closeTime, deliveryFee: b.deliveryFee, prepTime: b.prepTime }),
+            call: (api) => api.patchBrand(b.id, { name: b.name, tag: b.tag, icon: b.icon, img: b.img, on: b.on, lat: b.lat, lng: b.lng, address: b.address, phone: b.phone, description: b.description, workDays: b.workDays, openTime: b.openTime, closeTime: b.closeTime, manualStatus: b.manualStatus, deliveryFee: b.deliveryFee, prepTime: b.prepTime }),
             fail: 'Kitchen not saved',
             catalog: true,
           });
