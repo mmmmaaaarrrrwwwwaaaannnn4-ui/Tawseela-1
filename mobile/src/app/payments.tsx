@@ -110,7 +110,7 @@ export default function PaymentsScreen() {
             <Txt s={20} w={800} color="#111111">طرق الدفع الخاصة بي</Txt>
             <PressableScale onPress={startCard} style={styles.manageLink}>
               <Txt s={14} w={500} color="#777777">إدارة</Txt>
-              <Icon name="chevron_left" size={18} color="#777777" />
+              <Icon name="arrow_back_ios_new" size={18} color="#777777" />
             </PressableScale>
           </View>
 
