@@ -108,7 +108,7 @@ function EditBrand() {
           <View style={styles.daysGrid}>
             {([['sat','السبت'],['sun','الأحد'],['mon','الإثنين'],['tue','الثلاثاء'],['wed','الأربعاء'],['thu','الخميس'],['fri','الجمعة']] as const).map(([key,label]) => {
               const active = draft.workDays.includes(key);
-              return <PressableScale key={key} onPress={() => setDraft(d => ({ ...d, workDays: active ? d.workDays.filter(x => x !== key) : [...d.workDays, key] }))} style={[styles.dayChip,{backgroundColor:active?c.accentSoft:c.surface1,borderColor:active?c.accent:c.line}]}><Txt s={13} w={700} color={active?c.accentText:c.text2}>{label}</Txt><Icon name={active?'check_circle':'radio_button_unchecked'} size={17} color={active?c.accent:c.text3}/></PressableScale>;
+              return <PressableScale key={key} onPress={() => setDraft(d => ({ ...d, workDays: active ? d.workDays.filter(x => x !== key) : [...d.workDays, key] }))} style={[styles.dayChip,{backgroundColor:active?c.accentSoft:c.surface1,borderColor:active?c.accent:c.line}]}><Txt s={13} w={700} color={active?c.accentText:c.text2}>{label}</Txt>{active ? <Icon name="check_circle" size={17} color={c.accent}/> : null}</PressableScale>;
             })}
           </View>
           <FieldLabel>مواعيد العمل</FieldLabel>
