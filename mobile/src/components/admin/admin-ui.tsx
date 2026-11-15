@@ -18,7 +18,7 @@ import { cnt, initials, money, orderTime } from '@/lib/format';
 import { useApp } from '@/store/app-store';
 import type { Palette } from '@/theme/tokens';
 import { useTheme } from '@/theme/theme';
-import { family } from '@/theme/typography';
+import { family, familyForText } from '@/theme/typography';
 
 const EASE = Easing.bezier(0.22, 1, 0.36, 1);
 
@@ -275,7 +275,7 @@ export function AdminInput({
           backgroundColor: c.surface1,
           color: c.text1,
           paddingHorizontal: multiline ? 14 : 16,
-          fontFamily: family(fontWeight),
+          fontFamily: familyForText(rest.value ?? rest.defaultValue ?? rest.placeholder, fontWeight),
           fontSize,
         },
         multiline
