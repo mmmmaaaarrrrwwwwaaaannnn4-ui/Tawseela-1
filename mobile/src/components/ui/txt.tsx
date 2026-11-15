@@ -16,7 +16,7 @@ export interface TxtProps extends TextProps {
   strike?: boolean;
 }
 
-/** IBM Plex Sans Arabic for Arabic; Outfit for Latin text. Font weight is selected by fontFamily. */
+/** BF Arabic and Latin font files are selected by script; weights map to the supplied local font assets. */
 export function Txt({ s = 14, w = 400, lh, ls, color, align, upper, tabular, strike, style, children, ...rest }: TxtProps) {
   const { c } = useTheme();
   const isArabic = typeof children === 'string' && /[\u0600-\u06FF]/.test(children);
