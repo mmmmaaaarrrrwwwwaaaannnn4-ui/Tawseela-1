@@ -69,7 +69,8 @@ export const Brand = z.object({
   description: z.string().max(600).default(''),
   workDays: z.array(z.enum(['sat','sun','mon','tue','wed','thu','fri'])).default([]),
   openTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('09:00'),
-  closeTime: z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/).default('23:00'),
+  closeTime: z.string().regex(/^([01]\\d|2[0-3]):[0-5]\\d$/).default('23:00'),
+  manualStatus: z.enum(['auto', 'open', 'closed']).default('auto'),
   deliveryFee: money.nullable().default(null),
   prepTime: z.number().int().min(1).max(240).default(30),
   order: z.number().int(),
@@ -501,6 +502,7 @@ export const BrandPatch = z.object({
   workDays: Brand.shape.workDays,
   openTime: Brand.shape.openTime,
   closeTime: Brand.shape.closeTime,
+  manualStatus: Brand.shape.manualStatus,
   deliveryFee: Brand.shape.deliveryFee,
   prepTime: Brand.shape.prepTime,
 }).partial();
