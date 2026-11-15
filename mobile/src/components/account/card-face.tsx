@@ -67,20 +67,20 @@ export function CardChip() {
   return (
     <Svg width={58} height={45} viewBox="0 0 100 76">
       <Defs>
-        <SvgGradient id="chipGold" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#FFF3C7" />
-          <Stop offset="0.28" stopColor="#EBD18B" />
-          <Stop offset="0.7" stopColor="#C59B45" />
-          <Stop offset="1" stopColor="#F8E3A7" />
+        <SvgGradient id="chipSilver" x1="0" y1="0" x2="1" y2="1">
+          <Stop offset="0" stopColor="#F9FAFB" />
+          <Stop offset="0.28" stopColor="#DDE2E5" />
+          <Stop offset="0.7" stopColor="#AEB8BF" />
+          <Stop offset="1" stopColor="#FFFFFF" />
         </SvgGradient>
-        <SvgGradient id="chipShine" x1="0" y1="0" x2="0.9" y2="1">
+        <SvgGradient id="chipSilverShine" x1="0" y1="0" x2="0.9" y2="1">
           <Stop offset="0" stopColor="#FFFFFF" stopOpacity="0.65" />
           <Stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
         </SvgGradient>
       </Defs>
-      <Rect x={1} y={1} width={98} height={74} rx={10} fill="url(#chipGold)" stroke="#8C713B" strokeWidth={1.6} />
+      <Rect x={1} y={1} width={98} height={74} rx={10} fill="url(#chipGold)" stroke="#8D969D" strokeWidth={1.6} />
       <Path d="M5 7 Q28 -2 48 7 L48 68 Q20 73 5 62Z" fill="url(#chipShine)" />
-      <G fill="none" stroke="#8E743D" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
+      <G fill="none" stroke="#89939A" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <Path d="M0 25H25L32 18V0M100 25H75L68 18V0M0 51H25L32 58V76M100 51H75L68 58V76" />
         <Rect x={32} y={18} width={36} height={40} rx={4} />
         <Path d="M32 38H68M50 18V58M25 25V51M75 25V51" />
