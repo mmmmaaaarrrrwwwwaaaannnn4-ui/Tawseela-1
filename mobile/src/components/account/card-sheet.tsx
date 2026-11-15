@@ -143,7 +143,6 @@ export function CardSheet({
                 radius={15}
                 borderWidth={0}
                 textAlign="right"
-                writingDirection="rtl"
                 onChangeText={(v) => onChange({ num: v.replace(/\D/g, '').slice(0, 16).replace(/(.{4})(?=.)/g, '$1 ') })}
                 placeholder="يُرجى إدخال رقم البطاقة المصرفية"
                 keyboardType="number-pad"
@@ -166,7 +165,6 @@ export function CardSheet({
               radius={15}
               borderWidth={0}
               textAlign="right"
-              writingDirection="rtl"
               onChangeText={(v) => onChange({ cvv: v.replace(/\D/g, '').slice(0, 4) })}
               onFocus={() => onFlip(true)}
               onBlur={() => onFlip(false)}
@@ -185,7 +183,6 @@ export function CardSheet({
               radius={15}
               borderWidth={0}
               textAlign="right"
-              writingDirection="rtl"
               onChangeText={(v) => { let x = v.replace(/\D/g, '').slice(0, 4); if (x.length > 2) x = x.slice(0, 2) + '/' + x.slice(2); onChange({ exp: x }); }}
               placeholder="الشهر / السنة"
               keyboardType="number-pad"
@@ -202,7 +199,6 @@ export function CardSheet({
             radius={15}
             borderWidth={0}
             textAlign="right"
-            writingDirection="rtl"
             onChangeText={(v) => onChange({ name: v.toUpperCase() })}
             placeholder="يُرجى إدخال الاسم الموجود على البطاقة"
             autoComplete="name"
