@@ -19,7 +19,7 @@ import { useStatusBar } from '@/hooks/use-status-bar';
 import { money, orderTime } from '@/lib/format';
 import { api } from '@/lib/api';
 import { cardBrandOf } from '@/data/seed';
-import { payLabel, selectMyOrders, useApp, type NewCard } from '@/store/app-store';
+import { selectMyOrders, useApp, type NewCard } from '@/store/app-store';
 import { useSession } from '@/store/session';
 import { useTheme } from '@/theme/theme';
 
@@ -32,7 +32,6 @@ export default function PaymentsScreen() {
   const payM = useApp((s) => s.payM);
   const credit = useApp((s) => s.credit);
   const user = useSession((s) => s.user);
-  const defLabel = useApp((s) => payLabel(s));
   const history = useApp(useShallow((s) => selectMyOrders(s).slice(0, 4)));
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
@@ -183,27 +182,27 @@ export default function PaymentsScreen() {
           <View style={{ paddingHorizontal: 20, gap: 8, paddingTop: 22 }}>
             <View style={styles.historyHead}><Txt s={20} w={800} color="#111111">المعاملات الأخيرة</Txt><Txt s={14} color="#777777">عرض الكل ‹</Txt></View>
 
-            <ListCard radius={20}>
-              {history.map((o, i) => {
-                const refund = o.step === 4;
-                return (
-                  <View key={o.no} style={[styles.pay, { borderBottomColor: c.line, borderBottomWidth: i === history.length - 1 ? 0 : 1 }]}>
-                    <IconTile icon={refund ? 'undo' : 'receipt_long'} size={36} radius={11} iconSize={19} />
-                    <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
-                      <Txt s={13.5} w={700}>
-                        {refund ? 'Refund' : 'Order'} {o.no}
-                      </Txt>
-                      <Txt s={11.5} color={c.text3} numberOfLines={1}>
-                        {orderTime(o.placedAt)} · {o.pay}
-                      </Txt>
+            {history.length ? (
+              <ListCard radius={20}>
+                {history.map((o, i) => {
+                  const refund = o.step === 4;
+                  return (
+                    <View key={o.no} style={[styles.pay, { borderBottomColor: c.line, borderBottomWidth: i === history.length - 1 ? 0 : 1 }]}>
+                      <IconTile icon={refund ? 'undo' : 'receipt_long'} size={36} radius={11} iconSize={19} />
+                      <View style={{ flex: 1, minWidth: 0, gap: 1 }}>
+                        <Txt s={13.5} w={700}>{refund ? 'Refund' : 'Order'} {o.no}</Txt>
+                        <Txt s={11.5} color={c.text3} numberOfLines={1}>{orderTime(o.placedAt)} · {o.pay}</Txt>
+                      </View>
+                      <Txt s={14} w={700} color={refund ? c.ok : c.text1}>{(refund ? '+' : '−') + money(o.total)}</Txt>
                     </View>
-                    <Txt s={14} w={700} color={refund ? c.ok : c.text1}>
-                      {(refund ? '+' : '−') + money(o.total)}
-                    </Txt>
-                  </View>
-                );
-              })}
-            </ListCard>
+                  );
+                })}
+              </ListCard>
+            ) : (
+              <View style={styles.emptyHistory}>
+                <Txt s={14} w={500} color="#8A8A8A">لا توجد معلومات ذات صلة متاحة</Txt>
+              </View>
+            )}
           </View>
 
 
