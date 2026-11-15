@@ -3,6 +3,7 @@ import { StyleSheet, View, type GestureResponderEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
 import { Icon } from '@/components/icons/icon';
+import { PaymentNetworkLogo } from './brand-logos';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
 import type { Card } from '@/data/types';
@@ -123,7 +124,7 @@ function WalletCard({
                   <Txt s={11} w={600} ls={0.08} upper color="rgba(253,250,235,0.78)">
                     {card.nick || 'Card'}
                   </Txt>
-                  <Txt s={16} w={800} ls={0.12} color={CARD_INK}>{card.brand}</Txt>
+                  <PaymentNetworkLogo brand={card.brand} width={58} height={28} />
                 </View>
                 {isDef ? (
                   <View style={styles.def}>
