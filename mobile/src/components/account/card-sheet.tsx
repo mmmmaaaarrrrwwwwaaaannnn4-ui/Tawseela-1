@@ -192,7 +192,7 @@ export function CardSheet({
 
         <View style={styles.security}>
           <View style={styles.securityTitle}>
-            <Icon name="verified_user" size={22} fill color="#00A878" />
+            <Icon name="shield_lock" size={22} fill color="#00A878" />
             <Txt s={15} w={700} color="#00A878">تحمي توصيلة معلومات بطاقتك</Txt>
           </View>
           {SECURITY.map((line) => (
