@@ -38,11 +38,11 @@ function luhnValidCardNumber(value: string) {
 type SavedWallet = { id: string; provider: 'insta' | 'orange' | 'we' | 'etisalat' | 'vodafone'; phone: string; name: string; isDefault: boolean };
 
 const WALLET_INFO = {
-  insta: { label: 'InstaPay', logo: require('../../assets/payments/instapay.png') },
-  orange: { label: 'Orange Cash', logo: require('../../assets/payments/orange-cash.png') },
-  we: { label: 'WE Pay', logo: require('../../assets/payments/we-pay.png') },
-  etisalat: { label: 'Etisalat Cash', logo: require('../../assets/payments/etisalat-cash.png') },
-  vodafone: { label: 'Vodafone Cash', logo: require('../../assets/payments/vodafone-cash.png') },
+  insta: { label: 'InstaPay', logo: require('../assets/payments/instapay.png') },
+  orange: { label: 'Orange Cash', logo: require('../assets/payments/orange-cash.png') },
+  we: { label: 'WE Pay', logo: require('../assets/payments/we-pay.png') },
+  etisalat: { label: 'Etisalat Cash', logo: require('../assets/payments/etisalat-cash.png') },
+  vodafone: { label: 'Vodafone Cash', logo: require('../assets/payments/vodafone-cash.png') },
 } as const;
 
 function validCardExpiry(value: string) {
