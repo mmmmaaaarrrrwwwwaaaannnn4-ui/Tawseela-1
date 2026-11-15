@@ -78,8 +78,8 @@ export function CardChip() {
           <Stop offset="1" stopColor="#FFFFFF" stopOpacity="0" />
         </SvgGradient>
       </Defs>
-      <Rect x={1} y={1} width={98} height={74} rx={10} fill="url(#chipGold)" stroke="#8D969D" strokeWidth={1.6} />
-      <Path d="M5 7 Q28 -2 48 7 L48 68 Q20 73 5 62Z" fill="url(#chipShine)" />
+      <Rect x={1} y={1} width={98} height={74} rx={10} fill="url(#chipSilver)" stroke="#8D969D" strokeWidth={1.6} />
+      <Path d="M5 7 Q28 -2 48 7 L48 68 Q20 73 5 62Z" fill="url(#chipSilverShine)" />
       <G fill="none" stroke="#89939A" strokeWidth={1.8} strokeLinecap="round" strokeLinejoin="round">
         <Path d="M0 25H25L32 18V0M100 25H75L68 18V0M0 51H25L32 58V76M100 51H75L68 58V76" />
         <Rect x={32} y={18} width={36} height={40} rx={4} />
