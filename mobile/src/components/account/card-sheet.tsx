@@ -3,7 +3,7 @@ import { Image, StyleSheet, View } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 
 import { Icon } from '@/components/icons/icon';
-import { PaymentNetworkLogo, WalletProviderLogo } from './brand-logos';
+import { PaymentNetworkLogo } from './brand-logos';
 import { Eyebrow } from '@/components/ui/layout';
 import { Sheet } from '@/components/ui/overlays';
 import { PressableScale } from '@/components/ui/pressable-scale';
