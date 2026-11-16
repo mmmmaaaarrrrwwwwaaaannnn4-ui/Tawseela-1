@@ -117,7 +117,7 @@ export function CardWave({ size = 40, color = '#D9D9D9' }: { size?: number; colo
 }
 
 const styles = StyleSheet.create({
-  card: { width: '100%', maxWidth: 416, aspectRatio: 26 / 16, alignSelf: 'center', borderRadius: 9.6, padding: 22, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
+  card: { width: '100%', maxWidth: 416, aspectRatio: 26 / 16, alignSelf: 'center', borderRadius: 15, padding: 22, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
   chipRow: { flexDirection: 'row', alignItems: 'center', gap: 14 },
   topLine: { position: 'absolute', top: 0, left: 0, right: 0, height: 1, backgroundColor: 'rgba(255,255,255,0.08)' },
   logoFront: { position: 'absolute', top: '8.75%', right: '4.8%', width: '34.6%', aspectRatio: LOGO_RATIO },
