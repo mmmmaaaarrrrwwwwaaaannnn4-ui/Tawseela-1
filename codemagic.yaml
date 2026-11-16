@@ -1,0 +1,89 @@
+workflows:
+  tawseela-ios-unsigned:
+    name: Tawseela - Unsigned iOS IPA
+    max_build_duration: 90
+    instance_type: mac_mini_m2
+    environment:
+      xcode: 27.1
+      node: 24.12.0
+      groups:
+        - tawseela_ios_secrets
+      vars:
+        EXPO_PUBLIC_API_URL: https://tawseela-ap-pzip-1--marwankomanda0.replit.app
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: fix/saved-card-persistence-2026-11-14
+          include: true
+          source: true
+    scripts:
+      - name: Install Node dependencies
+        script: |
+          npm install --global npm@10.9.4
+          npm install --package-lock-only --ignore-scripts --no-audit --no-fund
+          npm ci --no-audit --no-fund
+      - name: TypeScript checks
+        script: npm run typecheck
+      - name: Run workspace tests
+        script: npm test
+      - name: Prepare Firebase iOS configuration
+        script: |
+          test -n "$IOS_FIREBASE_PLIST_BASE64" || { echo "Missing IOS_FIREBASE_PLIST_BASE64"; exit 1; }
+          test -n "$GOOGLE_WEB_CLIENT_ID" || { echo "Missing GOOGLE_WEB_CLIENT_ID"; exit 1; }
+          printf '%s' "$IOS_FIREBASE_PLIST_BASE64" | base64 --decode > mobile/GoogleService-Info.plist
+          plutil -lint mobile/GoogleService-Info.plist
+      - name: Generate native iOS project
+        script: |
+          cd mobile
+          export GOOGLE_SERVICE_INFO_PLIST=./GoogleService-Info.plist
+          export GOOGLE_WEB_CLIENT_ID="$GOOGLE_WEB_CLIENT_ID"
+          npx expo config --type public --json > "$CM_BUILD_DIR/expo-config.json"
+          node -e '
+            const fs = require("fs");
+            const c = JSON.parse(fs.readFileSync(process.env.CM_BUILD_DIR + "/expo-config.json", "utf8"));
+            const firebase = c.extra?.firebase;
+            const checks = {
+              iosBundleIdentifier: c.ios?.bundleIdentifier === "com.tawseela.app",
+              iosGoogleServicesFile: c.ios?.googleServicesFile === "./GoogleService-Info.plist" && fs.existsSync("GoogleService-Info.plist"),
+              firebaseIosApiKey: !!firebase?.ios?.apiKey,
+              firebaseIosAppId: !!firebase?.ios?.appId,
+              googleWebClientId: !!c.extra?.googleWebClientId,
+              googleNativePlugin: (c.plugins || []).some(p => (Array.isArray(p) ? p[0] : p) === "@react-native-google-signin/google-signin")
+            };
+            for (const [name, ok] of Object.entries(checks)) console.log(name + ": " + (ok ? "OK" : "MISSING"));
+            if (Object.values(checks).some(ok => !ok)) process.exit(1);
+          '
+          npx expo prebuild --platform ios --no-install
+          test -f ios/Tawseela/GoogleService-Info.plist || find ios -name GoogleService-Info.plist -print -quit | grep -q .
+          cd ios
+          pod install
+      - name: Verify Xcode workspace
+        script: |
+          cd mobile
+          xcodebuild -version
+          xcodebuild -version | grep -q '^Xcode 27' || { echo "Tawseela requires Xcode 27 for its iOS 27 Liquid Glass build"; exit 1; }
+          /usr/libexec/PlistBuddy -c 'Print :UIDesignRequiresCompatibility' ios/Tawseela/Info.plist | grep -qx 'false' || { echo "UIDesignRequiresCompatibility must be false"; exit 1; }
+          xcodebuild -list -workspace ios/Tawseela.xcworkspace
+      - name: Build unsigned iOS archive
+        script: |
+          cd mobile
+          xcodebuild \
+            -workspace ios/Tawseela.xcworkspace \
+            -scheme Tawseela \
+            -configuration Release \
+            -sdk iphoneos \
+            -destination 'generic/platform=iOS' \
+            -archivePath "$CM_BUILD_DIR/Tawseela.xcarchive" \
+            CODE_SIGNING_ALLOWED=NO \
+            CODE_SIGNING_REQUIRED=NO \
+            CODE_SIGN_IDENTITY="" \
+            archive
+      - name: Package unsigned IPA
+        script: |
+          mkdir -p "$CM_BUILD_DIR/ipa/Payload"
+          cp -R "$CM_BUILD_DIR/Tawseela.xcarchive/Products/Applications/Tawseela.app" "$CM_BUILD_DIR/ipa/Payload/"
+          cd "$CM_BUILD_DIR/ipa"
+          zip -r "$CM_BUILD_DIR/Tawseela-unsigned.ipa" Payload
+    artifacts:
+      - Tawseela-unsigned.ipa
