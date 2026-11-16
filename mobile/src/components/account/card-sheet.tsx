@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
 import { Icon } from '@/components/icons/icon';
@@ -18,7 +18,7 @@ export const blankCard = (name = ''): NewCard => ({ num: '', name: name.toUpperC
 
 type WalletProvider = 'insta' | 'orange' | 'we' | 'etisalat' | 'vodafone';
 
-const FLIP = Easing.bezier(0.34, 1.2, 0.64, 1);
+const MORPH = Easing.bezier(0.22, 1, 0.36, 1);
 const OUT = Easing.bezier(0.22, 1, 0.36, 1);
 const OLIVE = '#0D2818';
 
@@ -128,12 +128,12 @@ export function CardSheet({
   const validExp = expiryValid(n.exp);
   const validCvv = b.name === 'AMEX' ? /^\d{4}$/.test(n.cvv) : /^\d{3}$/.test(n.cvv);
   const wallet = PROVIDERS.find((x) => x.key === providerKey) ?? null;
-  const r = useSharedValue(flipped ? 180 : 0);
+  const cardMorph = useSharedValue(flipped ? 1 : 0);
   const mode = useSharedValue(providerKey ? 1 : 0);
 
   useEffect(() => {
-    r.set(withTiming(flipped ? 180 : 0, { duration: 680, easing: FLIP }));
-  }, [flipped, r]);
+    cardMorph.set(withTiming(flipped ? 1 : 0, { duration: 560, easing: MORPH }));
+  }, [flipped, cardMorph]);
 
   useEffect(() => {
     mode.set(withTiming(providerKey ? 1 : 0, { duration: 360, easing: OUT }));
@@ -151,16 +151,33 @@ export function CardSheet({
     }
   }, [visible, onFlip]);
 
-  const front = useAnimatedStyle(() => ({
-    backfaceVisibility: 'hidden',
-    opacity: r.value < 90 ? 1 : 0,
-    transform: [{ perspective: 1100 }, { rotateY: r.value + 'deg' }],
-  }));
-  const back = useAnimatedStyle(() => ({
-    backfaceVisibility: 'hidden',
-    opacity: r.value >= 90 ? 1 : 0,
-    transform: [{ perspective: 1100 }, { rotateY: (r.value - 180) + 'deg' }],
-  }));
+  // Premium 3D tilt + morph: depth, tilt, scale and opacity transition smoothly.
+  const front = useAnimatedStyle(() => {
+    const progress = cardMorph.value;
+    return {
+      opacity: interpolate(progress, [0, 0.42, 0.58, 1], [1, 1, 0, 0]),
+      transform: [
+        { perspective: 1100 },
+        { rotateY: `${interpolate(progress, [0, 1], [0, -13])}deg` },
+        { rotateX: `${interpolate(progress, [0, 1], [0, 3])}deg` },
+        { scale: interpolate(progress, [0, 0.5, 1], [1, 0.965, 0.975]) },
+        { translateX: interpolate(progress, [0, 1], [0, -5]) },
+      ],
+    };
+  });
+  const back = useAnimatedStyle(() => {
+    const progress = cardMorph.value;
+    return {
+      opacity: interpolate(progress, [0, 0.42, 0.58, 1], [0, 0, 1, 1]),
+      transform: [
+        { perspective: 1100 },
+        { rotateY: `${interpolate(progress, [0, 1], [13, 0])}deg` },
+        { rotateX: `${interpolate(progress, [0, 1], [-3, 0])}deg` },
+        { scale: interpolate(progress, [0, 0.5, 1], [0.975, 0.965, 1]) },
+        { translateX: interpolate(progress, [0, 1], [5, 0]) },
+      ],
+    };
+  });
   const bankPreview = useAnimatedStyle(() => ({
     opacity: 1 - mode.value,
     transform: [{ scale: 1 - mode.value * 0.035 }, { translateY: mode.value * -8 }],
@@ -235,7 +252,7 @@ export function CardSheet({
             <Animated.View style={[StyleSheet.absoluteFill, front]}>
               <CardSurface bg={TAWSELA_CARD_GRADIENT} style={styles.previewCard} logo="front">
                 <View style={styles.chipRow}>
-                  <CardChip />
+                  <CardChip wave={false} />
                 </View>
                 <View style={styles.cardBottom}>
                   <Txt s={19} w={600} ls={0.12} color={CARD_INK} tabular>{cardPreview}</Txt>
@@ -445,10 +462,10 @@ const styles = StyleSheet.create({
   header: { minHeight: 46, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'flex-start', gap: 10, paddingHorizontal: 20, paddingBottom: 10 },
   backButton: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
   cardWrap: { marginHorizontal: -4, marginTop: 4, marginBottom: 8, position: 'relative', aspectRatio: 26 / 16 },
-  previewCard: { width: '100%', maxWidth: '100%', height: '100%', borderRadius: 9.6, padding: 20, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
+  previewCard: { width: '100%', maxWidth: '100%', height: '100%', borderRadius: 15, padding: 20, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
   cardShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.28, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
   walletShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.24, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
-  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: '12%' },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: '18%' },
   cardBottom: { gap: 14, marginTop: 'auto', paddingBottom: 2 },
   cardMeta: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
   networkHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, paddingVertical: 4 },
