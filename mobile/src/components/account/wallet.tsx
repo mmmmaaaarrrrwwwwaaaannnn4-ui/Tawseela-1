@@ -55,7 +55,6 @@ export function Wallet({
               card={c}
               off={i - cur}
               width={w}
-              isDef={defId === c.id}
               holder={c.name || holder.toUpperCase()}
               onPress={() => {
                 if (!moved.current) onIndex(i);
@@ -73,14 +72,12 @@ function WalletCard({
   card,
   off,
   width,
-  isDef,
   holder,
   onPress,
 }: {
   card: Card;
   off: number;
   width: number;
-  isDef: boolean;
   holder: string;
   onPress: () => void;
 }) {
@@ -128,7 +125,6 @@ function WalletCard({
                   <PaymentNetworkLogo brand={cardBrandOf(card.num.replace(/\D/g, '')).name !== 'CARD' ? cardBrandOf(card.num.replace(/\D/g, '')).name : card.brand} width={64} height={34} />
                 </View>
               ) : null}
-              {isDef ? <View style={styles.def}><Txt s={9} w={700} color="#FFFFFF">أساسية</Txt></View> : null}
             </CardSurface>
           </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, backStyle]}>
@@ -160,7 +156,6 @@ const styles = StyleSheet.create({
   chipCenter: { position: 'absolute', top: 0, bottom: 0, left: '5.3%', justifyContent: 'center' },
   last4: { position: 'absolute', left: '5.6%', bottom: '8.2%' },
   networkLogo: { position: 'absolute', right: '4.2%', bottom: '6.5%' },
-  def: { position: 'absolute', top: '7%', right: '5%', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 9, backgroundColor: 'rgba(253,250,235,0.16)' },
   currency: { position: 'absolute', left: '5.3%', top: '8.4%' },
   number: { position: 'absolute', right: '5.3%', top: '53%' },
   holder: { position: 'absolute', left: '5.3%', bottom: '8.5%', maxWidth: '48%' },
