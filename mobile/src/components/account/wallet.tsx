@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import { StyleSheet, View, type GestureResponderEvent } from 'react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withSpring, withTiming } from 'react-native-reanimated';
 
-import { Icon } from '@/components/icons/icon';
+import { cardBrandOf } from '@/data/seed';
 import { PaymentNetworkLogo } from './brand-logos';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
@@ -119,42 +119,31 @@ function WalletCard({
         <View style={{ height: 210 }}>
           <Animated.View style={[StyleSheet.absoluteFill, frontStyle]}>
             <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="front">
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, marginTop: 38 }}>
+              <View pointerEvents="none" style={styles.chipCenter}>
                 <CardChip />
-                <Icon name="contactless" size={29} color="#FDF9E9" />
-                {isDef ? <View style={[styles.def, { marginLeft: 'auto' }]}><Txt s={9} w={700} color="#FFFFFF">أساسية</Txt></View> : null}
               </View>
-              <View style={{ gap: 13, marginTop: 'auto' }}>
-                <Txt s={18} w={600} ls={0.13} color="#FFFFFF" tabular>{card.num || '••••  ••••  ••••  ••••'}</Txt>
-                <View style={[styles.between, { alignItems: 'flex-end' }]}>
-                  <View style={{ flex: 1, gap: 3 }}>
-                    <Txt s={9} w={500} color="rgba(253,250,235,0.76)">اسم حامل البطاقة</Txt>
-                    <Txt s={12} w={600} color="#FFFFFF" numberOfLines={1}>{holder}</Txt>
-                  </View>
-                  <View style={{ gap: 3, alignItems: 'flex-start' }}>
-                    <Txt s={9} w={500} color="rgba(253,250,235,0.76)">MM/YY</Txt>
-                    <Txt s={12} w={600} color="#FFFFFF">{card.exp || '••/••'}</Txt>
-                  </View>
-                  <PaymentNetworkLogo brand={card.brand} width={46} height={28} />
+              <Txt s={16} w={500} ls={0.13} color="#FFFFFF" tabular style={styles.last4}>•• {card.num.replace(/\\D/g, '').slice(-4) || '••••'}</Txt>
+              {['VISA', 'MASTERCARD', 'AMEX', 'MEEZA', 'MADA', 'DISCOVER'].includes(cardBrandOf(card.num.replace(/\\D/g, '')).name !== 'CARD' ? cardBrandOf(card.num.replace(/\\D/g, '')).name : card.brand.toUpperCase()) ? (
+                <View style={styles.networkLogo}>
+                  <PaymentNetworkLogo brand={cardBrandOf(card.num.replace(/\\D/g, '')).name !== 'CARD' ? cardBrandOf(card.num.replace(/\\D/g, '')).name : card.brand} width={64} height={34} />
                 </View>
-              </View>
+              ) : null}
+              {isDef ? <View style={styles.def}><Txt s={9} w={700} color="#FFFFFF">أساسية</Txt></View> : null}
             </CardSurface>
           </Animated.View>
           <Animated.View style={[StyleSheet.absoluteFill, backStyle]}>
             <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="back" style={{ padding: 0 }}>
-              <View style={styles.backStripe} />
-              <View style={styles.backSignature}>
-                <View style={{ flex: 1, gap: 5 }}>
-                  <Txt s={9} w={700} ls={0.08} upper color={CARD_INK}>Authorized signature</Txt>
-                  <View style={styles.signaturePaper}>
-                    <Txt s={15} w={600} color="#153D31">{holder}</Txt>
-                  </View>
+              <Txt s={14} w={500} color={CARD_INK} style={styles.currency}>EGP</Txt>
+              <Txt s={15} w={500} color={CARD_INK} tabular style={styles.number}>••••  ••••  ••••  {card.num.replace(/\\D/g, '').slice(-4) || '••••'}</Txt>
+              <Txt s={13} w={500} color={CARD_INK} numberOfLines={1} style={styles.holder}>{holder.toUpperCase()}</Txt>
+              <View style={styles.securityInfo}>
+                <View style={styles.securityCell}>
+                  <Txt s={11} color={CARD_INK}>CVV</Txt>
+                  <Txt s={13} w={500} color={CARD_INK}>•••</Txt>
                 </View>
-                <View style={{ width: 52, gap: 5 }}>
-                  <Txt s={9} w={700} ls={0.08} upper color={CARD_INK}>CVV</Txt>
-                  <View style={styles.cvvPaper}>
-                    <Txt s={13} w={700} color="#153D31">•••</Txt>
-                  </View>
+                <View style={styles.securityCell}>
+                  <Txt s={11} color={CARD_INK}>صالحة حتى</Txt>
+                  <Txt s={13} w={500} color={CARD_INK}>{card.exp || '••/••'}</Txt>
                 </View>
               </View>
             </CardSurface>
@@ -168,10 +157,13 @@ function WalletCard({
 const styles = StyleSheet.create({
   wallet: { height: 210, marginHorizontal: 22 },
   shadow: { borderRadius: 20, shadowColor: '#1A1A1A', shadowOpacity: 0.28, shadowRadius: 20, shadowOffset: { width: 0, height: 22 }, elevation: 10 },
-  between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  def: { paddingHorizontal: 10, paddingVertical: 5, borderRadius: 9, backgroundColor: 'rgba(253,250,235,0.18)' },
-  backStripe: { position: 'absolute', top: 28, left: 0, right: 0, height: 42, backgroundColor: '#111111' },
-  backSignature: { position: 'absolute', top: 92, left: 20, right: 20, flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
-  signaturePaper: { height: 34, borderRadius: 4, backgroundColor: '#F8F7F0', justifyContent: 'center', paddingHorizontal: 10 },
-  cvvPaper: { height: 34, borderRadius: 4, backgroundColor: '#F8F7F0', alignItems: 'center', justifyContent: 'center' },
+  chipCenter: { position: 'absolute', top: 0, bottom: 0, left: '5.3%', justifyContent: 'center' },
+  last4: { position: 'absolute', left: '5.6%', bottom: '8.2%' },
+  networkLogo: { position: 'absolute', right: '4.2%', bottom: '6.5%' },
+  def: { position: 'absolute', top: '7%', right: '5%', paddingHorizontal: 9, paddingVertical: 4, borderRadius: 9, backgroundColor: 'rgba(253,250,235,0.16)' },
+  currency: { position: 'absolute', left: '5.3%', top: '8.4%' },
+  number: { position: 'absolute', right: '5.3%', top: '53%' },
+  holder: { position: 'absolute', left: '5.3%', bottom: '8.5%', maxWidth: '48%' },
+  securityInfo: { position: 'absolute', right: '5.3%', bottom: '8%', flexDirection: 'row', gap: 18, alignItems: 'flex-end' },
+  securityCell: { alignItems: 'flex-start', gap: 3 },
 });
