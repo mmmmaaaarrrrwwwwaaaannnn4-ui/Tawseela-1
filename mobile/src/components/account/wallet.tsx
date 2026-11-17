@@ -122,10 +122,10 @@ function WalletCard({
               <View pointerEvents="none" style={styles.chipCenter}>
                 <CardChip />
               </View>
-              <Txt s={16} w={500} ls={0.13} color="#FFFFFF" tabular style={styles.last4}>•• {card.num.replace(/\\D/g, '').slice(-4) || '••••'}</Txt>
-              {['VISA', 'MASTERCARD', 'AMEX', 'MEEZA', 'MADA', 'DISCOVER'].includes(cardBrandOf(card.num.replace(/\\D/g, '')).name !== 'CARD' ? cardBrandOf(card.num.replace(/\\D/g, '')).name : card.brand.toUpperCase()) ? (
+              <Txt s={16} w={500} ls={0.13} color="#FFFFFF" tabular style={styles.last4}>•• {card.num.replace(/\D/g, '').slice(-4) || '••••'}</Txt>
+              {['VISA', 'MASTERCARD', 'AMEX', 'MEEZA', 'MADA', 'DISCOVER'].includes(cardBrandOf(card.num.replace(/\D/g, '')).name !== 'CARD' ? cardBrandOf(card.num.replace(/\D/g, '')).name : card.brand.toUpperCase()) ? (
                 <View style={styles.networkLogo}>
-                  <PaymentNetworkLogo brand={cardBrandOf(card.num.replace(/\\D/g, '')).name !== 'CARD' ? cardBrandOf(card.num.replace(/\\D/g, '')).name : card.brand} width={64} height={34} />
+                  <PaymentNetworkLogo brand={cardBrandOf(card.num.replace(/\D/g, '')).name !== 'CARD' ? cardBrandOf(card.num.replace(/\D/g, '')).name : card.brand} width={64} height={34} />
                 </View>
               ) : null}
               {isDef ? <View style={styles.def}><Txt s={9} w={700} color="#FFFFFF">أساسية</Txt></View> : null}
@@ -134,7 +134,7 @@ function WalletCard({
           <Animated.View style={[StyleSheet.absoluteFill, backStyle]}>
             <CardSurface bg={TAWSELA_CARD_GRADIENT} logo="back" style={{ padding: 0 }}>
               <Txt s={14} w={500} color={CARD_INK} style={styles.currency}>EGP</Txt>
-              <Txt s={15} w={500} color={CARD_INK} tabular style={styles.number}>••••  ••••  ••••  {card.num.replace(/\\D/g, '').slice(-4) || '••••'}</Txt>
+              <Txt s={15} w={500} color={CARD_INK} tabular style={styles.number}>••••  ••••  ••••  {card.num.replace(/\D/g, '').slice(-4) || '••••'}</Txt>
               <Txt s={13} w={500} color={CARD_INK} numberOfLines={1} style={styles.holder}>{holder.toUpperCase()}</Txt>
               <View style={styles.securityInfo}>
                 <View style={styles.securityCell}>
