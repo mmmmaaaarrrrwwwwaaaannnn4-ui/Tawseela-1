@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Image, StyleSheet, View } from 'react-native';
-import Animated, { Easing, interpolate, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Icon } from '@/components/icons/icon';
-import { PaymentNetworkLogo } from './brand-logos';
 import { Sheet } from '@/components/ui/overlays';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
@@ -14,13 +14,64 @@ import type { NewCard } from '@/store/app-store';
 import { CARD_INK, CardChip, CardSurface, TAWSELA_CARD_GRADIENT } from './card-face';
 import { Field } from './field';
 
+/** Card network logos drawn inside this file (nothing is imported from the app folders). */
+const VISA_PATH = 'M9.112 8.262L5.97 15.758H3.92L2.374 9.775c-.094 -.368 -.175 -.503 -.461 -.658C1.447 8.864 .677 8.627 0 8.479l.046 -.217h3.3a.904 .904 0 0 1 .894 .764l.817 4.338 2.018 -5.102zm8.033 5.049c.008 -1.979 -2.736 -2.088 -2.717 -2.972 .006 -.269 .262 -.555 .822 -.628a3.66 3.66 0 0 1 1.913 .336l.34 -1.59a5.207 5.207 0 0 0 -1.814 -.333c-1.917 0 -3.266 1.02 -3.278 2.479 -.012 1.079 .963 1.68 1.698 2.04 .756 .367 1.01 .603 1.006 .931 -.005 .504 -.602 .725 -1.16 .734 -.975 .015 -1.54 -.263 -1.992 -.473l-.351 1.642c.453 .208 1.289 .39 2.156 .398 2.037 0 3.37 -1.006 3.377 -2.564m5.061 2.447H24l-1.565 -7.496h-1.656a.883 .883 0 0 0 -.826 .55l-2.909 6.946h2.036l.405 -1.12h2.488zm-2.163 -2.656l1.02 -2.815 .588 2.815zm-8.16 -4.84l-1.603 7.496H8.34l1.605 -7.496z';
+/** Paste the Meeza logo here as a base64 data URI (data:image/png;base64,...). Until then the word is shown as text. */
+const MEEZA_LOGO_URI = '';
+
+function PaymentNetworkLogo({
+  brand, width, height, tone = 'color',
+}: {
+  brand: string;
+  width: number;
+  height: number;
+  /** 'light' is the white Visa used on the dark card; 'color' is the normal blue Visa for white backgrounds. */
+  tone?: 'color' | 'light';
+}) {
+  if (brand === 'VISA') {
+    return (
+      <Svg width={width} height={height} viewBox="0 8.2 24 7.6" preserveAspectRatio="xMaxYMid meet">
+        <Path d={VISA_PATH} fill={tone === 'light' ? '#FFFFFF' : '#1A1F71'} fillOpacity={tone === 'light' ? 0.9 : 1} />
+      </Svg>
+    );
+  }
+  if (brand === 'MASTERCARD') {
+    return (
+      <Svg width={width} height={height} viewBox="0 0 131.39 86.9" preserveAspectRatio="xMaxYMid meet">
+        <Circle cx={43.45} cy={43.45} r={43.45} fill="#EB001B" />
+        <Circle cx={87.94} cy={43.45} r={43.45} fill="#F79E1B" />
+        <Path d="M65.695 6.13A43.45 43.45 0 0 1 65.695 80.77A43.45 43.45 0 0 1 65.695 6.13Z" fill="#FF5F00" />
+      </Svg>
+    );
+  }
+  if (brand === 'AMEX') {
+    return (
+      <Svg width={width} height={height} viewBox="0 0 100 62" preserveAspectRatio="xMaxYMid meet">
+        <Rect x={0} y={0} width={100} height={62} rx={6} fill="#016FD0" />
+        <SvgText x={50} y={40} fontSize={26} fontWeight="bold" fill="#FFFFFF" textAnchor="middle">AMEX</SvgText>
+      </Svg>
+    );
+  }
+  if (brand === 'MEEZA') {
+    if (MEEZA_LOGO_URI) return <Image source={{ uri: MEEZA_LOGO_URI }} resizeMode="contain" style={{ width, height }} />;
+    return (
+      <View style={{ width, height, alignItems: 'flex-end', justifyContent: 'center' }}>
+        <Txt s={Math.max(10, Math.round(height * 0.7))} w={800} color={tone === 'light' ? '#FFFFFF' : '#111111'}>ميزة</Txt>
+      </View>
+    );
+  }
+  return null;
+}
+
 export const blankCard = (name = ''): NewCard => ({ num: '', name: name.toUpperCase(), exp: '', cvv: '', nick: '', def: true });
 
 type WalletProvider = 'insta' | 'orange' | 'we' | 'etisalat' | 'vodafone';
 
-const MORPH = Easing.bezier(0.22, 1, 0.36, 1);
+const FLIP = Easing.bezier(0.34, 1.2, 0.64, 1);
 const OUT = Easing.bezier(0.22, 1, 0.36, 1);
 const OLIVE = '#0D2818';
+/** Currency label printed on the back of the card. */
+const CARD_CURRENCY = 'EGP';
 
 const SECURITY = [
   'تلتزم توصيلة بمعيار أمان بيانات بطاقات الدفع (PCI DSS) عند معالجة بيانات بطاقات المستخدمين.',
@@ -119,21 +170,26 @@ export function CardSheet({
   const [walletName, setWalletName] = useState('');
   const [saveWallet, setSaveWallet] = useState(false);
   const [walletErrors, setWalletErrors] = useState(false);
+  const [cardW, setCardW] = useState(0);
   const d = n.num.replace(/\D/g, '');
   const b = cardBrandOf(d);
   const knownBrand = d.length >= 4 && b.name !== 'CARD';
   const cardDigits = useMemo(() => formatCardNumber(d, b.name), [d, b.name]);
   const cardPreview = cardDigits || '••••  ••••  ••••  ••••';
+  const cardLast4 = d.length >= 4 ? '•• ' + d.slice(-4) : '•• ••••';
+  /* Card sizes follow the reference cards: 1 unit is 1% of the card width. */
+  const u = (cardW || 373) / 100;
+  const fs = (k: number) => Math.round(u * k * 10) / 10;
   const validNumber = cardLengthValid(d, b.name) && luhnValid(d);
   const validExp = expiryValid(n.exp);
   const validCvv = b.name === 'AMEX' ? /^\d{4}$/.test(n.cvv) : /^\d{3}$/.test(n.cvv);
   const wallet = PROVIDERS.find((x) => x.key === providerKey) ?? null;
-  const cardMorph = useSharedValue(flipped ? 1 : 0);
+  const r = useSharedValue(flipped ? 180 : 0);
   const mode = useSharedValue(providerKey ? 1 : 0);
 
   useEffect(() => {
-    cardMorph.set(withTiming(flipped ? 1 : 0, { duration: 560, easing: MORPH }));
-  }, [flipped, cardMorph]);
+    r.set(withTiming(flipped ? 180 : 0, { duration: 680, easing: FLIP }));
+  }, [flipped, r]);
 
   useEffect(() => {
     mode.set(withTiming(providerKey ? 1 : 0, { duration: 360, easing: OUT }));
@@ -151,33 +207,16 @@ export function CardSheet({
     }
   }, [visible, onFlip]);
 
-  // Premium 3D tilt + morph: depth, tilt, scale and opacity transition smoothly.
-  const front = useAnimatedStyle(() => {
-    const progress = cardMorph.value;
-    return {
-      opacity: interpolate(progress, [0, 0.42, 0.58, 1], [1, 1, 0, 0]),
-      transform: [
-        { perspective: 1100 },
-        { rotateY: `${interpolate(progress, [0, 1], [0, -13])}deg` },
-        { rotateX: `${interpolate(progress, [0, 1], [0, 3])}deg` },
-        { scale: interpolate(progress, [0, 0.5, 1], [1, 0.965, 0.975]) },
-        { translateX: interpolate(progress, [0, 1], [0, -5]) },
-      ],
-    };
-  });
-  const back = useAnimatedStyle(() => {
-    const progress = cardMorph.value;
-    return {
-      opacity: interpolate(progress, [0, 0.42, 0.58, 1], [0, 0, 1, 1]),
-      transform: [
-        { perspective: 1100 },
-        { rotateY: `${interpolate(progress, [0, 1], [13, 0])}deg` },
-        { rotateX: `${interpolate(progress, [0, 1], [-3, 0])}deg` },
-        { scale: interpolate(progress, [0, 0.5, 1], [0.975, 0.965, 1]) },
-        { translateX: interpolate(progress, [0, 1], [5, 0]) },
-      ],
-    };
-  });
+  const front = useAnimatedStyle(() => ({
+    backfaceVisibility: 'hidden',
+    opacity: r.value < 90 ? 1 : 0,
+    transform: [{ perspective: 1100 }, { rotateY: r.value + 'deg' }],
+  }));
+  const back = useAnimatedStyle(() => ({
+    backfaceVisibility: 'hidden',
+    opacity: r.value >= 90 ? 1 : 0,
+    transform: [{ perspective: 1100 }, { rotateY: (r.value - 180) + 'deg' }],
+  }));
   const bankPreview = useAnimatedStyle(() => ({
     opacity: 1 - mode.value,
     transform: [{ scale: 1 - mode.value * 0.035 }, { translateY: mode.value * -8 }],
@@ -248,42 +287,29 @@ export function CardSheet({
             </LinearGradient>
           </Animated.View>
         ) : (
-          <Animated.View style={[styles.cardWrap, bankPreview]}>
+          <Animated.View style={[styles.cardWrap, bankPreview]} onLayout={(e) => setCardW(e.nativeEvent.layout.width)}>
             <Animated.View style={[StyleSheet.absoluteFill, front]}>
               <CardSurface bg={TAWSELA_CARD_GRADIENT} style={styles.previewCard} logo="front">
-                <View style={styles.chipRow}>
-                  <CardChip wave={false} />
+                <View pointerEvents="none" style={styles.chipCenter}>
+                  <CardChip />
                 </View>
-                <View style={styles.cardBottom}>
-                  <Txt s={19} w={600} ls={0.12} color={CARD_INK} tabular>{cardPreview}</Txt>
-                  <View style={styles.cardMeta}>
-                    <View style={{ flex: 1, gap: 3 }}>
-                      <Txt s={9} color="rgba(253,250,235,0.72)">اسم حامل البطاقة</Txt>
-                      <Txt s={13} w={700} color={CARD_INK} numberOfLines={1}>{n.name || 'اسم حامل البطاقة'}</Txt>
-                    </View>
-                    <View style={{ gap: 3, alignItems: 'flex-start' }}>
-                      <Txt s={9} color="rgba(253,250,235,0.72)">MM/YY</Txt>
-                      <Txt s={13} w={700} color={CARD_INK}>{n.exp || '••/••'}</Txt>
-                    </View>
-                    {knownBrand ? <PaymentNetworkLogo brand={b.name} width={44} height={28} /> : null}
+                <Txt s={fs(4.4)} w={500} lh={1.2} color={CARD_INK} tabular style={styles.last4Text}>{cardLast4}</Txt>
+                {knownBrand ? (
+                  <View style={styles.networkLogo}>
+                    <PaymentNetworkLogo brand={b.name} tone="light" width={Math.round(u * 17.9)} height={Math.round(u * 5.8)} />
                   </View>
-                </View>
+                ) : null}
               </CardSurface>
             </Animated.View>
             <Animated.View style={[StyleSheet.absoluteFill, back]}>
-              <CardSurface bg={TAWSELA_CARD_GRADIENT} style={[styles.previewCard, { padding: 0 }]} logo="back">
-                <View style={styles.magneticStripe} />
-                <View style={styles.signatureRow}>
-                  <View style={styles.signatureArea}>
-                    <Txt s={9} w={700} ls={0.08} upper color={CARD_INK}>Authorized signature</Txt>
-                    <View style={styles.signaturePaper}><Txt s={13} w={600} color="#153D31">{n.name || ' '}</Txt></View>
-                  </View>
-                  <View style={styles.cvvArea}>
-                    <Txt s={9} w={700} ls={0.08} upper color={CARD_INK}>CVV</Txt>
-                    <View style={styles.cvvPaper}><Txt s={13} w={700} color="#153D31">{n.cvv ? '•'.repeat(n.cvv.length) : '•••'}</Txt></View>
-                  </View>
-                </View>
-                <Txt s={8} color="rgba(253,250,235,0.6)" style={styles.backHint}>AUTHORIZED SIGNATURE</Txt>
+              <CardSurface bg={TAWSELA_CARD_GRADIENT} style={styles.previewCard} logo="back">
+                <Txt s={fs(3.8)} w={500} lh={1.2} color={CARD_INK} style={styles.currencyText}>{CARD_CURRENCY}</Txt>
+                <Txt s={fs(4.4)} w={500} lh={1.2} color={CARD_INK} tabular style={styles.numberText}>{cardPreview}</Txt>
+                <Txt s={fs(3.4)} w={500} lh={1.2} color={CARD_INK} numberOfLines={1} style={styles.nameText}>{n.name || 'اسم حامل البطاقة'}</Txt>
+                <Txt s={fs(3.3)} lh={1.2} color={CARD_INK} align="center" style={styles.cvvLabel}>CVV</Txt>
+                <Txt s={fs(3.4)} w={500} lh={1.2} color={CARD_INK} align="center" style={styles.cvvValue}>{n.cvv ? '•'.repeat(n.cvv.length) : '•••'}</Txt>
+                <Txt s={fs(3.3)} lh={1.2} color={CARD_INK} align="center" style={styles.expLabel}>صالحة حتى</Txt>
+                <Txt s={fs(3.4)} w={500} lh={1.2} color={CARD_INK} align="center" style={styles.expValue}>{n.exp || '••/••'}</Txt>
               </CardSurface>
             </Animated.View>
           </Animated.View>
@@ -347,6 +373,8 @@ export function CardSheet({
                   focusColor={OLIVE}
                   textAlign="right"
                   onChangeText={(v) => { let x = v.replace(/\D/g, '').slice(0, 4); if (x.length > 2) x = x.slice(0, 2) + '/' + x.slice(2); onChange({ exp: x }); }}
+                  onFocus={() => onFlip(true)}
+                  onBlur={() => onFlip(false)}
                   placeholder="الشهر / السنة MM/YY"
                   keyboardType="number-pad"
                   error={showErrors && !validExp}
@@ -366,6 +394,8 @@ export function CardSheet({
                 textAlign="right"
                 onChangeText={(v) => onChange({ name: v.toUpperCase() })}
                 placeholder="يُرجى إدخال الاسم الموجود على البطاقة"
+                onFocus={() => onFlip(true)}
+                onBlur={() => onFlip(false)}
                 autoComplete="name"
                 autoCapitalize="characters"
                 error={showErrors && !n.name.trim()}
@@ -461,11 +491,21 @@ const styles = StyleSheet.create({
   content: { gap: 13, paddingBottom: 8 },
   header: { minHeight: 46, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'flex-start', gap: 10, paddingHorizontal: 20, paddingBottom: 10 },
   backButton: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
-  cardWrap: { marginHorizontal: -4, marginTop: 4, marginBottom: 8, position: 'relative', aspectRatio: 26 / 16 },
-  previewCard: { width: '100%', maxWidth: '100%', height: '100%', borderRadius: 15, padding: 20, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.07)' },
+  cardWrap: { marginHorizontal: -4, marginTop: 4, marginBottom: 8, position: 'relative', aspectRatio: 1.587 },
+  previewCard: { height: '100%', padding: 0 },
+  chipCenter: { position: 'absolute', top: 0, bottom: 0, left: '5.3%', justifyContent: 'center' },
+  last4Text: { position: 'absolute', left: '5.6%', top: '83.7%' },
+  networkLogo: { position: 'absolute', right: '3.8%', bottom: '6.6%' },
+  currencyText: { position: 'absolute', left: '5.3%', top: '8.4%' },
+  numberText: { position: 'absolute', right: '5.3%', top: '53%' },
+  nameText: { position: 'absolute', left: '5.3%', top: '85%', maxWidth: '48%' },
+  cvvLabel: { position: 'absolute', left: '55.4%', width: '18%', top: '76.3%' },
+  cvvValue: { position: 'absolute', left: '55.4%', width: '18%', top: '84.7%' },
+  expLabel: { position: 'absolute', left: '77.85%', width: '20%', top: '76.3%' },
+  expValue: { position: 'absolute', left: '77.85%', width: '20%', top: '84.7%' },
   cardShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.28, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
   walletShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.24, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
-  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: '18%' },
+  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: '12%' },
   cardBottom: { gap: 14, marginTop: 'auto', paddingBottom: 2 },
   cardMeta: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
   networkHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, paddingVertical: 4 },
@@ -500,7 +540,7 @@ const styles = StyleSheet.create({
   cvvArea: { width: 60, gap: 5 },
   cvvPaper: { height: 34, borderRadius: 4, backgroundColor: '#F8F7F0', alignItems: 'center', justifyContent: 'center' },
   backHint: { position: 'absolute', left: 20, bottom: 16 },
-  walletCard: { width: '100%', borderRadius: 20, padding: 22, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.42)' },
+  walletCard: { width: '100%', borderRadius: 14, padding: 22, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.42)' },
   walletCardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   walletBrandPill: { width: 108, height: 54, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.94)', alignItems: 'center', justifyContent: 'center', padding: 7 },
   walletLogo: { width: '100%', height: '100%' },
