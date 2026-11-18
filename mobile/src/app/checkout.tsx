@@ -83,8 +83,6 @@ function Checkout() {
   }, []));
   useEffect(() => () => { if (sheetErrorTimer.current) clearTimeout(sheetErrorTimer.current); }, []);
   const openPaymentSheet = () => {
-    const currentCard = s.cards.find((card) => card.id === s.defCard);
-    const currentWallet = savedWallets.find((wallet) => wallet.phone === walletPhone);
     setSheetSelection('');
     setSheetError(false);
     setPaymentSheet(true);
@@ -164,12 +162,6 @@ function Checkout() {
     else toast('Order not placed', r.message, 'error');
   };
 
-  const walletOptions = [
-    { name: 'Orange Cash' },
-    { name: 'Vodafone Cash' },
-    { name: 'Etisalat Cash' },
-    { name: 'WE Pay' },
-  ];
   const sel = (on: boolean) => ({ borderColor: on ? checkoutAccent : '#DDE5DE', backgroundColor: on ? checkoutAccentSoft : '#FFFDF5' });
 
   return (
@@ -333,7 +325,7 @@ function Checkout() {
         <PressableScale onPress={() => {}} style={styles.sheetBackdrop}>
           <View />
         </PressableScale>
-        <View style={[styles.sheet, { backgroundColor: c.surface1, borderColor: c.line }]}>
+        <View style={[styles.sheet, { backgroundColor: '#FFFDF8', borderColor: '#E4E8E4' }]}>
           <View style={styles.sheetHandle} />
           <Txt s={19} w={700}>اختار طريقة الدفع</Txt>
           <ScrollView style={{ maxHeight: 360 }} contentContainerStyle={{ gap: 9 }} showsVerticalScrollIndicator={false}>
@@ -360,7 +352,7 @@ function Checkout() {
               );
             })}
             <PressableScale style={[styles.sheetRow, { backgroundColor: '#FFFFFF' }]} onPress={() => { setPaymentSheet(false); router.push('/payments'); }}>
-              <View style={styles.sheetCheck}><Icon name="add" size={19} color={checkoutAccent} /></View>
+              <View style={styles.sheetCheck} />
               <View style={styles.sheetRowText}><Txt s={14} w={700}>إضافة طريقة دفع</Txt></View>
               <View style={styles.sheetVDiv} />
               <View style={styles.sheetLogo}><View style={[styles.addPaymentMark, { borderColor: checkoutAccent }]}><Icon name="add" size={23} color={checkoutAccent} /></View></View>
