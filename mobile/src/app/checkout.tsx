@@ -16,7 +16,7 @@ import { API_URL, api } from '@/lib/api';
 import { cardBrandOf } from '@/data/seed';
 import { useApp } from '@/store/app-store';
 import { family } from '@/theme/typography';
-import { NETWORK_LOGOS, WALLET_LOGOS } from './payment-logos'; // عدّل المسار حسب مكان الملف
+import { NETWORK_LOGOS, WALLET_LOGOS } from '@/data/payment-logos';
 
 /* ───────── الألوان: مستخرجة من لوجو توصيلة ───────── */
 const BRAND = '#12291F';        // الأخضر الغامق (خلفية اللوجو)
