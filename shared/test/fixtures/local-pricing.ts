@@ -78,7 +78,7 @@ export const ALL_EXTRAS: Extra[] = [...EXTRAS.sweet, ...EXTRAS.savory];
 /* ---- 2. src/lib/pricing.ts (after its imports, without the closing re-export) ---- */
 export const SPEEDS = [
   { t: 'Standard', s: '25–35 min', fee: 0 },
-  { t: 'Priority', s: '15–20 min', fee: 1.99 },
+  { t: 'Priority', s: '15–20 min', fee: 20 },
 ] as const;
 
 /** Unit price of a dish with a size index and selected extras. */
