@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { ActivityIndicator, Modal, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 import { WebView } from 'react-native-webview';
@@ -65,11 +65,6 @@ function networkOf(brand: string, num: string): 'visa' | 'mastercard' | 'meeza' 
   if (/^(5[1-5]|2[2-7])/.test(d)) return 'mastercard';
   if (/^507803/.test(d)) return 'meeza';
   return 'mastercard';
-}
-
-function Logo({ uri, fallback, width, height }: { uri: string; fallback: React.ReactNode; width: number; height: number }) {
-  if (!uri) return <>{fallback}</>;
-  return <Image source={{ uri }} style={{ width, height }} resizeMode="contain" />;
 }
 
 type Wallet = { id: string; provider: string; phone: string; name: string; isDefault: boolean };
@@ -137,12 +132,6 @@ function Checkout() {
     restaurant?.lat != null && restaurant?.lng != null && deliveryPoint
       ? roadDistanceKm ?? distanceBetweenKm(deliveryPoint.latitude, deliveryPoint.longitude, restaurant.lat, restaurant.lng)
       : null;
-  const etaMinutes = restaurant
-    ? Math.max(1, Math.ceil((restaurant.prepTime || s.prep) + (distanceKm == null ? 0 : distanceKm * 5 * (s.speed === 1 ? 0.5 : 1))))
-    : s.prep;
-  const etaFrom = new Date(Date.now() + etaMinutes * 60000);
-  const etaTo = new Date(Date.now() + (etaMinutes + 10) * 60000);
-
   /* ───────── أول طلب ───────── */
   const [isFirstOrder, setIsFirstOrder] = useState(false);
   useEffect(() => {
