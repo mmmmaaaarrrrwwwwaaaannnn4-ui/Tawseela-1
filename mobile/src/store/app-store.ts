@@ -465,10 +465,11 @@ export const useApp = create<AppStore>()(
 
         totals: () => {
           const s = get();
-          const kitchenIds = [...new Set(s.cart.map((line) => s.dishOf(line.id).brand))];
-          const hasKitchenFees = kitchenIds.some((id) => s.brands.find((brand) => brand.id === id)?.deliveryFee != null);
-          const deliveryFee = hasKitchenFees ? kitchenIds.reduce((sum, id) => sum + (s.brands.find((brand) => brand.id === id)?.deliveryFee ?? s.fee), 0) : s.fee;
-          return computeTotals({ cart: s.cart, dishOf: s.dishOf, mode: s.mode, speed: s.speed, fee: deliveryFee, freeAt: s.freeAt, promo: s.promo });
+          // Tawseela delivery policy: first completed order gets free delivery;
+          // every subsequent delivery order has one fixed EGP 5 fee.
+          const hasPreviousOrder = s.orders.length > 0;
+          const deliveryFee = hasPreviousOrder ? 5 : 0;
+          return computeTotals({ cart: s.cart, dishOf: s.dishOf, mode: s.mode, speed: s.speed, fee: deliveryFee, freeAt: 0, promo: s.promo });
         },
 
         showToast: toast,
