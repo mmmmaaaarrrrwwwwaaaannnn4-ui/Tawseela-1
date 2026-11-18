@@ -133,13 +133,21 @@ function Checkout() {
   const [tip, setTip] = useState(0);
   const [customTip, setCustomTip] = useState(false);
   const [promoText, setPromoText] = useState('');
+  const [scheduleSheet, setScheduleSheet] = useState(false);
+  const [scheduleOffset, setScheduleOffset] = useState(0);
+  const [rushDelivery, setRushDelivery] = useState(false);
+  const [noteExpanded, setNoteExpanded] = useState(false);
+  const scheduledFrom = new Date(etaFrom.getTime() + scheduleOffset * 60000);
+  const scheduledTo = new Date(etaTo.getTime() + scheduleOffset * 60000);
+  const scheduleLabel = rushDelivery ? 'توصيل مستعجل' : scheduleOffset === 0 ? 'أسرع وقت' : 'تأجيل الطلب';
+  const scheduleColor = rushDelivery ? RED : scheduleOffset === 0 ? GREEN : TEXT;
 
   /* ───────── الحسابات ───────── */
   const isDelivery = s.mode !== 'pickup';
   const baseDelivery = isDelivery ? t.fee : 0;
   const delivery = isDelivery && isFirstOrder ? 0 : baseDelivery;
   const discount = s.promo ? t.disc : 0;
-  const total = Math.max(0, t.sub - discount + delivery + SERVICE_FEE + tip);
+  const total = Math.max(0, t.sub - discount + delivery + SERVICE_FEE + tip + (rushDelivery ? 20 : 0));
 
   /* ───────── الدفع ───────── */
   const [paying, setPaying] = useState(false);
@@ -320,14 +328,14 @@ function Checkout() {
         {/* ───────── وقت التوصيل ───────── */}
         <View style={styles.section}>
           <View style={styles.titleRow}>
-            <PressableScale onPress={soon('جدولة الطلب')}>
-              <Txt s={13} w={600} style={{ color: BRAND }}>اختر موعد آخر</Txt>
+            <PressableScale onPress={() => setScheduleSheet(true)}>
+              <Txt s={13} w={600} style={{ color: BRAND, backgroundColor: BRAND_SOFT, paddingHorizontal: 12, paddingVertical: 7, borderRadius: 9 }}>اختر موعد آخر</Txt>
             </PressableScale>
             <Txt s={17} w={700} style={styles.titleInline}>{isDelivery ? 'وقت التوصيل' : 'وقت الاستلام'}</Txt>
           </View>
           <View style={styles.etaRow}>
-            <Txt s={14} w={600} style={{ color: GREEN }}>{`سيصل ${clock(etaFrom)} - ${clock(etaTo)}`}</Txt>
-            <Txt s={14} w={600} style={{ color: TEXT }}>  ·  أسرع وقت</Txt>
+            <Txt s={14} w={600} style={{ color: GREEN }}>{`سيصل ${clock(scheduledFrom)} - ${clock(scheduledTo)}`}</Txt>
+            <Txt s={14} w={600} style={{ color: scheduleColor }}>  ·  {scheduleLabel}</Txt>
             <Icon name="schedule" size={20} color={TEXT} />
           </View>
         </View>
@@ -340,7 +348,8 @@ function Checkout() {
             <PressableScale onPress={() => router.push('/addresses')} style={styles.addrRow}>
               <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
                 <Txt s={15} w={700} style={{ color: TEXT }}>{s.addr.tag}</Txt>
-                <Txt s={13} w={500} style={{ color: MUTED }} numberOfLines={1}>{s.addr.l1}</Txt>
+                <Txt s={13} w={500} style={{ color: GREEN }} numberOfLines={1}>{s.addr.l1}</Txt>
+                <Txt s={11} w={600} style={{ color: BRAND }}>التوصيل لمكان آخر</Txt>
               </View>
               <Icon name="location_on" size={22} color={TEXT} />
             </PressableScale>
@@ -512,10 +521,11 @@ function Checkout() {
                 placeholder="هل تود أن تخبرنا أي شيء آخر؟"
                 placeholderTextColor={MUTED}
                 multiline
-                style={[styles.noteInput, INPUT_FONT]}
+                onFocus={() => setNoteExpanded(true)}
+                style={[styles.noteInput, INPUT_FONT, noteExpanded && { minHeight: 120, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12 }]}
               />
             </View>
-            <Icon name="reviews" size={24} color={TEXT} />
+            <Icon name="edit_note" size={24} color={BRAND} />
           </View>
         </View>
 
@@ -555,6 +565,25 @@ function Checkout() {
         </PressableScale>
       </View>
 
+      <Modal visible={scheduleSheet} transparent animationType="slide" onRequestClose={() => setScheduleSheet(false)}>
+        <View style={styles.sheetBackdrop} />
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 18 }]}><View style={styles.sheetHandle} />
+          <Txt s={17} w={700} style={{ color: TEXT, textAlign: "right" }}>تغيير موعد التوصيل</Txt>
+          <View style={{ alignItems: "center", gap: 6, paddingVertical: 10 }}>
+            <Txt s={13} w={700} style={{ color: scheduleColor }}>{scheduleLabel}</Txt>
+            <Txt s={24} w={800} style={{ color: scheduleColor }}>{clock(scheduledFrom)} - {clock(scheduledTo)}</Txt>
+            <Txt s={12} color={MUTED}>موعد تقديري حسب تجهيز المطعم والتوصيل</Txt>
+          </View>
+          <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Txt s={11} color={MUTED}>أسرع وقت</Txt><Txt s={11} color={MUTED}>تأجيل حتى ساعتين</Txt></View>
+          <View style={styles.scheduleTrack} onTouchStart={(e) => { setRushDelivery(false); setScheduleOffset(Math.max(0, Math.min(120, Math.round(e.nativeEvent.locationX / 300 * 8) * 15))); }} onTouchMove={(e) => setScheduleOffset(Math.max(0, Math.min(120, Math.round(e.nativeEvent.locationX / 300 * 8) * 15)))}><View style={[styles.scheduleFill, { width: (scheduleOffset / 120 * 100) + "%" }]} /><View style={[styles.scheduleThumb, { left: (scheduleOffset / 120 * 100) + "%" }]} /></View>
+          <View style={{ flexDirection: "row", gap: 8 }}>
+            <PressableScale onPress={() => { setRushDelivery(false); setScheduleOffset(0); }} style={[styles.scheduleChoice, !rushDelivery && scheduleOffset === 0 && styles.scheduleChoiceOn]}><Txt s={13} w={700} color={GREEN}>أسرع وقت</Txt><Txt s={11} color={MUTED}>بدون رسوم إضافية</Txt></PressableScale>
+            <PressableScale onPress={() => { setRushDelivery(true); setScheduleOffset(0); }} style={[styles.scheduleChoice, rushDelivery && { borderColor: RED, backgroundColor: "#FFF1F0" }]}><Txt s={13} w={700} color={RED}>توصيل مستعجل</Txt><Txt s={11} color={RED}>+20 ج.م</Txt></PressableScale>
+          </View>
+          <PressableScale onPress={() => { setRushDelivery(false); setScheduleOffset((v) => v > 0 ? Math.min(120, v + 15) : 15); }} style={[styles.scheduleChoice, scheduleOffset > 0 && !rushDelivery && styles.scheduleChoiceOn]}><Txt s={13} w={700} color={TEXT}>تأجيل الطلب · {scheduleOffset} دقيقة</Txt><Txt s={11} color={MUTED}>اسحب المؤشر لاختيار موعد لاحق</Txt></PressableScale>
+          <PressableScale onPress={() => setScheduleSheet(false)} style={[styles.cta, { marginTop: 4 }]}><Txt s={15} w={700} color="#FFFFFF">تأكيد الموعد</Txt></PressableScale>
+        </View>
+      </Modal>
       {/* ───────── Bottom sheet ───────── */}
       <Modal visible={paymentSheet} transparent animationType="slide" onRequestClose={chooseCash}>
         <View style={styles.sheetBackdrop} />
@@ -767,6 +796,11 @@ const styles = StyleSheet.create({
   promoInput: { flex: 1, textAlign: 'right', paddingVertical: 0 },
 
   noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  scheduleTrack: { height: 8, borderRadius: 5, backgroundColor: BAND, marginVertical: 12 },
+  scheduleFill: { height: 8, borderRadius: 5, backgroundColor: BRAND },
+  scheduleThumb: { position: 'absolute', top: -6, width: 20, height: 20, borderRadius: 10, marginLeft: -10, backgroundColor: BRAND, borderWidth: 2, borderColor: '#FFFFFF' },
+  scheduleChoice: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12, alignItems: 'center', gap: 4 },
+  scheduleChoiceOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
   noteInput: { alignSelf: 'stretch', textAlign: 'right', paddingVertical: 0, minHeight: 20, color: TEXT },
 
   sumRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
