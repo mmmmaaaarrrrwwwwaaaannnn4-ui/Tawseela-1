@@ -58,6 +58,56 @@ function Checkout() {
   const [walletPhone, setWalletPhone] = useState('');
   const [paymentSheet, setPaymentSheet] = useState(false);
   const [walletProvider, setWalletProvider] = useState('');
+  const [savedWallets, setSavedWallets] = useState<{ id: string; provider: string; phone: string; name: string; isDefault: boolean }[]>([]);
+  const [sheetSelection, setSheetSelection] = useState('');
+  const [sheetError, setSheetError] = useState(false);
+  const sheetErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  useEffect(() => {
+    let active = true;
+    api.get<{ wallets: { id: string; provider: string; phone: string; name: string; isDefault: boolean }[] }>('/v1/me/wallets')
+      .then((result) => { if (active) setSavedWallets(Array.isArray(result.wallets) ? result.wallets : []); })
+      .catch(() => { if (active) setSavedWallets([]); });
+    return () => { active = false; if (sheetErrorTimer.current) clearTimeout(sheetErrorTimer.current); };
+  }, []);
+  const openPaymentSheet = () => {
+    const currentCard = s.cards.find((card) => card.id === s.defCard);
+    const currentWallet = savedWallets.find((wallet) => wallet.phone === walletPhone);
+    setSheetSelection(s.payM === 3 && currentWallet ? 'wallet:' + currentWallet.id : currentCard ? 'card:' + currentCard.id : '');
+    setSheetError(false);
+    setPaymentSheet(true);
+  };
+  const closePaymentSheetToCash = () => {
+    set({ payM: 2 });
+    setPaymentSheet(false);
+    setSheetError(false);
+  };
+  const confirmPaymentSelection = () => {
+    if (!sheetSelection) {
+      setSheetError(true);
+      if (sheetErrorTimer.current) clearTimeout(sheetErrorTimer.current);
+      sheetErrorTimer.current = setTimeout(() => setSheetError(false), 3000);
+      return;
+    }
+    if (sheetSelection.startsWith('card:')) {
+      useApp.getState().makeDefaultCard(sheetSelection.slice(5));
+      set({ payM: 1 });
+      setWalletProvider('');
+      setWalletPhone('');
+    } else {
+      const wallet = savedWallets.find((item) => item.id === sheetSelection.slice(7));
+      if (!wallet) {
+        setSheetError(true);
+        if (sheetErrorTimer.current) clearTimeout(sheetErrorTimer.current);
+        sheetErrorTimer.current = setTimeout(() => setSheetError(false), 3000);
+        return;
+      }
+      set({ payM: 3 });
+      setWalletProvider(wallet.name);
+      setWalletPhone(wallet.phone);
+    }
+    setPaymentSheet(false);
+    setSheetError(false);
+  };
   const [threeDSUrl, setThreeDSUrl] = useState<string | null>(null);
   const [threeDSError, setThreeDSError] = useState(false);
   const [threeDSReload, setThreeDSReload] = useState(0);
@@ -193,7 +243,7 @@ function Checkout() {
               <Txt s={13} w={700} align="center">الدفع النقدي عند الاستلام</Txt>
               <Radio on={s.payM === 2} />
             </PressableScale>
-            <PressableScale onPress={() => setPaymentSheet(true)} scaleTo={0.98}
+            <PressableScale onPress={openPaymentSheet} scaleTo={0.98}
               style={[styles.choice, sel(s.payM !== 2)]}>
               <Icon name="credit_card" size={22} color={s.payM !== 2 ? c.accent : c.text1} />
               <Txt s={13} w={700} align="center">اختيار طريقة دفع</Txt>
@@ -266,31 +316,39 @@ function Checkout() {
         }
       />
 
-      <Modal visible={paymentSheet} transparent animationType="slide" onRequestClose={() => setPaymentSheet(false)}>
-        <PressableScale onPress={() => setPaymentSheet(false)} style={styles.sheetBackdrop}>
+      <Modal visible={paymentSheet} transparent animationType="slide" onRequestClose={closePaymentSheetToCash}>
+        <PressableScale onPress={() => {}} style={styles.sheetBackdrop}>
           <View />
         </PressableScale>
         <View style={[styles.sheet, { backgroundColor: c.surface1, borderColor: c.line }]}>
           <View style={styles.sheetHandle} />
           <Txt s={19} w={700}>اختار طريقة الدفع</Txt>
-          <PressableScale style={styles.sheetRow} onPress={() => { set({ payM: 0 }); setWalletProvider(''); setPaymentSheet(false); }}>
-            <PaymentNetworkLogo brand={s.cards.find((card) => card.id === s.defCard)?.brand ?? 'CARD'} width={48} height={34} />
-            <View style={{ flex: 1 }}><Txt s={15} w={700}>بطاقة محفوظة</Txt><Txt s={12} color={c.text3}>الدفع باستخدام بطاقة محفوظة</Txt></View>
-            <Radio on={s.payM === 0} />
-          </PressableScale>
-          {walletOptions.map((w) => (
-            <PressableScale key={w.name} style={styles.sheetRow} onPress={() => { set({ payM: 3 }); setWalletProvider(w.name); setPaymentSheet(false); }}>
-              <WalletProviderLogo provider={w.name} width={48} height={42} />
-              <View style={{ flex: 1 }}><Txt s={15} w={700}>{w.name}</Txt></View>
-              <Radio on={s.payM === 3 && walletProvider === w.name} />
+          <ScrollView style={{ maxHeight: 360 }} contentContainerStyle={{ gap: 9 }} showsVerticalScrollIndicator={false}>
+            {s.cards.map((card) => (
+              <PressableScale key={card.id} style={[styles.sheetRow, { borderColor: sheetSelection === 'card:' + card.id ? c.accent : c.line, backgroundColor: sheetSelection === 'card:' + card.id ? c.accentSoft : c.surface1 }]} onPress={() => { setSheetSelection('card:' + card.id); setSheetError(false); }}>
+                <PaymentNetworkLogo brand={card.brand} width={48} height={34} />
+                <View style={{ flex: 1, gap: 2 }}><Txt s={14} w={700}>{card.brand} ···· {card.num.replace(/\D/g, '').slice(-4)}</Txt><Txt s={11.5} color={c.text3}>{card.name}</Txt></View>
+                <Radio on={sheetSelection === 'card:' + card.id} />
+              </PressableScale>
+            ))}
+            {savedWallets.map((wallet) => (
+              <PressableScale key={wallet.id} style={[styles.sheetRow, { borderColor: sheetSelection === 'wallet:' + wallet.id ? c.accent : c.line, backgroundColor: sheetSelection === 'wallet:' + wallet.id ? c.accentSoft : c.surface1 }]} onPress={() => { setSheetSelection('wallet:' + wallet.id); setSheetError(false); }}>
+                <WalletProviderLogo provider={wallet.name} width={48} height={42} />
+                <View style={{ flex: 1, gap: 2 }}><Txt s={14} w={700}>{wallet.name}</Txt><Txt s={12} color={c.text3}>{wallet.phone}</Txt></View>
+                <Radio on={sheetSelection === 'wallet:' + wallet.id} />
+              </PressableScale>
+            ))}
+            <PressableScale style={styles.sheetRow} onPress={() => { setPaymentSheet(false); router.push('/payments'); }}>
+              <View style={[styles.brandMark, { backgroundColor: c.accentSoft }]}><Icon name="add" size={24} color={c.accent} /></View>
+              <View style={{ flex: 1 }}><Txt s={15} w={700}>إضافة طريقة دفع</Txt></View>
+              <Icon name="chevron_right" size={20} color={c.text3} />
             </PressableScale>
-          ))}
-          <PressableScale style={styles.sheetRow} onPress={() => { set({ payM: 1 }); setPaymentSheet(false); router.push('/payments'); }}>
-            <PaymentNetworkLogo brand="VISA" width={48} height={34} />
-            <View style={{ flex: 1 }}><Txt s={15} w={700}>إضافة فيزا</Txt><Txt s={12} color={c.text3}>Visa أو Mastercard</Txt></View>
-            <Icon name="chevron_right" size={20} color={c.text3} />
-          </PressableScale>
-          <PressableScale onPress={() => setPaymentSheet(false)} style={styles.sheetClose}><Txt s={14} w={700}>إغلاق</Txt></PressableScale>
+          </ScrollView>
+          {sheetError ? <Txt s={13} w={700} color="#D92D20" align="center">اختار طريقة دفع</Txt> : null}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
+            <PressableScale onPress={confirmPaymentSelection} style={[styles.sheetAction, { backgroundColor: c.accent, borderColor: c.accent }]}><Txt s={15} w={700} color="#FFFFFF">متابعة</Txt></PressableScale>
+            <PressableScale onPress={closePaymentSheetToCash} style={[styles.sheetAction, { backgroundColor: 'transparent', borderColor: '#D7DCD8' }]}><Txt s={15} w={700} color={c.text1}>رجوع</Txt></PressableScale>
+          </View>
         </View>
       </Modal>
       <Modal visible={!!threeDSUrl} transparent animationType="slide" onRequestClose={finishThreeDS}>
@@ -379,7 +437,7 @@ const styles = StyleSheet.create({
   sheetHandle: { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: '#B8B8B8', marginBottom: 8 },
   sheetRow: { minHeight: 62, borderRadius: 16, borderWidth: 1, borderColor: '#E6E6E6', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
   brandMark: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  sheetClose: { height: 48, alignItems: 'center', justifyContent: 'center' },
+  sheetClose: { height: 48, alignItems: 'center', justifyContent: 'center' },\n  sheetAction: { flex: 1, height: 52, borderRadius: 15, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },\n  brandMark: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   payTile: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   note: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14.5, minHeight: 76, textAlignVertical: 'top' },
 });
