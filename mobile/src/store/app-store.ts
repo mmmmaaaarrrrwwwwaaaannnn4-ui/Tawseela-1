@@ -186,6 +186,7 @@ interface State {
   sound: boolean;
 
   /* customer */
+  customerLocation: { latitude: number; longitude: number } | null;
   saved: string[];
   cart: CartLine[];
   mode: FulfilmentMode;
@@ -383,6 +384,7 @@ const initialState = (): State => ({
 
   ...bundledCatalog(),
 
+  customerLocation: null,
   saved: ['brisket', 'carb', 'cheesecake'],
   cart: [],
   mode: 'delivery',
