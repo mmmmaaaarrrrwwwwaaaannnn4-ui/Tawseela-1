@@ -3,9 +3,10 @@ import { StyleSheet, View } from 'react-native';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 import { Txt } from '@/components/ui/txt';
 
-type LogoProps = { brand: string; width: number; height: number };
+type NetworkLogoProps = { brand: string; width: number; height: number };
+type WalletLogoProps = { provider: string; width: number; height: number };
 
-export function PaymentNetworkLogo({ brand, width, height }: LogoProps) {
+export function PaymentNetworkLogo({ brand, width, height }: NetworkLogoProps) {
   const key = brand.toUpperCase().replace(/[^A-Z]/g, '');
   if (key.includes('VISA')) {
     return <Svg width={width} height={height} viewBox="0 0 48 16"><Path d="M19 1 12 15H6L3 4c-.2-.8-.4-1-1.2-1.3L0 2.2V1h9l2 9 4-9h4Zm5 0-3 14h-5l3-14h5Zm12 4c0-1-.8-1.5-2.4-1.5-1.4 0-2.8.3-4 .8l.7-3.1C31.5.7 33 .4 34.8.4c4 0 6.2 1.6 6.2 4.3 0 4.7-6.5 4.9-6.5 6.5 0 .5.6.8 1.7.8 1.5 0 3.1-.4 4.4-1l-.7 3.3c-1.4.5-2.8.7-4.4.7-4 0-6.2-1.5-6.2-4.1C29.3 6.4 36 6.2 36 5Z" fill="#1A1F71" /></Svg>;
@@ -25,7 +26,7 @@ export function PaymentNetworkLogo({ brand, width, height }: LogoProps) {
   return <View style={[styles.logo,{width,height}]}><Txt s={Math.max(11,height*.5)} w={700} color="#777">CARD</Txt></View>;
 }
 
-export function WalletProviderLogo({ provider, width, height }: LogoProps) {
+export function WalletProviderLogo({ provider, width, height }: WalletLogoProps) {
   const name = provider.toLowerCase();
   const color = name.includes('vodafone') ? '#E60000' : name.includes('orange') ? '#F58220' : name.includes('etisalat') ? '#007C52' : name.includes('we') ? '#6A2C91' : '#6A2C91';
   const label = name.includes('vodafone') ? 'V' : name.includes('orange') ? 'Orange' : name.includes('etisalat') ? 'e&' : name.includes('we') ? 'WE' : 'IP';
