@@ -1,4 +1,5 @@
 import { StyleSheet, View } from 'react-native';
+import { WebView } from 'react-native-webview';
 
 import { Icon } from '@/components/icons/icon';
 import { AccentButton } from '@/components/ui/buttons';
@@ -40,6 +41,7 @@ export function AddressSheet({
   showErrors,
   onSave,
   onClose,
+  onMapSelect,
 }: {
   visible: boolean;
   value: NewAddress;
@@ -47,6 +49,7 @@ export function AddressSheet({
   showErrors: boolean;
   onSave: () => void;
   onClose: () => void;
+  onMapSelect: (latitude: number, longitude: number) => void;
 }) {
   const n = value;
   const preview = (n.l1.trim() || 'Street address') + (n.apt.trim() ? ', ' + n.apt.trim() : '');
@@ -93,6 +96,17 @@ export function AddressSheet({
       </View>
 
       <View style={{ gap: 8 }}>
+        <Eyebrow>Pin your delivery location</Eyebrow>
+        <Txt s={12} color={fixed.paperA(0.7)}>Move the map and place the pin exactly where the courier should arrive.</Txt>
+        <View style={styles.map}>
+          <WebView
+            originWhitelist={['*']}
+            javaScriptEnabled
+            source={{ html: '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>html,body,#map{height:100%;width:100%;margin:0;padding:0}</style></head><body><div id="map"></div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>const lat=' + (n.latitude ?? 30.0444) + ',lng=' + (n.longitude ?? 31.2357) + ';const map=L.map("map").setView([lat,lng],' + (n.latitude ? 16 : 12) + ');L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);const pin=L.marker([lat,lng],{draggable:true}).addTo(map);function send(p){window.ReactNativeWebView.postMessage(JSON.stringify({latitude:p.lat,longitude:p.lng}))}pin.on("dragend",()=>send(pin.getLatLng()));map.on("click",e=>{pin.setLatLng(e.latlng);send(e.latlng)});</script></body></html>' }}
+            onMessage={(event) => { try { const point = JSON.parse(event.nativeEvent.data); if (Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) onMapSelect(point.latitude, point.longitude); } catch {} }}
+            style={{ flex: 1, backgroundColor: '#F3F3F3' }}
+          />
+        </View>
         <Eyebrow>Address</Eyebrow>
         <Field
           icon="signpost"
@@ -148,6 +162,7 @@ export function AddressSheet({
 }
 
 const styles = StyleSheet.create({
+  map: { height: 230, borderRadius: 16, overflow: 'hidden', backgroundColor: '#F3F3F3' },
   preview: { padding: 14, borderRadius: 20, backgroundColor: fixed.ink, flexDirection: 'row', alignItems: 'center', gap: 12 },
   pinRing: { width: 56, height: 56, margin: -6, borderRadius: 28, backgroundColor: 'rgba(255,122,26,0.2)', alignItems: 'center', justifyContent: 'center' },
   pin: { width: 44, height: 44, borderRadius: 22, backgroundColor: fixed.orange, alignItems: 'center', justifyContent: 'center' },
