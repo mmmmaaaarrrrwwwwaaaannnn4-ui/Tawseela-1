@@ -1,14 +1,15 @@
 import { useCallback, useEffect, useState, type ReactNode } from 'react';
 import * as Crypto from 'expo-crypto';
-import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
-import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient as SvgGradient, Path, Rect, Stop } from 'react-native-svg';
 import { useShallow } from 'zustand/react/shallow';
 
 import { blankCard, CardSheet } from '@/components/account/card-sheet';
+import { Wallet } from '@/components/account/wallet';
 import { PaymentNetworkLogo } from '@/components/account/brand-logos';
+import { PagerDots } from '@/components/ui/controls';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
 import { useStatusBar } from '@/hooks/use-status-bar';
@@ -71,7 +72,7 @@ function validCardExpiry(value: string) {
   return year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth() + 1);
 }
 
-// تحويل واحد فقط لرد /v1/me/cards (كان متكرر 3 مرات وبنتايج مختلفة).
+// تحويل واحد فقط لرد /v1/me/cards.
 function mapCard(x: ServerCard) {
   const b = cardBrandOf(x.number.replace(/\D/g, ''));
   const exp = x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '';
@@ -122,23 +123,56 @@ function InfoIcon() {
   );
 }
 
-function ChipArt() {
-  const s = '#B6B6AE';
+/**
+ * لوجو "توصيلة باي" مرسوم بالكامل بـ SVG (حروف بخطوط سميكة مدورة + خط سفلي + كبسولة "باي").
+ * الرسم يدوي تقريبي من الصورة. لو عندك ملف SVG الأصلي للوجو، حط الـ paths بتاعته هنا مكان الرسم ده.
+ */
+function LogoArt() {
+  const lime = '#D4F03C';
+  const ink = GREEN;
   return (
-    <Svg width={49} height={35} viewBox="0 0 49 35" fill="none">
-      <Rect x={0.5} y={0.5} width={48} height={34} rx={6} fill="#F1F1ED" stroke="#C9C9C2" />
-      <Rect x={14} y={7} width={21} height={21} rx={6} stroke={s} />
-      <Path d="M0.5 12h14M0.5 23h14M34 12h14.5M34 23h14.5M24.5 0.5v6.5M24.5 28v6.5" stroke={s} />
-    </Svg>
-  );
-}
+    <Svg width={121} height={28.2} viewBox="0 0 450 105">
+      {/* الخط السفلي */}
+      <Path d="M128 100 Q290 98 448 90 L448 99 Q290 106 128 106 Z" fill={lime} />
 
-function ContactlessArt() {
-  return (
-    <Svg width={26} height={36} viewBox="0 0 26 36" fill="none">
-      <Path d="M2 11A9 9 0 0 1 2 25" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" />
-      <Path d="M8 7A15 15 0 0 1 8 29" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" />
-      <Path d="M14 3A21 21 0 0 1 14 33" stroke="#fff" strokeWidth={2.4} strokeLinecap="round" />
+      {/* الكبسولة */}
+      <G rotation={-4} origin="75, 64">
+        <Rect x={2} y={26} width={146} height={74} rx={37} fill={CREAM} />
+      </G>
+
+      {/* كلمة "باي" */}
+      <G skewX={-8} origin="0, 63" stroke={ink} strokeWidth={8} strokeLinecap="round" strokeLinejoin="round" fill="none">
+        <Path d="M128 52 L128 70 L100 70 L100 36" />
+        <Path d="M84 56 L84 70 C84 80 60 82 44 70" />
+        <Circle cx={116} cy={87} r={4.5} fill={ink} stroke="none" />
+        <Circle cx={62} cy={92} r={4} fill={ink} stroke="none" />
+        <Circle cx={75} cy={92} r={4} fill={ink} stroke="none" />
+      </G>
+
+      {/* كلمة "توصيلة" */}
+      <G skewX={-8} origin="0, 70" stroke={lime} strokeWidth={14} strokeLinecap="round" strokeLinejoin="round" fill="none">
+        {/* ت */}
+        <Path d="M436 56 L436 78 L400 78 L391 72" />
+        <Circle cx={424} cy={34} r={6} fill={lime} stroke="none" />
+        <Circle cx={440} cy={34} r={6} fill={lime} stroke="none" />
+        {/* و */}
+        <Circle cx={380} cy={64} r={12} strokeWidth={10} />
+        <Path d="M391 72 C394 90 388 99 374 98" strokeWidth={12} />
+        {/* ص */}
+        <Ellipse cx={326} cy={65} rx={20} ry={12} strokeWidth={10} />
+        <Path d="M332 78 L262 78" />
+        {/* ي */}
+        <Path d="M262 78 L252 78 L246 62 L240 78 L228 78" />
+        <Circle cx={240} cy={97} r={5.5} fill={lime} stroke="none" />
+        <Circle cx={254} cy={97} r={5.5} fill={lime} stroke="none" />
+        {/* ل */}
+        <Path d="M228 78 L214 78 L210 8" />
+        {/* ة */}
+        <Path d="M214 78 L192 78" />
+        <Ellipse cx={178} cy={64} rx={14} ry={11} strokeWidth={10} />
+        <Circle cx={170} cy={34} r={6.5} fill={lime} stroke="none" />
+        <Circle cx={186} cy={34} r={6.5} fill={lime} stroke="none" />
+      </G>
     </Svg>
   );
 }
@@ -186,35 +220,6 @@ function ReceiptArt() {
 
 /* ───────────────────────── pieces ───────────────────────── */
 
-function Logo() {
-  return (
-    <View style={styles.logo}>
-      <View style={styles.logoPill}>
-        <Text style={styles.logoPillTxt}>باي</Text>
-      </View>
-      <Text style={styles.logoTxt}>توصيلة</Text>
-      <View style={styles.logoStreak} />
-    </View>
-  );
-}
-
-function HeroCard({ brand, digits }: { brand: string; digits: string }) {
-  return (
-    <View style={styles.heroWrap}>
-      <LinearGradient colors={['#5CC38F', '#2F7A56', '#0B2C1A']} locations={[0, 0.55, 1]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
-        <Text style={styles.heroLogo}>توصيلة</Text>
-        <View style={styles.heroStreak} />
-        <View style={styles.heroChip}><ChipArt /></View>
-        <View style={styles.heroNfc}><ContactlessArt /></View>
-        <View style={styles.heroDigits}>
-          <Txt s={21} w={400} color="#FFFFFF" tabular>{`•• ${digits}`}</Txt>
-        </View>
-        <Text style={[styles.heroBrand, brand.length > 6 && { fontSize: 17 }]}>{brand}</Text>
-      </LinearGradient>
-    </View>
-  );
-}
-
 function CheckCircle({ on, onPress }: { on: boolean; onPress: () => void }) {
   return (
     <PressableScale scaleTo={0.9} onPress={onPress} style={[styles.chk, on ? styles.chkOn : styles.chkOff]}>
@@ -228,12 +233,11 @@ function MethodRow(props: {
   title: string;
   subtitle: string;
   isDefault: boolean;
-  onSelect?: () => void;
   onDefault: () => void;
   onDelete: () => void;
 }) {
   return (
-    <PressableScale scaleTo={0.99} onPress={props.onSelect ?? (() => {})} style={styles.row}>
+    <View style={styles.row}>
       <PressableScale scaleTo={0.9} onPress={props.onDelete} style={styles.delBtn}>
         <Ic d={P.trash} size={14} color="#D93A3A" />
       </PressableScale>
@@ -245,7 +249,7 @@ function MethodRow(props: {
       </View>
       <View style={[styles.vDiv, { marginLeft: 0 }]} />
       <View style={styles.logoBlock}>{props.logo}</View>
-    </PressableScale>
+    </View>
   );
 }
 
@@ -278,7 +282,7 @@ export default function PaymentsScreen() {
   const payM = useApp((s) => s.payM);
   const credit = useApp((s) => s.credit);
   const user = useSession((s) => s.user);
-  const history = useApp(useShallow((s) => selectMyOrders(s).slice(0, 4)));
+  const history = useApp(useShallow((s) => selectMyOrders(s).slice(0, 3)));
 
   const [idx, setIdx] = useState(0);
   const [open, setOpen] = useState(false);
@@ -315,7 +319,8 @@ export default function PaymentsScreen() {
   }, [loadCards, loadWallets]);
 
   const hasCards = !cardsLoading && cards.length > 0;
-  const cur = hasCards ? cards[Math.min(idx, cards.length - 1)] : undefined;
+  const safeIdx = hasCards ? Math.min(idx, cards.length - 1) : 0;
+  const cur = hasCards ? cards[safeIdx] : undefined;
   const hasWallets = savedWallets.length > 0;
   const noMethods = !cardsLoading && !walletsLoading && !hasCards && !hasWallets;
 
@@ -403,6 +408,8 @@ export default function PaymentsScreen() {
       .catch((e) => useApp.getState().showToast('تعذر حفظ المحفظة', errMsg(e, 'حاول مرة أخرى.'), 'error'));
   };
 
+  const curBrand = cur ? String(cur.brand).toUpperCase() : '';
+
   return (
     <View style={styles.root}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
@@ -410,29 +417,30 @@ export default function PaymentsScreen() {
         <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
           <View style={styles.headTop}>
             <View style={styles.headBtns}>
-              <PressableScale scaleTo={0.92} onPress={() => router.push(ROUTES.support as never)} style={[styles.circle, { backgroundColor: '#FFFFFF' }]}>
+              <PressableScale scaleTo={0.92} onPress={() => router.push(ROUTES.support as never)} style={styles.circle}>
                 <Ic d={P.headset} size={18} color={GREEN} />
               </PressableScale>
-              <PressableScale scaleTo={0.92} onPress={() => router.push(ROUTES.more as never)} style={[styles.circle, { backgroundColor: '#FFFFFF' }]}>
+              <PressableScale scaleTo={0.92} onPress={() => router.push(ROUTES.more as never)} style={styles.circle}>
                 <MoreDots />
               </PressableScale>
             </View>
-            <Logo />
+            <LogoArt />
           </View>
 
           <View style={styles.headBottom}>
+            {/* الأيقونتين: دايرة 36 ومتمركزة على نفس خط مبلغ الرصيد */}
             <View style={styles.quick}>
               <PressableScale scaleTo={0.94} onPress={startCard} style={styles.quickCol}>
                 <View style={[styles.quickCircle, { backgroundColor: CREAM }]}>
-                  <Ic d={P.card} size={17} color={GREEN} sw={2.2} />
+                  <Ic d={P.card} size={20} color={GREEN} sw={2.2} />
                 </View>
-                <Txt s={11} w={500} color={CREAM} align="center">البطاقات المحفوظة</Txt>
+                <Txt s={10} w={500} color={CREAM} align="center" numberOfLines={2}>البطاقات المحفوظة</Txt>
               </PressableScale>
               <PressableScale scaleTo={0.94} onPress={() => router.push(ROUTES.topUp as never)} style={styles.quickCol}>
                 <View style={[styles.quickCircle, { backgroundColor: LIME }]}>
-                  <Ic d={P.plus} size={18} color={GREEN} sw={2.2} />
+                  <Ic d={P.plus} size={21} color={GREEN} sw={2.2} />
                 </View>
-                <Txt s={11} w={500} color={CREAM} align="center">إضافة إلى الرصيد</Txt>
+                <Txt s={10} w={500} color={CREAM} align="center" numberOfLines={2}>إضافة إلى الرصيد</Txt>
               </PressableScale>
             </View>
 
@@ -449,9 +457,14 @@ export default function PaymentsScreen() {
           </View>
         </View>
 
-        {/* ───── البطاقة الكبيرة / الحالة الفاضية ───── */}
-        {hasCards && cur ? (
-          <HeroCard brand={String(cur.brand).toUpperCase()} digits={last4(cur.num)} />
+        {/* ───── كاروسيل البطاقات (نفس الـ Wallet القديم: سحب + فليب لضهر البطاقة) ───── */}
+        {hasCards ? (
+          <>
+            <View style={{ marginTop: 12 }}>
+              <Wallet cards={cards} index={safeIdx} defId={payM === PAY_CARD ? defCard : null} holder={user?.name ?? ''} onIndex={setIdx} />
+            </View>
+            {cards.length > 1 ? <PagerDots count={cards.length} index={safeIdx} onPick={setIdx} activeWidth={20} /> : null}
+          </>
         ) : (
           <View style={styles.emptyHero}>
             {!cardsLoading ? (
@@ -469,28 +482,23 @@ export default function PaymentsScreen() {
         )}
 
         {/* ───── طريقة الدفع ───── */}
-        <View style={styles.sectionHead}>
+        <View style={[styles.sectionHead, { marginTop: hasCards ? 18 : 10.5 }]}>
           <Txt s={19} w={800} color="#111111" align="right">طريقة الدفع</Txt>
           <Txt s={13} color="#333333" align="right">بيانات بطاقتك مشفرة ومحمية معنا</Txt>
         </View>
 
-        <View style={{ paddingHorizontal: 12, marginTop: 9 }}>
-          {hasCards ? cards.map((x, i) => {
-            const brand = String(x.brand).toUpperCase();
-            return (
-              <View key={x.id} style={{ marginBottom: i === cards.length - 1 ? 0 : 8 }}>
-                <MethodRow
-                  logo={NETWORKS.includes(brand) ? <PaymentNetworkLogo brand={brand as any} width={42} height={31} /> : <Ic d={P.card} size={26} color="#555" />}
-                  title={x.name || brand}
-                  subtitle={`•••• •••• •••• ${last4(x.num)}`}
-                  isDefault={payM === PAY_CARD && defCard === x.id}
-                  onSelect={() => setIdx(i)}
-                  onDefault={() => useApp.getState().makeDefaultCard(x.id)}
-                  onDelete={() => deleteCard(x.id)}
-                />
-              </View>
-            );
-          }) : null}
+        <View style={{ paddingHorizontal: 12, marginTop: 10 }}>
+          {/* صف واحد بس للبطاقة المختارة في الكاروسيل (بدل تكرار كل البطاقات) */}
+          {hasCards && cur ? (
+            <MethodRow
+              logo={NETWORKS.includes(curBrand) ? <PaymentNetworkLogo brand={curBrand as any} width={42} height={31} /> : <Ic d={P.card} size={26} color="#555" />}
+              title={cur.name || curBrand}
+              subtitle={`•••• •••• •••• ${last4(cur.num)}`}
+              isDefault={payM === PAY_CARD && defCard === cur.id}
+              onDefault={() => useApp.getState().makeDefaultCard(cur.id)}
+              onDelete={() => deleteCard(cur.id)}
+            />
+          ) : null}
 
           {hasWallets ? (
             <>
@@ -526,7 +534,7 @@ export default function PaymentsScreen() {
         ) : null}
 
         {/* ───── معاملات رصيد طلبات ───── */}
-        <View style={[styles.sectionHead, { marginTop: noMethods ? 20 : 12 }]}>
+        <View style={[styles.sectionHead, { marginTop: noMethods ? 20 : 24 }]}>
           <Txt s={19} w={800} color="#111111" align="right">معاملات رصيد طلبات ·</Txt>
         </View>
 
@@ -584,36 +592,23 @@ const styles = StyleSheet.create({
   // direction: 'ltr' عشان الترتيب الفيزيائي يفضل زي الصورة سواء الجهاز RTL أو لأ.
   root: { flex: 1, backgroundColor: '#FFFFFF', direction: 'ltr' },
 
-  header: { backgroundColor: GREEN, paddingBottom: 9, paddingRight: 10, paddingLeft: 14 },
+  header: { backgroundColor: GREEN, paddingBottom: 12, paddingRight: 10, paddingLeft: 14 },
   headTop: { height: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headBtns: { flexDirection: 'row', gap: 7.5 },
-  circle: { width: 32, height: 32, borderRadius: 16, alignItems: 'center', justifyContent: 'center' },
-  headBottom: { marginTop: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  quick: { flexDirection: 'row', marginLeft: -9 },
-  quickCol: { width: 44, alignItems: 'center', gap: 4 },
-  quickCircle: { width: 29, height: 29, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  balanceBox: { alignItems: 'flex-end', gap: 4, paddingTop: 2 },
-  balanceLbl: { flexDirection: 'row', alignItems: 'center', gap: 6 },
-  balanceAmt: { flexDirection: 'row', alignItems: 'center', gap: 6.5 },
+  circle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
 
-  logo: { width: 121, height: 30, justifyContent: 'center', alignItems: 'flex-end' },
-  logoPill: { position: 'absolute', left: 0, top: 4, height: 24, paddingHorizontal: 10, borderRadius: 13, backgroundColor: '#F4F0E4', alignItems: 'center', justifyContent: 'center', transform: [{ rotate: '-5deg' }] },
-  logoPillTxt: { color: GREEN, fontWeight: '900', fontSize: 14, fontStyle: 'italic' },
-  logoTxt: { color: LIME, fontWeight: '900', fontSize: 30, fontStyle: 'italic', lineHeight: 34 },
-  logoStreak: { position: 'absolute', left: 32, right: 0, bottom: 0, height: 4, borderRadius: 2, backgroundColor: LIME, transform: [{ rotate: '-2deg' }] },
-
-  heroWrap: { marginTop: 7, marginHorizontal: 25 },
-  hero: { aspectRatio: 1.586, borderRadius: 27, overflow: 'hidden', borderWidth: 1, borderColor: '#4DB588' },
-  heroLogo: { position: 'absolute', left: 18, top: 5, color: '#E3F54A', fontWeight: '900', fontSize: 30, fontStyle: 'italic', transform: [{ rotate: '-7deg' }] },
-  heroStreak: { position: 'absolute', left: 1, top: 38, width: 116, height: 4.5, borderRadius: 3, backgroundColor: '#D6F03C', opacity: 0.9, transform: [{ rotate: '-13deg' }] },
-  heroChip: { position: 'absolute', left: 19, top: 90 },
-  heroNfc: { position: 'absolute', left: 80, top: 89 },
-  heroDigits: { position: 'absolute', left: 20, bottom: 13 },
-  heroBrand: { position: 'absolute', right: 14, bottom: 12, color: '#FFFFFF', fontWeight: '900', fontStyle: 'italic', fontSize: 26 },
+  headBottom: { marginTop: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  // 26 = ارتفاع سطر "رصيدك هو" (22) + المسافة (4) → مركز الدايرة (36) = مركز مبلغ الرصيد (36)
+  quick: { flexDirection: 'row', marginLeft: -11, marginTop: 26 },
+  quickCol: { width: 58, alignItems: 'center', gap: 4 },
+  quickCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
+  balanceBox: { alignItems: 'flex-end', gap: 4 },
+  balanceLbl: { height: 22, flexDirection: 'row', alignItems: 'center', gap: 6 },
+  balanceAmt: { height: 36, flexDirection: 'row', alignItems: 'center', gap: 6.5 },
 
   emptyHero: { marginTop: 7, height: 214.5, paddingTop: 57, alignItems: 'center' },
 
-  sectionHead: { marginTop: 10.5, paddingHorizontal: 12, gap: 3, alignItems: 'flex-end' },
+  sectionHead: { paddingHorizontal: 12, gap: 3, alignItems: 'flex-end' },
 
   row: { minHeight: 43, flexDirection: 'row', alignItems: 'center', borderWidth: 1, borderColor: BORDER, borderRadius: 12, backgroundColor: '#FFFFFF', paddingLeft: 11, overflow: 'hidden' },
   delBtn: { width: 24, height: 24, borderRadius: 12, backgroundColor: '#FBE3E6', alignItems: 'center', justifyContent: 'center', marginRight: 10 },
@@ -626,7 +621,7 @@ const styles = StyleSheet.create({
   walletLogo: { width: 44, height: 34 },
   histIcon: { width: 32, height: 32, borderRadius: 10, backgroundColor: '#EEF8D8', alignItems: 'center', justifyContent: 'center' },
 
-  sep: { height: 24, flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 7 },
+  sep: { height: 30, flexDirection: 'row', alignItems: 'center', gap: 9, paddingHorizontal: 7 },
   sepLine: { flex: 1, height: 1, backgroundColor: '#D5D8DC' },
 
   addBox: { marginTop: 19, marginHorizontal: 15, height: 83, borderRadius: 14, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', gap: 12 },
