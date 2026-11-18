@@ -471,7 +471,7 @@ export const useApp = create<AppStore>()(
           // every subsequent delivery order has one fixed EGP 5 fee.
           const hasPreviousOrder = s.orders.some((order) => order.step === 3);
           const deliveryFee = hasPreviousOrder ? 5 : 0;
-          return computeTotals({ cart: s.cart, dishOf: s.dishOf, mode: s.mode, speed: s.speed, fee: deliveryFee, freeAt: 0, promo: s.promo });
+          return computeTotals({ cart: s.cart, dishOf: s.dishOf, mode: s.mode, speed: s.speed, fee: deliveryFee, freeAt: hasPreviousOrder ? Number.MAX_SAFE_INTEGER : 0, promo: s.promo });
         },
 
         showToast: toast,
