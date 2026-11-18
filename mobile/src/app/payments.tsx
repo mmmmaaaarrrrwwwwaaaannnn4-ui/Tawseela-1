@@ -678,7 +678,7 @@ const styles = StyleSheet.create({
 
   // سحب المعاملات
   swipeWrap: { borderRadius: 12, overflow: 'hidden' },
-  swipeBg: { ...StyleSheet.absoluteFillObject, borderRadius: 12, justifyContent: 'center' },
+  swipeBg: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, borderRadius: 12, justifyContent: 'center' },
   swipeDel: { backgroundColor: SWIPE_DEL, alignItems: 'flex-start', paddingLeft: 22 },
   swipeOpen: { backgroundColor: SWIPE_OPEN, alignItems: 'flex-end', paddingRight: 22 },
 });
