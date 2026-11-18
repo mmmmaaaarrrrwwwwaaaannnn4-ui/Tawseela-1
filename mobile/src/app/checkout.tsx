@@ -16,7 +16,6 @@ import { API_URL, api } from '@/lib/api';
 import { cardBrandOf } from '@/data/seed';
 import { useApp } from '@/store/app-store';
 import { family } from '@/theme/typography';
-import { NETWORK_LOGOS, WALLET_LOGOS } from '@/data/payment-logos';
 
 /* ───────── الألوان: مستخرجة من لوجو توصيلة ───────── */
 const BRAND = '#12291F';        // الأخضر الغامق (خلفية اللوجو)
@@ -54,7 +53,7 @@ function distanceBetweenKm(lat1: number, lon1: number, lat2: number, lon2: numbe
 }
 
 /** يحدد شبكة البطاقة من اسم الـ brand أو من أول أرقام البطاقة */
-function networkOf(brand: string, num: string): 'visa' | 'mastercard' | 'meeza' | 'amex' | '' {
+function networkOf(brand: string, num: string): 'visa' | 'mastercard' | 'meeza' | 'amex' {
   const b = (brand || '').toLowerCase();
   if (b.includes('amex') || b.includes('american')) return 'amex';
   if (b.includes('master')) return 'mastercard';
@@ -65,7 +64,7 @@ function networkOf(brand: string, num: string): 'visa' | 'mastercard' | 'meeza' 
   if (/^4/.test(d)) return 'visa';
   if (/^(5[1-5]|2[2-7])/.test(d)) return 'mastercard';
   if (/^507803/.test(d)) return 'meeza';
-  return '';
+  return 'mastercard';
 }
 
 function Logo({ uri, fallback, width, height }: { uri: string; fallback: React.ReactNode; width: number; height: number }) {
@@ -135,13 +134,12 @@ function Checkout() {
   const [customTip, setCustomTip] = useState(false);
   const [promoText, setPromoText] = useState('');
   const [scheduleSheet, setScheduleSheet] = useState(false);
-  const [scheduleOffset, setScheduleOffset] = useState(0);
-  const [rushDelivery, setRushDelivery] = useState(false);
+  const rushDelivery = s.speed === 1;
   const [noteExpanded, setNoteExpanded] = useState(false);
-  const scheduledFrom = new Date(etaFrom.getTime() + scheduleOffset * 60000);
-  const scheduledTo = new Date(etaTo.getTime() + scheduleOffset * 60000);
-  const scheduleLabel = rushDelivery ? 'توصيل مستعجل' : scheduleOffset === 0 ? 'أسرع وقت' : 'تأجيل الطلب';
-  const scheduleColor = rushDelivery ? RED : scheduleOffset === 0 ? GREEN : TEXT;
+  const scheduledFrom = new Date(Date.now() + ((restaurant?.prepTime ?? s.prep) + (distanceKm == null ? 0 : distanceKm * 5 * (rushDelivery ? 0.5 : 1))) * 60000);
+  const scheduledTo = new Date(scheduledFrom.getTime() + 10 * 60000);
+  const scheduleLabel = rushDelivery ? 'توصيل مستعجل' : 'التوصيل العادي';
+  const scheduleColor = rushDelivery ? RED : GREEN;
 
   /* ───────── الحسابات ───────── */
   const isDelivery = s.mode !== 'pickup';
@@ -289,21 +287,11 @@ function Checkout() {
 
   const cardLogo = (brand: string, num: string, w: number, h: number) => {
     const net = networkOf(brand, num);
-    const known = /VISA|MASTER|AMEX|MEEZA|MADA|DISCOVER/.test((net || brand || '').toUpperCase());
-    if (!known) return <Icon name="credit_card" size={26} color={MUTED} />;
-    return (
-      <Logo
-        uri={net ? NETWORK_LOGOS[net] : ''}
-        width={w}
-        height={h}
-        fallback={<PaymentNetworkLogo brand={net ? net.toUpperCase() : brand} width={w} height={h} />}
-      />
-    );
+    return <PaymentNetworkLogo brand={net.toUpperCase()} width={w} height={h} />;
   };
-  const walletLogo = (name: string, w: number, h: number) => {
-    const uri = WALLET_LOGOS.find((x) => x.match.test(name))?.uri ?? '';
-    return <Logo uri={uri} width={w} height={h} fallback={<WalletProviderLogo provider={name} width={w} height={h} />} />;
-  };
+  const walletLogo = (name: string, w: number, h: number) => (
+    <WalletProviderLogo provider={name} width={w} height={h} />
+  );
 
   const soon = (title: string) => () => toast('قريبًا', `${title} هتتوفر قريبًا.`, 'info');
 
