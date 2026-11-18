@@ -1,5 +1,5 @@
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback, type ReactNode } from 'react';
+import { useCallback, useState, type ReactNode } from 'react';
 import * as Location from 'expo-location';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
@@ -37,6 +37,7 @@ export default function HomeScreen() {
   const { c } = useTheme();
   const chrome = useChrome();
   const user = useSession((s) => s.user);
+  const [currentAddress, setCurrentAddress] = useState('جارٍ تحديد موقعك…');
   useFocusEffect(useCallback(() => {
     let cancelled = false;
     const refreshCustomerLocation = async () => {
@@ -45,7 +46,7 @@ export default function HomeScreen() {
       if (!permission.granted && permission.status === 'undetermined') {
         permission = await Location.requestForegroundPermissionsAsync();
       }
-      if (!permission.granted) return;
+      if (!permission.granted) { if (!cancelled) setCurrentAddress('فعّل الموقع لتحديد عنوان التوصيل'); return; }
       const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
       if (!cancelled) {
         useApp.setState({ customerLocation: {
@@ -53,6 +54,10 @@ export default function HomeScreen() {
           longitude: position.coords.longitude,
         } });
       }
+      const places = await Location.reverseGeocodeAsync({ latitude: position.coords.latitude, longitude: position.coords.longitude });
+      const place = places[0];
+      const label = place ? [place.street, place.district, place.city, place.region].filter(Boolean).join('، ') : '';
+      if (!cancelled) setCurrentAddress(label || 'تم تحديد موقعك الحالي');
     };
     void refreshCustomerLocation().catch(() => undefined);
     return () => { cancelled = true; };
@@ -96,6 +101,10 @@ export default function HomeScreen() {
                   Tawseela
                 </Txt>
               </View>
+              <PressableScale onPress={() => router.push('/addresses')} scaleTo={0.98} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Icon name="location_on" size={14} color={c.accent} />
+                <Txt s={11} w={500} color={c.text3} numberOfLines={1}>{currentAddress}</Txt>
+              </PressableScale>
             </View>
             <View style={{ flexDirection: 'row', gap: 8 }}>
               <PressableScale
