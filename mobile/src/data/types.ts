@@ -152,6 +152,8 @@ export interface Address {
   note: string;
   door: boolean;
   phone?: string;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface PayOption {
