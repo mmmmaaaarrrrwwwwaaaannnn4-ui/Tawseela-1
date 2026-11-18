@@ -543,14 +543,19 @@ function Checkout() {
             <Txt s={24} w={800} style={{ color: scheduleColor }}>{clock(scheduledFrom)} - {clock(scheduledTo)}</Txt>
             <Txt s={12} color={MUTED}>موعد تقديري حسب تجهيز المطعم والتوصيل</Txt>
           </View>
-          <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Txt s={11} color={MUTED}>أسرع وقت</Txt><Txt s={11} color={MUTED}>تأجيل حتى ساعتين</Txt></View>
-          <View style={styles.scheduleTrack} onTouchStart={(e) => { setRushDelivery(false); setScheduleOffset(Math.max(0, Math.min(120, Math.round(e.nativeEvent.locationX / 300 * 8) * 15))); }} onTouchMove={(e) => { setRushDelivery(false); setScheduleOffset(Math.max(0, Math.min(120, Math.round(e.nativeEvent.locationX / 300 * 8) * 15))); }}><View style={[styles.scheduleFill, { width: (scheduleOffset / 120 * 100) + "%" }]} /><View style={[styles.scheduleThumb, { left: (scheduleOffset / 120 * 100) + "%" }]} /></View>
-          <View style={{ flexDirection: "row", gap: 8 }}>
-            <PressableScale onPress={() => { setRushDelivery(false); setScheduleOffset(0); }} style={[styles.scheduleChoice, !rushDelivery && scheduleOffset === 0 && styles.scheduleChoiceOn]}><Txt s={13} w={700} color={GREEN}>أسرع وقت</Txt><Txt s={11} color={MUTED}>بدون رسوم إضافية</Txt></PressableScale>
-            <PressableScale onPress={() => { setRushDelivery(true); setScheduleOffset(0); }} style={[styles.scheduleChoice, rushDelivery && { borderColor: RED, backgroundColor: "#FFF1F0" }]}><Txt s={13} w={700} color={RED}>توصيل مستعجل</Txt><Txt s={11} color={RED}>+20 ج.م</Txt></PressableScale>
-          </View>
-          <PressableScale onPress={() => { setRushDelivery(false); setScheduleOffset((v) => v > 0 ? Math.min(120, v + 15) : 15); }} style={[styles.scheduleChoice, scheduleOffset > 0 && !rushDelivery && styles.scheduleChoiceOn]}><Txt s={13} w={700} color={TEXT}>تأجيل الطلب · {scheduleOffset} دقيقة</Txt><Txt s={11} color={MUTED}>اسحب المؤشر لاختيار موعد لاحق</Txt></PressableScale>
-          <PressableScale onPress={() => { set({ speed: rushDelivery ? 1 : 0 }); setScheduleSheet(false); }} style={[styles.cta, { marginTop: 4 }]}><Txt s={15} w={700} color="#FFFFFF">تأكيد الموعد</Txt></PressableScale>
+          <PressableScale onPress={() => set({ speed: rushDelivery ? 0 : 1 })} style={[styles.scheduleChoice, { borderColor: rushDelivery ? RED : BORDER, backgroundColor: rushDelivery ? '#FFF1F0' : '#FFFFFF' }]}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Icon name={rushDelivery ? 'check_circle' : 'radio_button_unchecked'} size={22} color={rushDelivery ? RED : MUTED} />
+                <Txt s={14} w={700} color={RED}>توصيل مستعجل</Txt>
+              </View>
+              <Txt s={14} w={800} color={RED}>+20 ج.م</Txt>
+            </View>
+            <Txt s={11} color={MUTED}>تقليل وقت انتقال المندوب إلى النصف، دون تغيير وقت تجهيز المطعم</Txt>
+          </PressableScale>
+          <PressableScale onPress={() => setScheduleSheet(false)} style={[styles.cta, { marginTop: 4 }]}>
+            <Txt s={15} w={700} color="#FFFFFF">تأكيد</Txt>
+          </PressableScale>
         </View>
       </Modal>
       {/* ───────── Bottom sheet ───────── */}
@@ -765,9 +770,6 @@ const styles = StyleSheet.create({
   promoInput: { flex: 1, textAlign: 'right', paddingVertical: 0 },
 
   noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  scheduleTrack: { height: 8, borderRadius: 5, backgroundColor: BAND, marginVertical: 12 },
-  scheduleFill: { height: 8, borderRadius: 5, backgroundColor: BRAND },
-  scheduleThumb: { position: 'absolute', top: -6, width: 20, height: 20, borderRadius: 10, marginLeft: -10, backgroundColor: BRAND, borderWidth: 2, borderColor: '#FFFFFF' },
   scheduleChoice: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12, alignItems: 'center', gap: 4 },
   scheduleChoiceOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
   noteInput: { alignSelf: 'stretch', textAlign: 'right', paddingVertical: 0, minHeight: 20, color: TEXT },
