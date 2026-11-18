@@ -1,13 +1,12 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react';
-import { ActivityIndicator, Image, StyleSheet, TextInput, View } from 'react-native';
-import Animated, { Easing, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
+import { ActivityIndicator, Image, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import Animated, { Easing, FadeIn, useAnimatedStyle, useSharedValue, withTiming } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Svg, { Circle, Path, Rect, Text as SvgText } from 'react-native-svg';
 
 import { Icon } from '@/components/icons/icon';
-import { Sheet } from '@/components/ui/overlays';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
 import { cardBrandOf } from '@/data/seed';
@@ -77,34 +76,26 @@ const OUT = Easing.bezier(0.22, 1, 0.36, 1);
 const GREEN = '#153222';
 const OLIVE = GREEN;
 const ERROR = '#C0342F';
-const FIELD_BORDER = '#E4E4E4';
+/** قياسات الخانات مأخوذة من صور المرجع: ارتفاع 58، ركن 8، حد 1.3 رمادي فاتح، مسافة 16. */
+const FIELD_BORDER = '#EBEBEB';
+const PAGE_PAD = 18;
 /** Currency label printed on the back of the card. */
 const CARD_CURRENCY = 'EGP';
 
 const ROUTES = { support: '/support', more: '/menu' } as const;
 const HEADSET_PATH = 'M5 14v-2a7 7 0 0 1 14 0v2M5 14h2v5H5a1 1 0 0 1-1-1v-3a1 1 0 0 1 1-1zM19 14h-2v5h2a1 1 0 0 0 1-1v-3a1 1 0 0 0-1-1zM19 19v.5a2.5 2.5 0 0 1-2.5 2.5H13';
 
-const SECURITY = [
-  'تلتزم توصيلة بمعيار أمان بيانات بطاقات الدفع (PCI DSS) عند معالجة بيانات بطاقات المستخدمين.',
-  'معلومات البطاقة آمنة، ولن تتم مشاركتها مع أي طرف.',
-  'جميع البيانات مشفّرة.',
-  'لا تبيع توصيلة معلومات بطاقتك بتاتًا.',
-  'في حال حدوث عملية تفويض مسبق، سيتم إعادة المبلغ على الفور.',
-];
-
 const PROVIDERS: {
   key: WalletProvider;
   label: string;
-  short: string;
   gradient: readonly [string, string];
-  tile: string;
   logo: number;
 }[] = [
-  { key: 'insta', label: 'InstaPay', short: 'إنستاباي', gradient: ['#4C167A', '#A92B8B'], tile: '#F4ECFB', logo: require('../../assets/payments/instapay.png') },
-  { key: 'orange', label: 'Orange Cash', short: 'أورنج كاش', gradient: ['#F58220', '#FFB33B'], tile: '#FFF4E8', logo: require('../../assets/payments/orange-cash.png') },
-  { key: 'we', label: 'WE Pay', short: 'WE Pay', gradient: ['#4C247D', '#8A45B5'], tile: '#F2ECFA', logo: require('../../assets/payments/we-pay.png') },
-  { key: 'etisalat', label: 'Etisalat Cash', short: 'اتصالات كاش', gradient: ['#007C52', '#16B982'], tile: '#EAF7F0', logo: require('../../assets/payments/etisalat-cash.png') },
-  { key: 'vodafone', label: 'Vodafone Cash', short: 'فودافون كاش', gradient: ['#C90018', '#F2293B'], tile: '#FFF0F1', logo: require('../../assets/payments/vodafone-cash.png') },
+  { key: 'insta', label: 'InstaPay', gradient: ['#4C167A', '#A92B8B'], logo: require('../../assets/payments/instapay.png') },
+  { key: 'orange', label: 'Orange Cash', gradient: ['#F58220', '#FFB33B'], logo: require('../../assets/payments/orange-cash.png') },
+  { key: 'we', label: 'WE Pay', gradient: ['#4C247D', '#8A45B5'], logo: require('../../assets/payments/we-pay.png') },
+  { key: 'etisalat', label: 'Etisalat Cash', gradient: ['#007C52', '#16B982'], logo: require('../../assets/payments/etisalat-cash.png') },
+  { key: 'vodafone', label: 'Vodafone Cash', gradient: ['#C90018', '#F2293B'], logo: require('../../assets/payments/vodafone-cash.png') },
 ];
 
 function luhnValid(value: string) {
@@ -190,10 +181,18 @@ function MoreDots() {
   );
 }
 
+function Chevron({ open }: { open: boolean }) {
+  return (
+    <Svg width={14} height={14} viewBox="0 0 24 24" fill="none" style={{ transform: [{ rotate: open ? '180deg' : '0deg' }] }}>
+      <Path d="M6 9l6 6 6-6" stroke="#666666" strokeWidth={2.6} strokeLinecap="round" strokeLinejoin="round" />
+    </Svg>
+  );
+}
+
 /* ───────────────────────── floating-label field ───────────────────────── */
 
 /**
- * خانة بنفس شكل المرجع: العنوان كبير في ااالنص وهي فاضية، ولما تتفتح أو تتكتب بيطلع فوق صغير.
+ * نفس خانة المرجع: العنوان في النص وهي فاضية، ولما تتفتح أو تتكتب بيطلع فوق ويصغر بأنيميشن خفيف.
  * لو error = true: الإطار والعنوان أحمر + علامة تحذير شمال + رسالة تحت الخانة.
  */
 function FloatingField({
@@ -216,6 +215,16 @@ function FloatingField({
 }) {
   const [focused, setFocused] = useState(false);
   const floated = focused || value.length > 0;
+  const p = useSharedValue(floated ? 1 : 0);
+
+  useEffect(() => {
+    p.set(withTiming(floated ? 1 : 0, { duration: 160, easing: Easing.out(Easing.quad) }));
+  }, [floated, p]);
+
+  const labelAnim = useAnimatedStyle(() => ({
+    transform: [{ translateY: -11.5 * p.value }, { scale: 1 - 0.27 * p.value }],
+  }));
+
   return (
     <View style={styles.formGroup}>
       <View style={[styles.fieldBox, { borderColor: error ? ERROR : focused ? GREEN : FIELD_BORDER }]}>
@@ -235,9 +244,9 @@ function FloatingField({
           textAlign="right"
           style={styles.fieldInput}
         />
-        <View pointerEvents="none" style={[styles.fieldLabelWrap, floated ? styles.fieldLabelUp : styles.fieldLabelMid]}>
-          <Txt s={floated ? 12 : 16} color={error ? ERROR : '#777777'} align="right">{label}</Txt>
-        </View>
+        <Animated.View pointerEvents="none" style={[styles.fieldLabel, labelAnim]}>
+          <Txt s={15} color={error ? ERROR : '#777777'} align="right">{label}</Txt>
+        </Animated.View>
         <View pointerEvents="none" style={styles.fieldLeft}>{error ? <WarnIcon /> : left}</View>
       </View>
       {error && errorText ? <Txt s={12} color={ERROR} align="right">{errorText}</Txt> : null}
@@ -245,7 +254,9 @@ function FloatingField({
   );
 }
 
-/** Existing add-payment-method sheet, rebuilt around the supplied reference layout. */
+/**
+ * صفحة إضافة بطاقة (صفحة كاملة، مش bottom sheet). نفس الـ props القديمة فمفيش تغيير مطلوب في payments.tsx.
+ */
 export function CardSheet({
   visible, value, onChange, showErrors, flipped, onFlip, onSave, onSaveWallet, saving = false, onClose,
 }: {
@@ -263,12 +274,12 @@ export function CardSheet({
   const n = value;
   const insets = useSafeAreaInsets();
   const [providerKey, setProviderKey] = useState<WalletProvider | null>(null);
+  const [showMethods, setShowMethods] = useState(false);
   const [walletPhone, setWalletPhone] = useState('');
   const [walletName, setWalletName] = useState('');
-  const [saveWallet, setSaveWallet] = useState(false);
   const [walletErrors, setWalletErrors] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
-  const [cardW, setCardW] = useState(0);
+  const [bodyW, setBodyW] = useState(0);
   const d = n.num.replace(/\D/g, '');
   const b = cardBrandOf(d);
   const knownBrand = d.length >= 4 && b.name !== 'CARD';
@@ -276,13 +287,15 @@ export function CardSheet({
   const cardPreview = cardDigits || '••••  ••••  ••••  ••••';
   const cardLast4 = d.length >= 4 ? '•• ' + d.slice(-4) : '•• ••••';
   /* Card sizes follow the reference cards: 1 unit is 1% of the card width. */
-  const u = (cardW || 373) / 100;
+  const u = (bodyW || 373) / 100;
   const fs = (k: number) => Math.round(u * k * 10) / 10;
   const validNumber = cardLengthValid(d, b.name) && luhnValid(d);
   const validExp = expiryValid(n.exp);
   const validCvv = b.name === 'AMEX' ? /^\d{4}$/.test(n.cvv) : /^\d{3}$/.test(n.cvv);
   const validName = n.name.trim().length > 0;
   const wallet = PROVIDERS.find((x) => x.key === providerKey) ?? null;
+  // عرض وارتفاع المعاينة صريحين (بنفس عرض الخانات) عشان تتوسّط وتبقى بنسبة الكارت الحقيقي.
+  const cardSize = bodyW ? { width: bodyW, height: bodyW / 1.587 } : { alignSelf: 'stretch' as const, aspectRatio: 1.587 };
   const r = useSharedValue(flipped ? 180 : 0);
   const mode = useSharedValue(providerKey ? 1 : 0);
 
@@ -302,9 +315,9 @@ export function CardSheet({
   useEffect(() => {
     if (!visible) {
       setProviderKey(null);
+      setShowMethods(false);
       setWalletPhone('');
       setWalletName('');
-      setSaveWallet(false);
       setWalletErrors(false);
       setTouched({});
       onFlip(false);
@@ -329,10 +342,6 @@ export function CardSheet({
     opacity: mode.value,
     transform: [{ scale: 0.965 + mode.value * 0.035 }, { translateY: (1 - mode.value) * 8 }],
   }));
-  const formTransition = useAnimatedStyle(() => ({
-    opacity: 1,
-    transform: [{ translateY: mode.value * 3 }],
-  }));
 
   const confirm = () => {
     if (wallet) {
@@ -340,7 +349,7 @@ export function CardSheet({
         setWalletErrors(true);
         return;
       }
-      onSaveWallet?.(wallet.label, normalizeEgyptPhone(walletPhone), walletName.trim(), saveWallet);
+      onSaveWallet?.(wallet.label, normalizeEgyptPhone(walletPhone), walletName.trim(), true);
       return;
     }
     onSave();
@@ -352,16 +361,15 @@ export function CardSheet({
   };
 
   return (
-    <Sheet
-      visible={visible}
-      onClose={onClose}
-      fullScreen
-      scroll
-      header={
-        /* نفس الهيدر الأخضر الثابت بتاع صفحة المدفوعات، من غير الرصيد وأيقونات الرصيد */
+    <Modal visible={visible} animationType="slide" presentationStyle="fullScreen" statusBarTranslucent onRequestClose={onClose}>
+      <KeyboardAvoidingView style={styles.page} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+        {/* الهيدر الأخضر الثابت (ستاتس بار + لوجو) — نفس صفحة المدفوعات من غير الرصيد */}
         <View style={[styles.greenHeader, { paddingTop: insets.top + 6 }]}>
           <View style={styles.headTop}>
             <View style={styles.headBtns}>
+              <PressableScale scaleTo={0.92} onPress={onClose} style={styles.circle}>
+                <Icon name="chevron_right" size={20} color={GREEN} />
+              </PressableScale>
               <PressableScale scaleTo={0.92} onPress={() => go(ROUTES.support)} style={styles.circle}>
                 <HeadsetIcon />
               </PressableScale>
@@ -372,232 +380,208 @@ export function CardSheet({
             <Image source={LOGO} resizeMode="contain" style={{ width: 121, height: 29 }} />
           </View>
         </View>
-      }
-      footer={
-        <PressableScale onPress={confirm} disabled={saving} style={styles.confirmButton} scaleTo={0.985}>
-          {saving ? <ActivityIndicator color="#FFFFFF" /> : <Txt s={19} w={700} color="#FFFFFF">إضافة</Txt>}
-        </PressableScale>
-      }
-    >
-      <View style={styles.content}>
-        <View style={styles.titleRow}>
-          <PressableScale onPress={onClose} style={styles.backButton}>
-            <Icon name="chevron_right" size={25} color="#171717" />
+
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={styles.scrollContent}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={styles.body} onLayout={(e) => setBodyW(e.nativeEvent.layout.width)}>
+            {wallet ? (
+              <Animated.View style={[styles.cardWrap, cardSize, walletPreview]}>
+                <LinearGradient colors={[...wallet.gradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.walletCard, { height: '100%' }]}>
+                  <View pointerEvents="none" style={styles.walletGlow} />
+                  <View style={styles.walletCardTop}>
+                    <View style={styles.walletBrandPill}>
+                      <Image source={wallet.logo} resizeMode="contain" style={styles.walletLogo} />
+                    </View>
+                    <View style={styles.walletBrandText}>
+                      <Txt s={11} w={700} color="rgba(255,255,255,0.78)">محفظة إلكترونية</Txt>
+                      <Txt s={19} w={800} color="#FFFFFF">{wallet.label}</Txt>
+                    </View>
+                  </View>
+                  <View style={styles.walletCardBottom}>
+                    <Txt s={10} w={600} color="rgba(255,255,255,0.78)">رقم المحفظة</Txt>
+                    <Txt s={22} w={800} color="#FFFFFF" tabular>{formatEgyptPhone(walletPhone) || '01X XXXX XXXX'}</Txt>
+                    <Txt s={10} w={600} color="rgba(255,255,255,0.78)">اسم صاحب المحفظة</Txt>
+                    <Txt s={16} w={700} color="#FFFFFF" numberOfLines={1}>{walletName.trim() || 'الاسم كما هو مسجل بالمحفظة'}</Txt>
+                  </View>
+                </LinearGradient>
+              </Animated.View>
+            ) : (
+              <Animated.View style={[styles.cardWrap, cardSize, bankPreview]}>
+                <Animated.View style={[StyleSheet.absoluteFill, front]}>
+                  <CardSurface bg={TAWSELA_CARD_GRADIENT} style={styles.previewCard} logo="front">
+                    <View pointerEvents="none" style={styles.chipCenter}>
+                      <CardChip />
+                    </View>
+                    <Txt s={fs(4.4)} w={500} lh={1.2} color={CARD_INK} tabular style={styles.last4Text}>{cardLast4}</Txt>
+                    {knownBrand ? (
+                      <View style={styles.networkLogo}>
+                        <PaymentNetworkLogo brand={b.name} tone="light" width={Math.round(u * 17.9)} height={Math.round(u * 5.8)} />
+                      </View>
+                    ) : null}
+                  </CardSurface>
+                </Animated.View>
+                <Animated.View style={[StyleSheet.absoluteFill, back]}>
+                  <CardSurface bg={TAWSELA_CARD_GRADIENT} style={styles.previewCard} logo="back">
+                    <Txt s={fs(3.8)} w={500} lh={1.2} color={CARD_INK} style={styles.currencyText}>{CARD_CURRENCY}</Txt>
+                    <Txt s={fs(4.4)} w={500} lh={1.2} color={CARD_INK} tabular style={styles.numberText}>{cardPreview}</Txt>
+                    <Txt s={fs(3.4)} w={500} lh={1.2} color={CARD_INK} numberOfLines={1} style={styles.nameText}>{n.name || 'اسم حامل البطاقة'}</Txt>
+                    <Txt s={fs(3.3)} lh={1.2} color={CARD_INK} align="center" style={styles.cvvLabel}>CVV</Txt>
+                    <Txt s={fs(3.4)} w={500} lh={1.2} color={CARD_INK} align="center" style={styles.cvvValue}>{n.cvv ? '•'.repeat(n.cvv.length) : '•••'}</Txt>
+                    <Txt s={fs(3.3)} lh={1.2} color={CARD_INK} align="center" style={styles.expLabel}>صالحة حتى</Txt>
+                    <Txt s={fs(3.4)} w={500} lh={1.2} color={CARD_INK} align="center" style={styles.expValue}>{n.exp || '••/••'}</Txt>
+                  </CardSurface>
+                </Animated.View>
+              </Animated.View>
+            )}
+
+            {!wallet ? (
+              <View style={styles.fields}>
+                <FloatingField
+                  value={n.num}
+                  label="رقم البطاقة"
+                  onChangeText={(v) => onChange({ num: formatCardNumber(v, b.name) })}
+                  onBlur={() => touch('num')}
+                  keyboardType="number-pad"
+                  autoComplete="cc-number"
+                  error={showErr('num', !validNumber)}
+                  errorText="رقم بطاقة غير صحيح"
+                  left={knownBrand ? <PaymentNetworkLogo brand={b.name} width={40} height={26} /> : undefined}
+                />
+
+                <View style={styles.rowFields}>
+                  <View style={styles.smallField}>
+                    <FloatingField
+                      value={n.cvv}
+                      label="CVV"
+                      onChangeText={(v) => onChange({ cvv: v.replace(/\D/g, '').slice(0, b.name === 'AMEX' ? 4 : 3) })}
+                      onFocus={() => onFlip(true)}
+                      onBlur={() => { touch('cvv'); onFlip(false); }}
+                      keyboardType="number-pad"
+                      secureTextEntry
+                      error={showErr('cvv', !validCvv)}
+                      errorText="رمز الأمان غير صحيح"
+                      left={<Icon name="credit_card" size={26} color="#B8B8B8" />}
+                    />
+                  </View>
+                  <View style={styles.smallField}>
+                    <FloatingField
+                      value={n.exp}
+                      label="تاريخ الانتهاء"
+                      placeholder="MM/YY"
+                      onChangeText={(v) => { let x = v.replace(/\D/g, '').slice(0, 4); if (x.length > 2) x = x.slice(0, 2) + '/' + x.slice(2); onChange({ exp: x }); }}
+                      onFocus={() => onFlip(true)}
+                      onBlur={() => { touch('exp'); onFlip(false); }}
+                      keyboardType="number-pad"
+                      error={showErr('exp', !validExp)}
+                      errorText="تاريخ انتهاء غير صالح"
+                    />
+                  </View>
+                </View>
+
+                <FloatingField
+                  value={n.name}
+                  label="اسم صاحب البطاقة"
+                  onChangeText={(v) => onChange({ name: v.toUpperCase() })}
+                  onFocus={() => onFlip(true)}
+                  onBlur={() => { touch('name'); onFlip(false); }}
+                  autoComplete="name"
+                  autoCapitalize="characters"
+                  error={showErr('name', !validName)}
+                  errorText="اكتب اسم حامل البطاقة كما هو مطبوع عليها"
+                />
+              </View>
+            ) : (
+              <View style={styles.fields}>
+                <FloatingField
+                  value={formatEgyptPhone(walletPhone)}
+                  label="رقم الهاتف المرتبط بالمحفظة"
+                  onChangeText={(v) => setWalletPhone(normalizeEgyptPhone(v))}
+                  onBlur={() => touch('wphone')}
+                  keyboardType="phone-pad"
+                  error={showErr('wphone', !isEgyptPhone(walletPhone), walletErrors)}
+                  errorText="أدخل رقم محفظة مصري صحيح يبدأ بـ 010 أو 011 أو 012 أو 015"
+                />
+                <FloatingField
+                  value={walletName}
+                  label="اسم صاحب المحفظة"
+                  onChangeText={setWalletName}
+                  onBlur={() => touch('wname')}
+                  autoComplete="name"
+                  error={showErr('wname', !walletName.trim(), walletErrors)}
+                  errorText="اكتب اسم صاحب المحفظة"
+                />
+              </View>
+            )}
+
+            {/* طرق دفع أخرى — مخفية لحد ما العميل يدوس على العنوان */}
+            <View style={styles.methods}>
+              <PressableScale scaleTo={0.97} onPress={() => setShowMethods((v) => !v)} style={styles.methodsToggle}>
+                <Chevron open={showMethods} />
+                <Txt s={14} w={700} color="#333333">طرق دفع أخرى</Txt>
+              </PressableScale>
+              {showMethods ? (
+                <Animated.View entering={FadeIn.duration(180)} style={styles.providerRow}>
+                  {PROVIDERS.map((item) => {
+                    const on = providerKey === item.key;
+                    return (
+                      <PressableScale
+                        key={item.key}
+                        scaleTo={0.95}
+                        onPress={() => {
+                          setWalletErrors(false);
+                          setTouched((t) => ({ ...t, wphone: false, wname: false }));
+                          setProviderKey((cur) => (cur === item.key ? null : item.key));
+                        }}
+                        style={[styles.providerTile, { borderColor: on ? GREEN : '#E3E3E3' }]}
+                      >
+                        <Image source={item.logo} resizeMode="contain" style={styles.providerImage} />
+                      </PressableScale>
+                    );
+                  })}
+                </Animated.View>
+              ) : null}
+            </View>
+          </View>
+        </ScrollView>
+
+        {/* زرار الإضافة صغير وتحت */}
+        <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 12) }]}>
+          <PressableScale onPress={confirm} disabled={saving} style={styles.confirmButton} scaleTo={0.985}>
+            {saving ? <ActivityIndicator color="#FFFFFF" /> : <Txt s={16} w={700} color="#FFFFFF">إضافة</Txt>}
           </PressableScale>
-          <Txt s={26} w={800} color="#111111">{wallet ? 'إضافة ' + wallet.label : 'أضف بطاقة جديدة'}</Txt>
         </View>
-
-        {wallet ? (
-          <Animated.View style={[styles.cardWrap, walletPreview]}>
-            <LinearGradient colors={[...wallet.gradient]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={[styles.walletCard, { height: '100%' }]}>
-              <View pointerEvents="none" style={[styles.walletGlow, { backgroundColor: 'rgba(255,255,255,0.13)' }]} />
-              <View style={styles.walletCardTop}>
-                <View style={styles.walletBrandPill}>
-                  <Image source={wallet.logo} resizeMode="contain" style={styles.walletLogo} />
-                </View>
-                <View style={styles.walletBrandText}>
-                  <Txt s={11} w={700} color="rgba(255,255,255,0.78)">محفظة إلكترونية</Txt>
-                  <Txt s={19} w={800} color="#FFFFFF">{wallet.label}</Txt>
-                </View>
-              </View>
-              <View style={styles.walletCardBottom}>
-                <Txt s={10} w={600} color="rgba(255,255,255,0.78)">رقم المحفظة</Txt>
-                <Txt s={22} w={800} color="#FFFFFF" tabular>{formatEgyptPhone(walletPhone) || '01X XXXX XXXX'}</Txt>
-                <Txt s={10} w={600} color="rgba(255,255,255,0.78)">اسم صاحب المحفظة</Txt>
-                <Txt s={16} w={700} color="#FFFFFF" numberOfLines={1}>{walletName.trim() || 'الاسم كما هو مسجل بالمحفظة'}</Txt>
-              </View>
-            </LinearGradient>
-          </Animated.View>
-        ) : (
-          <Animated.View style={[styles.cardWrap, bankPreview]} onLayout={(e) => setCardW(e.nativeEvent.layout.width)}>
-            <Animated.View style={[StyleSheet.absoluteFill, front]}>
-              <CardSurface bg={TAWSELA_CARD_GRADIENT} style={styles.previewCard} logo="front">
-                <View pointerEvents="none" style={styles.chipCenter}>
-                  <CardChip />
-                </View>
-                <Txt s={fs(4.4)} w={500} lh={1.2} color={CARD_INK} tabular style={styles.last4Text}>{cardLast4}</Txt>
-                {knownBrand ? (
-                  <View style={styles.networkLogo}>
-                    <PaymentNetworkLogo brand={b.name} tone="light" width={Math.round(u * 17.9)} height={Math.round(u * 5.8)} />
-                  </View>
-                ) : null}
-              </CardSurface>
-            </Animated.View>
-            <Animated.View style={[StyleSheet.absoluteFill, back]}>
-              <CardSurface bg={TAWSELA_CARD_GRADIENT} style={styles.previewCard} logo="back">
-                <Txt s={fs(3.8)} w={500} lh={1.2} color={CARD_INK} style={styles.currencyText}>{CARD_CURRENCY}</Txt>
-                <Txt s={fs(4.4)} w={500} lh={1.2} color={CARD_INK} tabular style={styles.numberText}>{cardPreview}</Txt>
-                <Txt s={fs(3.4)} w={500} lh={1.2} color={CARD_INK} numberOfLines={1} style={styles.nameText}>{n.name || 'اسم حامل البطاقة'}</Txt>
-                <Txt s={fs(3.3)} lh={1.2} color={CARD_INK} align="center" style={styles.cvvLabel}>CVV</Txt>
-                <Txt s={fs(3.4)} w={500} lh={1.2} color={CARD_INK} align="center" style={styles.cvvValue}>{n.cvv ? '•'.repeat(n.cvv.length) : '•••'}</Txt>
-                <Txt s={fs(3.3)} lh={1.2} color={CARD_INK} align="center" style={styles.expLabel}>صالحة حتى</Txt>
-                <Txt s={fs(3.4)} w={500} lh={1.2} color={CARD_INK} align="center" style={styles.expValue}>{n.exp || '••/••'}</Txt>
-              </CardSurface>
-            </Animated.View>
-          </Animated.View>
-        )}
-
-        {!wallet ? (
-          <Animated.View style={[styles.fields, formTransition]}>
-            <FloatingField
-              value={n.num}
-              label="رقم البطاقة"
-              onChangeText={(v) => onChange({ num: formatCardNumber(v, b.name) })}
-              onBlur={() => touch('num')}
-              keyboardType="number-pad"
-              autoComplete="cc-number"
-              error={showErr('num', !validNumber)}
-              errorText="رقم بطاقة غير صحيح"
-              left={
-                knownBrand ? (
-                  <PaymentNetworkLogo brand={b.name} width={40} height={26} />
-                ) : (
-                  <View style={styles.miniBrands}>
-                    <PaymentNetworkLogo brand="AMEX" width={27} height={20} />
-                    <PaymentNetworkLogo brand="MASTERCARD" width={27} height={19} />
-                    <PaymentNetworkLogo brand="VISA" width={27} height={19} />
-                  </View>
-                )
-              }
-            />
-
-            <View style={styles.rowFields}>
-              <View style={styles.smallField}>
-                <FloatingField
-                  value={n.cvv}
-                  label="CVV"
-                  onChangeText={(v) => onChange({ cvv: v.replace(/\D/g, '').slice(0, b.name === 'AMEX' ? 4 : 3) })}
-                  onFocus={() => onFlip(true)}
-                  onBlur={() => { touch('cvv'); onFlip(false); }}
-                  keyboardType="number-pad"
-                  secureTextEntry
-                  error={showErr('cvv', !validCvv)}
-                  errorText="رمز الأمان غير صحيح"
-                  left={<Icon name="credit_card" size={26} color="#B8B8B8" />}
-                />
-              </View>
-              <View style={styles.smallField}>
-                <FloatingField
-                  value={n.exp}
-                  label="تاريخ الانتهاء"
-                  placeholder="MM/YY"
-                  onChangeText={(v) => { let x = v.replace(/\D/g, '').slice(0, 4); if (x.length > 2) x = x.slice(0, 2) + '/' + x.slice(2); onChange({ exp: x }); }}
-                  onFocus={() => onFlip(true)}
-                  onBlur={() => { touch('exp'); onFlip(false); }}
-                  keyboardType="number-pad"
-                  error={showErr('exp', !validExp)}
-                  errorText="تاريخ انتهاء غير صالح"
-                />
-              </View>
-            </View>
-
-            <FloatingField
-              value={n.name}
-              label="اسم صاحب البطاقة"
-              onChangeText={(v) => onChange({ name: v.toUpperCase() })}
-              onFocus={() => onFlip(true)}
-              onBlur={() => { touch('name'); onFlip(false); }}
-              autoComplete="name"
-              autoCapitalize="characters"
-              error={showErr('name', !validName)}
-              errorText="اكتب اسم حامل البطاقة كما هو مطبوع عليها"
-            />
-
-            <PressableScale onPress={() => onChange({ def: !n.def })} style={styles.defaultRow}>
-              <View style={[styles.switch, n.def && styles.switchOn]}><View style={[styles.switchKnob, n.def && styles.switchKnobOn]} /></View>
-              <Txt s={16} w={700} color="#171717">تعيين كطريقة الدفع الأساسية</Txt>
-            </PressableScale>
-          </Animated.View>
-        ) : (
-          <Animated.View style={[styles.fields, formTransition]}>
-            <Txt s={17} w={800} color="#111111" align="right">بيانات {wallet.label}</Txt>
-            <FloatingField
-              value={formatEgyptPhone(walletPhone)}
-              label="رقم الهاتف المرتبط بالمحفظة"
-              onChangeText={(v) => setWalletPhone(normalizeEgyptPhone(v))}
-              onBlur={() => touch('wphone')}
-              keyboardType="phone-pad"
-              error={showErr('wphone', !isEgyptPhone(walletPhone), walletErrors)}
-              errorText="أدخل رقم محفظة مصري صحيح يبدأ بـ 010 أو 011 أو 012 أو 015."
-            />
-            <FloatingField
-              value={walletName}
-              label="اسم صاحب المحفظة"
-              onChangeText={setWalletName}
-              onBlur={() => touch('wname')}
-              autoComplete="name"
-              error={showErr('wname', !walletName.trim(), walletErrors)}
-              errorText="اكتب اسم صاحب المحفظة."
-            />
-            <PressableScale onPress={() => setSaveWallet((x) => !x)} style={styles.defaultRow}>
-              <View style={[styles.switch, saveWallet && styles.switchOn]}><View style={[styles.switchKnob, saveWallet && styles.switchKnobOn]} /></View>
-              <Txt s={14} w={700} color="#171717">حفظ هذه المحفظة لاستخدامها لاحقًا</Txt>
-            </PressableScale>
-          </Animated.View>
-        )}
-
-        <View style={styles.security}>
-          <View style={styles.securityTitle}>
-            <Icon name="shield_lock" size={22} fill color="#00A878" />
-            <Txt s={15} w={700} color="#00A878">تحمي توصيلة معلومات بطاقتك</Txt>
-          </View>
-          {SECURITY.map((line) => (
-            <View key={line} style={styles.securityLine}>
-              <Icon name="check" size={15} color="#00A878" />
-              <Txt s={12.5} w={500} lh={1.45} color="#8A8A8A" style={{ flex: 1 }}>{line}</Txt>
-            </View>
-          ))}
-          <View style={styles.securityBadges}>
-            <View style={styles.securityBadge}><Image source={require('../../assets/payments/amex-safekey.jpg')} resizeMode="contain" style={styles.securityBadgeImage} /></View>
-            <View style={styles.securityBadge}><Image source={require('../../assets/payments/mastercard-identity-check.png')} resizeMode="contain" style={styles.securityBadgeImage} /></View>
-            <View style={styles.securityBadge}><Image source={require('../../assets/payments/visa-secure.jpg')} resizeMode="contain" style={styles.securityBadgeImage} /></View>
-            <View style={styles.securityBadge}><Txt s={9} w={700} color="#7B7B7B">PCI DSS</Txt></View>
-          </View>
-        </View>
-
-        <View style={styles.otherMethodsTitle}>
-          <View style={styles.dividerFlex} />
-          <Txt s={19} w={800} color="#111111">طرق دفع أخرى</Txt>
-          <View style={styles.dividerFlex} />
-        </View>
-        <View style={styles.providerRow}>
-          {PROVIDERS.map((item) => (
-            <PressableScale key={item.key} onPress={() => { setWalletErrors(false); setTouched((t) => ({ ...t, wphone: false, wname: false })); setProviderKey(item.key); }} style={[styles.providerTile, { backgroundColor: item.tile, borderColor: providerKey === item.key ? OLIVE : 'transparent', borderWidth: providerKey === item.key ? 1.5 : 0 }]}>
-              <Image source={item.logo} resizeMode="contain" style={styles.providerImage} />
-            </PressableScale>
-          ))}
-        </View>
-      </View>
-    </Sheet>
+      </KeyboardAvoidingView>
+    </Modal>
   );
 }
 
 const styles = StyleSheet.create({
-  content: { gap: 14, paddingBottom: 8, paddingTop: 6 },
+  // direction: 'ltr' زي صفحة المدفوعات عشان الترتيب الفيزيائي يفضل ثابت.
+  page: { flex: 1, backgroundColor: '#FFFFFF', direction: 'ltr' },
 
-  // الهيدر الأخضر الثابت (direction: 'ltr' زي صفحة المدفوعات عشان الترتيب الفيزيائي يفضل ثابت)
-  greenHeader: { backgroundColor: GREEN, paddingBottom: 12, paddingRight: 10, paddingLeft: 14, direction: 'ltr' },
+  greenHeader: { backgroundColor: GREEN, paddingBottom: 12, paddingHorizontal: 14 },
   headTop: { height: 32, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   headBtns: { flexDirection: 'row', gap: 7.5 },
   circle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
 
-  titleRow: { minHeight: 46, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'flex-start', gap: 8 },
-  backButton: { width: 34, height: 34, alignItems: 'center', justifyContent: 'center' },
+  scrollContent: { paddingHorizontal: PAGE_PAD, paddingTop: 14, paddingBottom: 24 },
+  body: { gap: 16 },
 
-  fields: { gap: 14 },
-  formGroup: { gap: 6 },
-  fieldBox: { height: 58, borderWidth: 1.5, borderRadius: 16, backgroundColor: '#FFFFFF', overflow: 'hidden' },
+  fields: { gap: 16 },
+  formGroup: { gap: 7 },
+  fieldBox: { height: 58, borderWidth: 1.3, borderRadius: 8, backgroundColor: '#FFFFFF', overflow: 'hidden' },
   // لو الخط مختلف عن باقي التطبيق ضيف fontFamily بتاع التطبيق هنا.
-  fieldInput: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, paddingHorizontal: 16, paddingTop: 22, paddingBottom: 2, fontSize: 17, color: '#111111', textAlign: 'right' },
-  fieldLabelWrap: { position: 'absolute', right: 16, left: 70, alignItems: 'flex-end' },
-  fieldLabelMid: { top: 0, bottom: 0, justifyContent: 'center' },
-  fieldLabelUp: { top: 8 },
-  fieldLeft: { position: 'absolute', left: 14, top: 0, bottom: 0, justifyContent: 'center' },
-  miniBrands: { flexDirection: 'row', alignItems: 'center', gap: 3 },
-  rowFields: { flexDirection: 'row', gap: 9 },
+  fieldInput: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, paddingHorizontal: 16.5, paddingTop: 25, paddingBottom: 0, fontSize: 14.5, color: '#1A1A1A', textAlign: 'right' },
+  fieldLabel: { position: 'absolute', right: 16.5, left: 70, top: 0, bottom: 0, justifyContent: 'center', alignItems: 'flex-end', transformOrigin: 'right center' },
+  fieldLeft: { position: 'absolute', left: 17, top: 0, bottom: 0, justifyContent: 'center' },
+  rowFields: { flexDirection: 'row', gap: 16 },
   smallField: { flex: 1, minWidth: 0 },
 
-  cardWrap: { marginHorizontal: -4, marginTop: 4, marginBottom: 8, position: 'relative', aspectRatio: 1.587 },
+  cardWrap: { alignSelf: 'center', position: 'relative' },
   previewCard: { height: '100%', padding: 0 },
   chipCenter: { position: 'absolute', top: 0, bottom: 0, left: '5.3%', justifyContent: 'center' },
   last4Text: { position: 'absolute', left: '5.6%', top: '83.7%' },
@@ -609,37 +593,16 @@ const styles = StyleSheet.create({
   cvvValue: { position: 'absolute', left: '55.4%', width: '18%', top: '84.7%' },
   expLabel: { position: 'absolute', left: '77.85%', width: '20%', top: '76.3%' },
   expValue: { position: 'absolute', left: '77.85%', width: '20%', top: '84.7%' },
-  cardShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.28, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
-  walletShadow: { borderRadius: 20, shadowColor: '#00170F', shadowOpacity: 0.24, shadowRadius: 17, shadowOffset: { width: 0, height: 10 }, elevation: 8 },
-  chipRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: '12%' },
-  cardBottom: { gap: 14, marginTop: 'auto', paddingBottom: 2 },
-  cardMeta: { flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
-  networkHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 9, paddingVertical: 4 },
-  defaultRow: { minHeight: 58, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12, paddingHorizontal: 4 },
-  switch: { width: 48, height: 28, borderRadius: 20, backgroundColor: '#D9D9D9', padding: 3, justifyContent: 'center' },
-  switchOn: { backgroundColor: '#FFD91A' },
-  switchKnob: { width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF' },
-  switchKnobOn: { alignSelf: 'flex-end' },
-  security: { gap: 8, paddingTop: 2 },
-  securityTitle: { flexDirection: 'row', alignItems: 'center', gap: 7 },
-  securityLine: { flexDirection: 'row', alignItems: 'flex-start', gap: 7 },
-  securityBadges: { flexDirection: 'row', justifyContent: 'flex-end', gap: 6, paddingTop: 3 },
-  securityBadge: { minWidth: 53, height: 32, paddingHorizontal: 5, borderWidth: 1, borderColor: '#DDDDDD', borderRadius: 5, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
-  securityBadgeImage: { width: 66, height: 25 },
-  meezaLogo: { width: 42, height: 35 },
-  otherMethodsTitle: { flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 5 },
-  dividerFlex: { height: 1, flex: 1, backgroundColor: '#BFC3CA' },
-  providerRow: { flexDirection: 'row', gap: 4, justifyContent: 'space-between' },
-  providerImage: { width: '88%', height: '82%' },
-  providerTile: { flex: 1, minWidth: 0, height: 76, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  confirmButton: { height: 62, borderRadius: 20, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center' },
-  magneticStripe: { position: 'absolute', left: 0, right: 0, top: '18%', height: '18%', backgroundColor: '#101010' },
-  signatureRow: { position: 'absolute', left: 20, right: 20, top: '48%', flexDirection: 'row', alignItems: 'flex-end', gap: 10 },
-  signatureArea: { flex: 1, gap: 5 },
-  signaturePaper: { height: 34, borderRadius: 4, backgroundColor: '#F8F7F0', justifyContent: 'center', paddingHorizontal: 10 },
-  cvvArea: { width: 60, gap: 5 },
-  cvvPaper: { height: 34, borderRadius: 4, backgroundColor: '#F8F7F0', alignItems: 'center', justifyContent: 'center' },
-  backHint: { position: 'absolute', left: 20, bottom: 16 },
+
+  methods: { gap: 8 },
+  methodsToggle: { alignSelf: 'flex-end', flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 6 },
+  providerRow: { flexDirection: 'row', gap: 8 },
+  providerTile: { flex: 1, minWidth: 0, height: 46, borderRadius: 10, borderWidth: 1.5, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
+  providerImage: { width: '78%', height: '68%' },
+
+  footer: { paddingHorizontal: PAGE_PAD, paddingTop: 8, backgroundColor: '#FFFFFF' },
+  confirmButton: { height: 46, borderRadius: 12, backgroundColor: GREEN, alignItems: 'center', justifyContent: 'center' },
+
   walletCard: { width: '100%', borderRadius: 14, padding: 22, overflow: 'hidden', justifyContent: 'space-between', borderWidth: 1, borderColor: 'rgba(255,255,255,0.42)' },
   walletCardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between' },
   walletBrandPill: { width: 108, height: 54, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.94)', alignItems: 'center', justifyContent: 'center', padding: 7 },
@@ -647,7 +610,4 @@ const styles = StyleSheet.create({
   walletBrandText: { alignItems: 'flex-end', gap: 3 },
   walletCardBottom: { gap: 5, alignItems: 'flex-start' },
   walletGlow: { position: 'absolute', width: 210, height: 210, borderRadius: 105, right: -70, bottom: -120, backgroundColor: 'rgba(255,255,255,0.12)' },
-  backToCard: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 7, paddingHorizontal: 13, paddingVertical: 9, borderRadius: 18, backgroundColor: '#EAF0E8' },
-  walletForm: { gap: 12 },
-  walletNotice: { flexDirection: 'row', alignItems: 'flex-start', gap: 7, padding: 10, borderRadius: 12, backgroundColor: '#FFF8E6' },
 });
