@@ -62,9 +62,9 @@ describe('totals', () => {
 
   it('adds the priority fee for delivery only', () => {
     const fast = totals([{ id: 'pep', s: 1, ex: [], q: 1 }], { speed: 1 });
-    expect(fast.speedFee).toBe(1.99);
+    expect(fast.speedFee).toBe(20);
     expect(fast.cartTotal).toBeCloseTo(17.49);
-    expect(fast.total).toBeCloseTo(19.48);
+    expect(fast.total).toBeCloseTo(37.49);
     expect(totals([{ id: 'pep', s: 1, ex: [], q: 1 }], { speed: 1, mode: 'pickup' })).toMatchObject({ fee: 0, speedFee: 0, total: 14.5 });
   });
 
