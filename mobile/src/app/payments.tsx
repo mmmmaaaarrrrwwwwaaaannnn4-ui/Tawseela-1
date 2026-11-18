@@ -38,7 +38,7 @@ const RECEIPT = { uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAE6CA
 const CARD_GAP = 20;
 const NETWORKS = ['MADA', 'VISA', 'AMEX', 'MASTERCARD', 'DISCOVER'];
 
-type ServerCard = { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string };
+type ServerCard = { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string; [k: string]: unknown };
 type SavedWallet = { id: string; provider: 'insta' | 'orange' | 'we' | 'etisalat' | 'vodafone'; phone: string; name: string; isDefault: boolean };
 
 const WALLET_INFO = {
@@ -102,7 +102,13 @@ const BRAND_SAMPLE: Record<string, string> = { VISA: '4000000000000000', MASTERC
 function mapCard(x: ServerCard) {
   const digits = x.number.replace(/\D/g, '');
   let b = cardBrandOf(digits);
-  const brand = b.name !== 'CARD' ? normalizeBrand(b.name, digits) : normalizeBrand(x.brand, x.number);
+  let brand = b.name !== 'CARD' ? normalizeBrand(b.name, digits) : normalizeBrand(x.brand, x.number);
+  if (brand === 'CARD') {
+    // Fallback to network/BIN metadata when the API masks the card number.
+    const rest = Object.entries(x).filter(([k]) => !['name', 'id', 'number'].includes(k));
+    const bin = rest.find(([k, v]) => /bin|first|prefix/i.test(k) && /^\d{1,9}$/.test(String(v ?? '')));
+    brand = normalizeBrand(JSON.stringify(rest.map(([, v]) => v)), bin ? String(bin[1]) : digits);
+  }
   if (b.name === 'CARD' && BRAND_SAMPLE[brand]) b = cardBrandOf(BRAND_SAMPLE[brand]);
   const exp = x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '';
   return { id: x.id, brand, num: x.number, exp, bg: b.bg, nick: '', name: x.name };
