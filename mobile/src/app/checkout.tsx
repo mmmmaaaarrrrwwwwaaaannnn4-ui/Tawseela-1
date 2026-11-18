@@ -389,7 +389,7 @@ function Checkout() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
               <View style={styles.newBadge}><Txt s={14} w={600} style={{ color: '#1F7A7A' }}>New!</Txt></View>
               <Txt s={17} w={700} style={{ color: TEXT }}>أقساط بنكية</Txt>
-              <Icon name="account_balance" size={28} color={TEXT} />
+              <Icon name="storefront" size={28} color={TEXT} />
             </View>
           </PressableScale>
 
@@ -736,7 +736,7 @@ const styles = StyleSheet.create({
   totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   cta: { height: 56, borderRadius: 14, backgroundColor: OLIVE, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
 
-  sheetBackdrop: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.38)' },
+  sheetBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.38)' },
   sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 12, gap: 14 },
   sheetHandle: { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: '#C9C9C9', marginBottom: 4 },
   method: { minHeight: 80, borderRadius: 18, borderWidth: 1, borderColor: '#E1E3E6', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFFFFF' },
