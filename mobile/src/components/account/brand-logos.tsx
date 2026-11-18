@@ -1,76 +1,805 @@
-import { Circle, Path, Rect, Svg, Text as SvgText } from 'react-native-svg';
-import { Text, View, StyleSheet } from 'react-native';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useShallow } from 'zustand/react/shallow';
+import { WebView } from 'react-native-webview';
 
-type BrandProps = { brand: string; width?: number; height?: number };
+import { Icon } from '@/components/icons/icon';
+import { PaymentNetworkLogo, WalletProviderLogo } from '@/components/account/brand-logos';
+import { PressableScale } from '@/components/ui/pressable-scale';
+import { RevealScope } from '@/components/ui/reveal';
+import { Txt } from '@/components/ui/txt';
+import { useStatusBar } from '@/hooks/use-status-bar';
+import { placeOrder } from '@/lib/checkout';
+import { API_URL, api } from '@/lib/api';
+import { cardBrandOf } from '@/data/seed';
+import { useApp } from '@/store/app-store';
+import { family } from '@/theme/typography';
+import { NETWORK_LOGOS, WALLET_LOGOS } from '@/data/payment-logos';
 
-/** Payment network marks are vector reproductions of the networks' recognizable marks. */
-export function PaymentNetworkLogo({ brand, width = 58, height = 28 }: BrandProps) {
-  const key = brand.toUpperCase();
-  if (key.includes('VISA')) {
-    return <Svg width={width} height={height} viewBox="0 0 24 24"><Path fill="#1A1F71" d="M9.112 8.262L5.97 15.758H3.92L2.374 9.775c-.094-.368-.175-.503-.461-.658C1.447 8.864.677 8.627 0 8.479l.046-.217h3.3a.904.904 0 01.894.764l.817 4.338 2.018-5.102zm8.033 5.049c.008-1.979-2.736-2.088-2.717-2.972.006-.269.262-.555.822-.628a3.66 3.66 0 011.913.336l.34-1.59a5.207 5.207 0 00-1.814-.333c-1.917 0-3.266 1.02-3.278 2.479-.012 1.079.963 1.68 1.698 2.04.756.367 1.01.603 1.006.931-.005.504-.602.725-1.16.734-.975.015-1.54-.263-1.992-.473l-.351 1.642c.453.208 1.289.39 2.156.398 2.037 0 3.37-1.006 3.377-2.564m5.061 2.447H24l-1.565-7.496h-1.656a.883.883 0 00-.826.55l-2.909 6.946h2.036l.405-1.12h2.488zm-2.163-2.656l1.02-2.815.588 2.815zm-8.16-4.84l-1.603 7.496H8.34l1.605-7.496z"/></Svg>;
-  }
-  if (key.includes('MASTER')) {
-    return <Svg width={width} height={height} viewBox="0 0 48 30"><Circle cx="18" cy="15" r="13" fill="#EB001B"/><Circle cx="30" cy="15" r="13" fill="#F79E1B"/><Path d="M24 5.2a13 13 0 0 1 0 19.6 13 13 0 0 1 0-19.6Z" fill="#FF5F00"/></Svg>;
-  }
-  if (key.includes('AMEX')) {
-    return <Svg width={width} height={height} viewBox="0 0 64 40"><Rect x="1" y="1" width="62" height="38" rx="5" fill="#176FC1"/><SvgText x="32" y="25" textAnchor="middle" fill="#FFFFFF" fontSize="17" fontWeight="900" letterSpacing="-0.7">AMEX</SvgText><Path d="M4 11h56M4 29h56" stroke="#FFFFFF" strokeWidth="1.2" opacity={0.9}/></Svg>;
-  }
-  if (key.includes('MEEZA')) {
-    return <View style={[styles.meeza,{width,height}]}><Text style={styles.meezaText}>ميزة</Text><Text style={styles.meezaLatin}>MEEZA</Text></View>;
-  }
-  if (key.includes('MADA')) {
-    return <View style={[styles.mada,{width,height}]}><View style={styles.madaMark}><View style={styles.madaDotGreen}/><View style={styles.madaDotBlue}/></View><Text style={styles.madaText}>مدى</Text></View>;
-  }
-  if (key.includes('DISCOVER')) {
-    return <View style={[styles.discover,{width,height}]}><Text style={styles.discoverText}>DISCOVER</Text><View style={styles.discoverArc}/></View>;
-  }
-  return <View style={[styles.unknown,{width,height}]}><Text style={styles.unknownText}>CARD</Text></View>;
+/* ───────── الألوان: مستخرجة من لوجو توصيلة ───────── */
+const BRAND = '#12291F';        // الأخضر الغامق (خلفية اللوجو)
+const BRAND_SOFT = '#EAF0EB';
+const LIME = '#D4EA45';         // الأخضر الليموني (كلمة توصيلة)
+const BG = '#FFFFFF';
+const BAND = '#F2F3F5';
+const BORDER = '#E1E3E6';
+const TEXT = '#1F1F1F';
+const MUTED = '#7A7A7A';
+const GREEN = '#2E7D32';
+const RED = '#D92D20';
+
+const SERVICE_FEE = 5;
+const TIP_OPTIONS = [10, 15, 20];
+
+/** خط واحد لكل حقول الإدخال (نفس خط باقي نصوص الصفحة) */
+const INPUT_FONT = { fontFamily: family(500), fontSize: 14, color: TEXT } as const;
+
+const egp = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(2)} ج.م`;
+const egp2 = (n: number) => `${n.toFixed(2)} ج.م`;
+
+function clock(d: Date) {
+  const h = d.getHours();
+  const m = String(d.getMinutes()).padStart(2, '0');
+  return `${h % 12 || 12}:${m} ${h >= 12 ? 'م' : 'ص'}`;
 }
 
-/** Full wallet/provider marks; these are not colour tiles with placeholder initials. */
-export function WalletProviderLogo({ provider, width = 48, height = 42 }: { provider: string; width?: number; height?: number }) {
-  const key = provider.toLowerCase();
-  if (key.includes('insta')) {
-    return <View style={[styles.wordLogo,{width,height}]}><Text style={styles.insta}>INSTA</Text><Text style={styles.instaPay}>PAY</Text></View>;
-  }
-  if (key.includes('tawseela') || key.includes('توصيلة')) {
-    return <View style={[styles.providerWrap,{width,height,gap:1}]}><Svg width={width} height={height*0.68} viewBox="0 0 48 34"><Rect x={8} y={1} width={28} height={30} rx={4} fill="none" stroke="#E51D2A" strokeWidth={2.4}/><Path d="M13 7h18M13 24h18M18 16h8" stroke="#E51D2A" strokeWidth={2.1} strokeLinecap="round"/><Path d="M20 12c5-5 11-2 13 3-4 0-7 2-9 6" fill="none" stroke="#E51D2A" strokeWidth={2.2}/></Svg><Text style={styles.cashText}>توصيلة</Text></View>;
-  }
-  if (key.includes('orange')) {
-    return <View style={[styles.providerWrap,{width,height,gap:0}]}><Svg width={width*0.68} height={height*0.52} viewBox="0 0 48 36"><Path d="M5 28L25 8H12V2h27v27h-6V16L13 36Z" fill="#101010"/><Path d="M26 8h13v21h-6V16L20 32l-5-5Z" fill="#F58220"/></Svg><Text style={styles.orangeText}>Orange</Text><Text style={styles.orangeText}>Money</Text></View>;
-  }
-  if (key.includes('vodafone')) {
-    return <View style={[styles.providerWrap,{width,height}]}><Svg width={width} height={height} viewBox="0 0 48 42"><Circle cx="24" cy="21" r="19" fill="#E60000"/><Path d="M30.8 5.8c.65 0 1.3.06 1.75.18-3.6.75-5.8 4.1-5.78 7.75 0 .08.01.18.02.27 5.8 1.42 8.4 4.9 8.4 9.75 0 4.85-3.75 10.15-10.2 10.15-5.2 0-10.6-4.45-10.6-11.55 0-4.75 2.6-9.3 5.85-11.95 3.2-2.55 7.05-4.6 10.56-4.6Z" fill="#FFFFFF"/></Svg></View>;
-  }
-  if (key.includes('etisalat')) {
-    return <View style={[styles.wordLogo,{width,height,gap:0}]}><Text style={styles.etisalat}>e&amp;</Text><Text style={styles.etisalatSub}>etisalat and</Text></View>;
-  }
-  return <View style={[styles.wordLogo,{width,height,gap:0}]}><Text style={styles.we}>we</Text><View style={styles.wePay}><Text style={styles.wePayText}>Pay</Text></View></View>;
+function distanceBetweenKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const rad = (v: number) => (v * Math.PI) / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLon = rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** يحدد شبكة البطاقة من اسم الـ brand أو من أول أرقام البطاقة */
+function networkOf(brand: string, num: string): 'visa' | 'mastercard' | 'meeza' | 'amex' | '' {
+  const b = (brand || '').toLowerCase();
+  if (b.includes('amex') || b.includes('american')) return 'amex';
+  if (b.includes('master')) return 'mastercard';
+  if (b.includes('visa')) return 'visa';
+  if (b.includes('meeza') || b.includes('ميزة')) return 'meeza';
+  const d = (num || '').replace(/\D/g, '');
+  if (/^3[47]/.test(d)) return 'amex';
+  if (/^4/.test(d)) return 'visa';
+  if (/^(5[1-5]|2[2-7])/.test(d)) return 'mastercard';
+  if (/^507803/.test(d)) return 'meeza';
+  return '';
+}
+
+function Logo({ uri, fallback, width, height }: { uri: string; fallback: React.ReactNode; width: number; height: number }) {
+  if (!uri) return <>{fallback}</>;
+  return <Image source={{ uri }} style={{ width, height }} resizeMode="contain" />;
+}
+
+type Wallet = { id: string; provider: string; phone: string; name: string; isDefault: boolean };
+
+export default function CheckoutScreen() {
+  return (
+    <RevealScope>
+      <Checkout />
+    </RevealScope>
+  );
+}
+
+function Checkout() {
+  useStatusBar();
+  const insets = useSafeAreaInsets();
+  const s = useApp(
+    useShallow((st) => ({
+      mode: st.mode,
+      prep: st.prep,
+      brands: st.brands,
+      customerLocation: st.customerLocation,
+      addr: st.addrs[st.addr] ?? st.addrs[0],
+      payM: st.payM,
+      cards: st.cards,
+      defCard: st.defCard,
+      note: st.note,
+      cart: st.cart,
+      promo: st.promo,
+    })),
+  );
+  const t = useApp((st) => st.totals)();
+  const set = useApp((st) => st.setCheckout);
+  const toast = useApp.getState().showToast;
+
+  /* ───────── وقت التوصيل ───────── */
+  const cartBrandId = s.cart[0] ? useApp.getState().dishOf(s.cart[0].id).brand : '';
+  const restaurant = s.brands.find((b) => b.id === cartBrandId);
+  const distanceKm =
+    restaurant?.lat != null && restaurant?.lng != null && s.customerLocation
+      ? distanceBetweenKm(s.customerLocation.latitude, s.customerLocation.longitude, restaurant.lat, restaurant.lng)
+      : null;
+  const etaMinutes = restaurant
+    ? Math.max(1, Math.ceil((restaurant.prepTime || s.prep) + (distanceKm == null ? 0 : distanceKm * 5)))
+    : s.prep;
+  const etaFrom = new Date(Date.now() + etaMinutes * 60000);
+  const etaTo = new Date(Date.now() + (etaMinutes + 10) * 60000);
+
+  /* ───────── أول طلب ───────── */
+  const [isFirstOrder, setIsFirstOrder] = useState(false);
+  useEffect(() => {
+    let active = true;
+    api
+      .get<{ orders: unknown[] }>('/v1/me/orders')
+      .then((r) => { if (active) setIsFirstOrder(Array.isArray(r.orders) && r.orders.length === 0); })
+      .catch(() => { if (active) setIsFirstOrder(false); });
+    return () => { active = false; };
+  }, []);
+
+  /* ───────── إكرامية + كود خصم ───────── */
+  const [tip, setTip] = useState(0);
+  const [customTip, setCustomTip] = useState(false);
+  const [promoText, setPromoText] = useState('');
+
+  /* ───────── الحسابات ───────── */
+  const isDelivery = s.mode !== 'pickup';
+  const baseDelivery = isDelivery ? t.fee : 0;
+  const delivery = isDelivery && isFirstOrder ? 0 : baseDelivery;
+  const discount = s.promo ? t.disc : 0;
+  const total = Math.max(0, t.sub - discount + delivery + SERVICE_FEE + tip);
+
+  /* ───────── الدفع ───────── */
+  const [paying, setPaying] = useState(false);
+  const [cardsReady, setCardsReady] = useState(false);
+  const [payPicked, setPayPicked] = useState<'cash' | 'online' | null>(null);
+  const [savedCardCvv, setSavedCardCvv] = useState('');
+  const [walletPhone, setWalletPhone] = useState('');
+  const [walletProvider, setWalletProvider] = useState('');
+  const [savedWallets, setSavedWallets] = useState<Wallet[]>([]);
+  const [paymentSheet, setPaymentSheet] = useState(false);
+  const [sheetSelection, setSheetSelection] = useState('');
+  const [sheetError, setSheetError] = useState(false);
+  const sheetErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    useApp.setState({ cards: [], defCard: '' });
+    let active = true;
+    api
+      .get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards')
+      .then((result) => {
+        if (!active) return;
+        const next = result.cards.map((x) => {
+          const b = cardBrandOf(x.number.replace(/\D/g, ''));
+          return {
+            id: x.id,
+            brand: b.name !== 'CARD' ? b.name : x.brand || b.name,
+            num: x.number,
+            exp: x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '',
+            bg: b.bg,
+            nick: '',
+            name: x.name,
+          };
+        });
+        const cur = useApp.getState().defCard;
+        useApp.setState({ cards: next, defCard: next.some((x) => x.id === cur) ? cur : next[0]?.id ?? '' });
+      })
+      .catch(() => { if (active) useApp.setState({ cards: [], defCard: '' }); })
+      .finally(() => { if (active) setCardsReady(true); });
+    return () => { active = false; };
+  }, []);
+
+  useFocusEffect(
+    useCallback(() => {
+      let active = true;
+      api
+        .get<{ wallets: Wallet[] }>('/v1/me/wallets')
+        .then((r) => { if (active) setSavedWallets(Array.isArray(r.wallets) ? r.wallets : []); })
+        .catch(() => { if (active) setSavedWallets([]); });
+      return () => { active = false; };
+    }, []),
+  );
+  useEffect(() => () => { if (sheetErrorTimer.current) clearTimeout(sheetErrorTimer.current); }, []);
+
+  const flashSheetError = () => {
+    setSheetError(true);
+    if (sheetErrorTimer.current) clearTimeout(sheetErrorTimer.current);
+    sheetErrorTimer.current = setTimeout(() => setSheetError(false), 3000);
+  };
+
+  const openPaymentSheet = () => { setSheetSelection(''); setSheetError(false); setPaymentSheet(true); };
+
+  const chooseCash = () => {
+    set({ payM: 2 });
+    setPayPicked('cash');
+    setPaymentSheet(false);
+    setSheetError(false);
+  };
+
+  const confirmPaymentSelection = () => {
+    if (!sheetSelection) { flashSheetError(); return; }
+    if (sheetSelection.startsWith('card:')) {
+      useApp.getState().makeDefaultCard(sheetSelection.slice(5));
+      set({ payM: 1 });
+      setWalletProvider('');
+      setWalletPhone('');
+    } else {
+      const wallet = savedWallets.find((w) => w.id === sheetSelection.slice(7));
+      if (!wallet) { flashSheetError(); return; }
+      set({ payM: 3 });
+      setWalletProvider(wallet.name);
+      setWalletPhone(wallet.phone);
+    }
+    setPayPicked('online');
+    setPaymentSheet(false);
+    setSheetError(false);
+  };
+
+  /* ───────── 3DS ───────── */
+  const [threeDSUrl, setThreeDSUrl] = useState<string | null>(null);
+  const [threeDSError, setThreeDSError] = useState(false);
+  const [threeDSReload, setThreeDSReload] = useState(0);
+  const challengeResolver = useRef<(() => void) | null>(null);
+  const finishThreeDS = () => {
+    setThreeDSUrl(null);
+    challengeResolver.current?.();
+    challengeResolver.current = null;
+  };
+
+  /* ───────── تنفيذ الطلب ───────── */
+  const pay = async () => {
+    if (paying || !s.cart.length) return;
+    if (!payPicked) { toast('اختار طريقة دفع', 'اختار الدفع عند الاستلام أو بطاقة / محفظة.', 'error'); return; }
+    if (s.payM !== 2 && s.payM !== 3 && !cardsReady) { toast('انتظر قليلًا', 'جارٍ تحميل بطاقات الدفع المحفوظة.', 'info'); return; }
+    if (s.payM === 3 && !/^01[0125]\d{8}$/.test(walletPhone.replace(/[\s()-]/g, ''))) {
+      toast('رقم المحفظة غير صحيح', 'أدخل رقم محفظة مصريًا صحيحًا يبدأ بـ 010 أو 011 أو 012 أو 015.', 'error');
+      return;
+    }
+    const selectedCard = s.cards.find((c) => c.id === s.defCard);
+    if ((s.payM === 0 || s.payM === 1) && (!selectedCard || !/^\d{3,4}$/.test(savedCardCvv))) {
+      toast('أدخل رمز الأمان', 'اختر بطاقة محفوظة وأدخل رمز الأمان CVV لإتمام الدفع.', 'error');
+      return;
+    }
+    setPaying(true);
+    // ملحوظة: الإكرامية (tip) لازم تتبعت للسيرفر داخل placeOrder
+    const r = await placeOrder(
+      s.payM === 0 || s.payM === 1 ? { token: selectedCard!.id, cvv: savedCardCvv } : undefined,
+      s.payM === 3 ? walletPhone : undefined,
+      (url) => new Promise<void>((resolve) => {
+        challengeResolver.current = resolve;
+        setThreeDSError(false);
+        setThreeDSUrl(url);
+      }),
+    );
+    setSavedCardCvv('');
+    setWalletPhone('');
+    setPaying(false);
+    if (r.ok) router.replace('/success');
+    else if (r.priceChanged) toast('تم تحديث الأسعار', `السعر الجديد ${egp(r.total ?? total)}`, 'sync');
+    else if (r.cancelled) toast('تم إلغاء الدفع', r.message, 'info');
+    else toast('لم يتم تنفيذ الطلب', r.message, 'error');
+  };
+
+  const selectedCard = s.cards.find((c) => c.id === s.defCard);
+  const last4 = (v: string) => v.replace(/\D/g, '').slice(-4);
+  const payBtnLabel = paying
+    ? s.payM === 2 ? 'جارٍ تأكيد الطلب…' : s.payM === 3 ? 'في انتظار موافقة المحفظة…' : 'جارٍ معالجة البطاقة…'
+    : 'تنفيذ الطلب';
+
+  const cardLogo = (brand: string, num: string, w: number, h: number) => {
+    const net = networkOf(brand, num);
+    const known = /VISA|MASTER|AMEX|MEEZA|MADA|DISCOVER/.test((net || brand || '').toUpperCase());
+    if (!known) return <Icon name="credit_card" size={26} color={MUTED} />;
+    return (
+      <Logo
+        uri={net ? NETWORK_LOGOS[net] : ''}
+        width={w}
+        height={h}
+        fallback={<PaymentNetworkLogo brand={net ? net.toUpperCase() : brand} width={w} height={h} />}
+      />
+    );
+  };
+  const walletLogo = (name: string, w: number, h: number) => {
+    const uri = WALLET_LOGOS.find((x: { match: RegExp; uri: string }) => x.match.test(name))?.uri ?? '';
+    return <Logo uri={uri} width={w} height={h} fallback={<WalletProviderLogo provider={name} width={w} height={h} />} />;
+  };
+
+  const soon = (title: string) => () => toast('قريبًا', `${title} هتتوفر قريبًا.`, 'info');
+
+  return (
+    <View style={{ flex: 1, backgroundColor: BG }}>
+      {/* ───────── الهيدر ───────── */}
+      <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
+        <View style={styles.backSpacer} />
+        <Txt s={16} w={600} style={{ color: TEXT }}>تنفيذ الطلب</Txt>
+        <PressableScale onPress={() => router.back()} style={styles.back} accessibilityRole="button" accessibilityLabel="رجوع">
+          <Icon name="chevron_right" size={22} color={BRAND} />
+        </PressableScale>
+      </View>
+
+      <ScrollView
+        contentContainerStyle={{ paddingBottom: 170 + insets.bottom }}
+        keyboardShouldPersistTaps="handled"
+        keyboardDismissMode="on-drag"
+        showsVerticalScrollIndicator={false}
+      >
+        <View style={styles.band} />
+
+        {/* ───────── وقت التوصيل ───────── */}
+        <View style={styles.section}>
+          <View style={styles.titleRow}>
+            <PressableScale onPress={soon('جدولة الطلب')}>
+              <Txt s={13} w={600} style={{ color: BRAND }}>اختر موعد آخر</Txt>
+            </PressableScale>
+            <Txt s={17} w={700} style={styles.titleInline}>{isDelivery ? 'وقت التوصيل' : 'وقت الاستلام'}</Txt>
+          </View>
+          <View style={styles.etaRow}>
+            <Txt s={14} w={600} style={{ color: GREEN }}>{`سيصل ${clock(etaFrom)} - ${clock(etaTo)}`}</Txt>
+            <Txt s={14} w={600} style={{ color: TEXT }}>  ·  أسرع وقت</Txt>
+            <Icon name="schedule" size={20} color={TEXT} />
+          </View>
+        </View>
+        <View style={styles.band} />
+
+        {/* ───────── العنوان ───────── */}
+        <View style={styles.section}>
+          <Txt s={17} w={700} style={styles.title}>{isDelivery ? 'عنوان التوصيل' : 'الاستلام من'}</Txt>
+          {isDelivery ? (
+            <PressableScale onPress={() => router.push('/addresses')} style={styles.addrRow}>
+              <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
+                <Txt s={15} w={700} style={{ color: TEXT }}>{s.addr.tag}</Txt>
+                <Txt s={13} w={500} style={{ color: MUTED }} numberOfLines={1}>{s.addr.l1}</Txt>
+              </View>
+              <Icon name="location_on" size={22} color={TEXT} />
+            </PressableScale>
+          ) : (
+            <View style={styles.addrRow}>
+              <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
+                <Txt s={15} w={700} style={{ color: TEXT }}>{restaurant?.name ?? ''}</Txt>
+                <Txt s={13} w={500} style={{ color: MUTED }}>{`جاهز خلال ~${s.prep} دقيقة`}</Txt>
+              </View>
+              <Icon name="storefront" size={22} color={TEXT} />
+            </View>
+          )}
+        </View>
+        <View style={styles.band} />
+
+        {/* ───────── الدفع: كلهم تحت بعض ───────── */}
+        <View style={styles.section}>
+          <Txt s={17} w={700} style={styles.title}>الدفع</Txt>
+
+          {/* أقساط بنكية */}
+          <PressableScale onPress={soon('الأقساط البنكية')} scaleTo={0.98} style={styles.payOpt}>
+            <View style={styles.minChip}><Txt s={11} w={500} style={{ color: MUTED }}>الحد الأدنى للطلب 500 ج.م</Txt></View>
+            <View style={styles.payOptLabel}>
+              <View style={styles.newBadge}><Txt s={11} w={700} style={{ color: '#1F7A7A' }}>New!</Txt></View>
+              <Txt s={14} w={600} style={{ color: TEXT }}>أقساط بنكية</Txt>
+              <Icon name="storefront" size={22} color={TEXT} />
+            </View>
+          </PressableScale>
+
+          {/* Apple Pay */}
+          <PressableScale onPress={soon('Apple Pay')} scaleTo={0.98} style={styles.payOpt}>
+            <Dot on={false} />
+            <View style={styles.payOptLabel}>
+              <Txt s={14} w={700} style={{ color: TEXT }}>Apple Pay</Txt>
+              <View style={styles.applePayMark}><Txt s={10} w={700} style={{ color: TEXT }}>Pay</Txt></View>
+            </View>
+          </PressableScale>
+
+          {/* الدفع عند الاستلام */}
+          <PressableScale onPress={chooseCash} scaleTo={0.98} style={[styles.payOpt, payPicked === 'cash' && styles.payOptOn]}>
+            <Dot on={payPicked === 'cash'} />
+            <View style={styles.payOptLabel}>
+              <Txt s={14} w={600} style={{ color: TEXT }}>الدفع عند الاستلام</Txt>
+              <Icon name="payments" size={22} color={TEXT} />
+            </View>
+          </PressableScale>
+
+          {/* بطاقة / محفظة */}
+          <PressableScale onPress={openPaymentSheet} scaleTo={0.98} style={[styles.payOpt, payPicked === 'online' && styles.payOptOn]}>
+            <Dot on={payPicked === 'online'} />
+            <View style={styles.payOptLabel}>
+              <Txt s={14} w={600} style={{ color: TEXT }}>بطاقة ائتمان / محفظة كاش</Txt>
+              <Icon name="credit_card" size={22} color={TEXT} />
+            </View>
+          </PressableScale>
+
+          {payPicked === 'online' && s.payM === 3 ? (
+            <View style={styles.pickedBox}>
+              <Txt s={13} w={700} style={{ color: TEXT }}>{walletProvider || 'محفظة الموبايل'}</Txt>
+              <Txt s={13} w={500} style={{ color: MUTED }}>{walletPhone}</Txt>
+            </View>
+          ) : null}
+
+          {payPicked === 'online' && s.payM !== 3 && selectedCard ? (
+            <View style={styles.pickedBox}>
+              <Txt s={13} w={700} style={{ color: TEXT }}>{`${selectedCard.name || 'بطاقة محفوظة'} · •••• ${last4(selectedCard.num)}`}</Txt>
+              <TextInput
+                value={savedCardCvv}
+                onChangeText={(v) => setSavedCardCvv(v.replace(/[^0-9]/g, '').slice(0, 4))}
+                placeholder="رمز الأمان CVV"
+                placeholderTextColor={MUTED}
+                keyboardType="number-pad"
+                secureTextEntry
+                maxLength={4}
+                style={[styles.input, INPUT_FONT, { minHeight: 46, marginTop: 6, alignSelf: 'stretch' }]}
+              />
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.band} />
+
+        {/* ───────── رصيد توصيلة ───────── */}
+        <View style={[styles.section, { paddingVertical: 14 }]}>
+          <View style={styles.balRow}>
+            <Switch
+              value={false}
+              onValueChange={() => toast('رصيدك 0 ج.م', 'مفيش رصيد متاح في توصيلة دلوقتي.', 'info')}
+              trackColor={{ false: '#B7B9BD', true: BRAND }}
+              thumbColor="#FFFFFF"
+              ios_backgroundColor="#B7B9BD"
+              style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
+            />
+            <View style={{ alignItems: 'flex-end', gap: 2 }}>
+              <Txt s={14} w={700} style={{ color: TEXT }}>استخدم رصيد توصيلة</Txt>
+              <Txt s={13} w={500} style={{ color: MUTED }}>{egp(0)}</Txt>
+            </View>
+          </View>
+        </View>
+        <View style={styles.band} />
+
+        {/* ───────── الإكرامية ───────── */}
+        {isDelivery ? (
+          <>
+            <View style={styles.section}>
+              <Txt s={17} w={700} style={styles.title}>قدم الشكر بإكرامية</Txt>
+              <Txt s={13} w={500} style={[styles.title, { color: MUTED }]}>سيحصل مندوب التوصيل على المبلغ بأكمله.</Txt>
+              <View style={styles.chips}>
+                <PressableScale onPress={() => { setCustomTip(true); setTip(0); }} style={[styles.chip, { minWidth: 56 }, customTip && styles.chipOn]}>
+                  <Txt s={14} w={700} style={{ color: TEXT }}>آخر</Txt>
+                </PressableScale>
+                {[...TIP_OPTIONS].reverse().map((v) => (
+                  <PressableScale
+                    key={v}
+                    onPress={() => { setCustomTip(false); setTip(tip === v ? 0 : v); }}
+                    style={[styles.chip, { flex: 1 }, !customTip && tip === v && styles.chipOn]}
+                  >
+                    <Txt s={14} w={700} style={{ color: TEXT }}>{egp(v)}</Txt>
+                  </PressableScale>
+                ))}
+              </View>
+              {customTip ? (
+                <TextInput
+                  value={tip ? String(tip) : ''}
+                  onChangeText={(v) => setTip(Number(v.replace(/[^0-9]/g, '').slice(0, 3)) || 0)}
+                  placeholder="اكتب مبلغ الإكرامية"
+                  placeholderTextColor={MUTED}
+                  keyboardType="number-pad"
+                  style={[styles.input, INPUT_FONT, { minHeight: 46 }]}
+                />
+              ) : null}
+            </View>
+            <View style={styles.band} />
+          </>
+        ) : null}
+
+        {/* ───────── كود الخصم ───────── */}
+        <View style={styles.section}>
+          <View style={styles.titleRow}>
+            <PressableScale onPress={soon('برنامج المكافآت')}>
+              <Txt s={13} w={700} style={{ color: BRAND }}>مكافآت برنامج توصيلة</Txt>
+            </PressableScale>
+            <Txt s={17} w={700} style={styles.titleInline}>كود الخصم</Txt>
+          </View>
+          <View style={styles.promoBox}>
+            <PressableScale onPress={() => { if (promoText.trim()) set({ promo: promoText.trim() } as never); }}>
+              <Txt s={14} w={700} style={{ color: promoText.trim() ? BRAND : MUTED }}>تفعيل</Txt>
+            </PressableScale>
+            <TextInput
+              value={promoText}
+              onChangeText={setPromoText}
+              placeholder="اكتب كود الخصم هنا"
+              placeholderTextColor={MUTED}
+              autoCapitalize="characters"
+              style={[styles.promoInput, INPUT_FONT]}
+            />
+          </View>
+        </View>
+        <View style={styles.band} />
+
+        {/* ───────── ملاحظات إضافية (نفس تصميم الصورة) ───────── */}
+        <View style={styles.section}>
+          <Txt s={17} w={700} style={styles.title}>ملاحظات إضافية</Txt>
+          <View style={styles.noteRow}>
+            <View style={{ flex: 1, alignItems: 'flex-end', gap: 2 }}>
+              <Txt s={14} w={700} style={{ color: TEXT }}>دوّن ملاحظة</Txt>
+              <TextInput
+                value={s.note}
+                onChangeText={(v) => set({ note: v })}
+                placeholder="هل تود أن تخبرنا أي شيء آخر؟"
+                placeholderTextColor={MUTED}
+                multiline
+                style={[styles.noteInput, INPUT_FONT]}
+              />
+            </View>
+            <Icon name="reviews" size={24} color={TEXT} />
+          </View>
+        </View>
+
+        {/* ───────── ملخّص الدفع (نفس تصميم الصورة) ───────── */}
+        <View style={[styles.section, { gap: 16, paddingTop: 8 }]}>
+          <Txt s={17} w={700} style={styles.title}>ملخّص الدفع</Txt>
+          <Row label="المجموع الفرعي" value={egp2(t.sub)} />
+          {discount > 0 ? <Row label="خصم" gem value={`- ${egp2(discount)}`} valueColor={GREEN} /> : null}
+          {isDelivery ? (
+            isFirstOrder ? (
+              <Row label="توصيل مجاني" tag="أول طلب" info value={egp2(0)} strike={baseDelivery > 0 ? egp2(baseDelivery) : undefined} />
+            ) : (
+              <Row label="التوصيل" info value={egp2(baseDelivery)} />
+            )
+          ) : null}
+          <Row label="رسوم الخدمة" info value={egp2(SERVICE_FEE)} />
+          {tip > 0 ? <Row label="إكرامية المندوب" value={egp2(tip)} /> : null}
+          <Row label="المبلغ الإجمالي" value={egp2(total)} bold />
+        </View>
+      </ScrollView>
+
+      {/* ───────── البار السفلي ───────── */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10 }]}>
+        <View style={{ gap: 2 }}>
+          <View style={styles.totalRow}>
+            <Txt s={20} w={800} style={{ color: TEXT }}>{egp(total)}</Txt>
+            <Txt s={17} w={800} style={{ color: TEXT }}>المجموع الكلي</Txt>
+          </View>
+          <View style={styles.pointsRow}>
+            <Txt s={13} w={500} style={{ color: MUTED }}>{`ستكسب ${Math.round(total * 1.4)} من النقاط`}</Txt>
+            <View style={styles.pointsDot}><Icon name="star" size={10} color={LIME} /></View>
+          </View>
+        </View>
+        <PressableScale onPress={() => void pay()} style={[styles.cta, paying && { opacity: 0.85 }]}>
+          {paying ? <ActivityIndicator color="#FFFFFF" style={{ marginEnd: 8 }} /> : null}
+          <Txt s={16} w={700} color="#FFFFFF">{payBtnLabel}</Txt>
+        </PressableScale>
+      </View>
+
+      {/* ───────── Bottom sheet ───────── */}
+      <Modal visible={paymentSheet} transparent animationType="slide" onRequestClose={chooseCash}>
+        <View style={styles.sheetBackdrop} />
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
+          <View style={styles.sheetHandle} />
+          <Txt s={16} w={700} style={{ color: TEXT, textAlign: 'right' }}>اختار طريقة الدفع</Txt>
+
+          <ScrollView style={{ maxHeight: 340 }} contentContainerStyle={{ gap: 8 }} showsVerticalScrollIndicator={false}>
+            {s.cards.map((card) => (
+              <MethodRow
+                key={card.id}
+                selected={sheetSelection === 'card:' + card.id}
+                onSelect={() => { setSheetSelection('card:' + card.id); setSheetError(false); }}
+                title={card.name || 'بطاقة محفوظة'}
+                sub={`•••• •••• •••• ${last4(card.num)}`}
+                logo={cardLogo(card.brand, card.num, 52, 30)}
+              />
+            ))}
+
+            {savedWallets.length ? (
+              <View style={styles.divLabelRow}>
+                <View style={styles.divLine} />
+                <Txt s={13} w={700} style={{ color: BRAND }}>محافظ إلكترونية</Txt>
+                <View style={styles.divLine} />
+              </View>
+            ) : null}
+
+            {savedWallets.map((w) => (
+              <MethodRow
+                key={w.id}
+                selected={sheetSelection === 'wallet:' + w.id}
+                onSelect={() => { setSheetSelection('wallet:' + w.id); setSheetError(false); }}
+                title={w.name}
+                sub={w.phone}
+                logo={walletLogo(w.name, 52, 34)}
+              />
+            ))}
+
+            {/* إضافة طريقة دفع: ارتفاع 70، + في النص وتحتها النص */}
+            <PressableScale style={styles.addMethod} onPress={() => { setPaymentSheet(false); router.push('/payments'); }}>
+              <Icon name="add" size={24} color={TEXT} />
+              <Txt s={13} w={600} style={{ color: TEXT }}>إضافة طريقة دفع جديدة</Txt>
+            </PressableScale>
+          </ScrollView>
+
+          {/* متابعة على اليمين، رجوع على الشمال */}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+            <PressableScale onPress={chooseCash} style={[styles.sheetBtn, { backgroundColor: '#FFFFFF', borderColor: '#E6E8E6' }]}>
+              <Txt s={15} w={700} style={{ color: TEXT }}>رجوع</Txt>
+            </PressableScale>
+            <PressableScale
+              onPress={confirmPaymentSelection}
+              style={[styles.sheetBtn, { backgroundColor: sheetError ? RED : BRAND, borderColor: sheetError ? RED : BRAND }]}
+            >
+              <Txt s={15} w={700} color="#FFFFFF">{sheetError ? 'اختار طريقة دفع' : 'متابعة'}</Txt>
+            </PressableScale>
+          </View>
+        </View>
+      </Modal>
+
+      {/* ───────── 3DS ───────── */}
+      <Modal visible={!!threeDSUrl} transparent animationType="slide" onRequestClose={finishThreeDS}>
+        <View style={styles.threeDSRoot}>
+          <View style={styles.threeDSSheet}>
+            <View style={styles.threeDSHeader}>
+              <PressableScale onPress={finishThreeDS} style={styles.threeDSClose} accessibilityRole="button" accessibilityLabel="إغلاق التحقق">
+                <Icon name="close" size={20} color={TEXT} />
+              </PressableScale>
+              <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
+                <Txt s={15} w={700}>التحقق من البنك</Txt>
+                <Txt s={11} color={MUTED}>أدخل رمز التأكيد داخل التطبيق</Txt>
+              </View>
+              <View style={styles.threeDSEmpty} />
+            </View>
+            {threeDSUrl ? (
+              <WebView
+                key={threeDSReload}
+                source={{ uri: threeDSUrl }}
+                style={styles.threeDSWebView}
+                javaScriptEnabled
+                domStorageEnabled
+                sharedCookiesEnabled={false}
+                thirdPartyCookiesEnabled
+                setSupportMultipleWindows={false}
+                originWhitelist={['https://*']}
+                onShouldStartLoadWithRequest={(request) => {
+                  let returnUrl = '';
+                  try { returnUrl = decodeURIComponent(new URL(threeDSUrl).searchParams.get('merchantRedirect') || ''); } catch {}
+                  const target = request.url;
+                  const isReturn =
+                    target.startsWith(API_URL + '/v1/payments/kashier/return') ||
+                    (returnUrl.length > 0 && target.startsWith(returnUrl));
+                  if (isReturn) { finishThreeDS(); return false; }
+                  return target.startsWith('https://');
+                }}
+                onError={() => setThreeDSError(true)}
+                onHttpError={(e) => { if (e.nativeEvent.statusCode >= 400) setThreeDSError(true); }}
+                startInLoadingState
+                renderLoading={() => (
+                  <View style={styles.threeDSLoading}><Txt s={13} color={MUTED}>جارٍ تحميل صفحة التحقق الآمنة…</Txt></View>
+                )}
+              />
+            ) : null}
+            {threeDSError ? (
+              <View style={styles.threeDSError}>
+                <Txt s={13} w={600} color={RED}>تعذر تحميل صفحة البنك. تحقق من اتصال الإنترنت وحاول مرة أخرى.</Txt>
+                <PressableScale onPress={() => { setThreeDSError(false); setThreeDSReload((v) => v + 1); }}>
+                  <Txt s={13} w={700} color={BRAND}>إعادة المحاولة</Txt>
+                </PressableScale>
+              </View>
+            ) : null}
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+/* ───────── مكونات صغيرة ───────── */
+
+function Dot({ on }: { on: boolean }) {
+  return (
+    <View style={[styles.dot, on && { borderColor: BRAND }]}>
+      {on ? <View style={styles.dotInner} /> : null}
+    </View>
+  );
+}
+
+function InfoDot() {
+  return (
+    <View style={styles.infoDot}>
+      <Txt s={10} w={700} style={{ color: MUTED }}>i</Txt>
+    </View>
+  );
+}
+
+function Row({
+  label, value, tag, strike, valueColor, info, gem, bold,
+}: { label: string; value: string; tag?: string; strike?: string; valueColor?: string; info?: boolean; gem?: boolean; bold?: boolean }) {
+  const fs = bold ? 16 : 14;
+  const fw = bold ? 800 : 500;
+  return (
+    <View style={styles.sumRow}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {strike ? <Txt s={fs} w={fw} style={{ color: MUTED, textDecorationLine: 'line-through' }}>{strike}</Txt> : null}
+        {!strike ? <Txt s={fs} w={fw} style={{ color: valueColor ?? TEXT }}>{value}</Txt> : null}
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {info ? <InfoDot /> : null}
+        {tag ? <View style={styles.tag}><Txt s={12} w={700} style={{ color: BRAND }}>{tag}</Txt></View> : null}
+        <Txt s={fs} w={fw} style={{ color: TEXT }}>{label}</Txt>
+        {gem ? <View style={styles.gem} /> : null}
+      </View>
+    </View>
+  );
+}
+
+/** صف وسيلة دفع في الـ Sheet (ارتفاع 58): [صح] | الاسم + الرقم | اللوجو */
+function MethodRow({
+  selected, onSelect, title, sub, logo,
+}: { selected: boolean; onSelect: () => void; title: string; sub: string; logo: React.ReactNode }) {
+  return (
+    <PressableScale style={[styles.method, selected && { borderColor: BRAND, backgroundColor: BRAND_SOFT }]} onPress={onSelect}>
+      <View style={[styles.check, selected && styles.checkOn]}>
+        <Icon name="check" size={16} color={selected ? GREEN : '#C4C8C6'} />
+      </View>
+      <View style={styles.vDiv} />
+      <View style={styles.methodText}>
+        <Txt s={13} w={700} style={{ color: TEXT }} numberOfLines={1}>{title}</Txt>
+        <Txt s={12} w={500} style={{ color: MUTED }} numberOfLines={1}>{sub}</Txt>
+      </View>
+      <View style={styles.vDiv} />
+      <View style={styles.logoBox}>{logo}</View>
+    </PressableScale>
+  );
 }
 
 const styles = StyleSheet.create({
-  discover:{justifyContent:'center',alignItems:'center',overflow:'hidden'},
-  discoverText:{fontSize:10,fontWeight:'900',letterSpacing:0.4,color:'#111111'},
-  discoverArc:{position:'absolute',right:3,bottom:0,width:24,height:9,borderRadius:12,backgroundColor:'#F58220',transform:[{rotate:'-12deg'}]},
-  unknown:{justifyContent:'center',alignItems:'center',borderRadius:5,backgroundColor:'#F5F5F0'},
-  unknownText:{fontSize:10,fontWeight:'900',color:'#183D32'},
-  providerWrap:{alignItems:'center',justifyContent:'center'},
-  wordLogo:{alignItems:'center',justifyContent:'center'},
-  etisalat:{fontSize:27,fontWeight:'900',letterSpacing:-2,color:'#E60012',lineHeight:28},
-  etisalatSub:{fontSize:8,fontWeight:'800',color:'#E60012',lineHeight:10},
-  orangeText:{fontSize:9,fontWeight:'900',color:'#111111',lineHeight:10},
-  cashText:{fontSize:9,fontWeight:'900',color:'#E51D2A',lineHeight:10},
-  meeza:{alignItems:'center',justifyContent:'center',gap:0},
-  meezaText:{fontSize:13,fontWeight:'900',color:'#087A55',lineHeight:14},
-  meezaLatin:{fontSize:7,fontWeight:'900',letterSpacing:0.6,color:'#176FC1'},
-  mada:{alignItems:'center',justifyContent:'center',gap:0},
-  madaMark:{flexDirection:'row',alignItems:'center',gap:2},
-  madaDotGreen:{width:10,height:10,borderRadius:3,backgroundColor:'#0B9D66'},
-  madaDotBlue:{width:10,height:10,borderRadius:3,backgroundColor:'#176FC1'},
-  madaText:{fontSize:10,fontWeight:'900',color:'#087A55'},
-  insta:{fontSize:12,fontWeight:'900',fontStyle:'italic',color:'#5B2589',lineHeight:13},
-  instaPay:{fontSize:12,fontWeight:'900',fontStyle:'italic',color:'#F18B24',lineHeight:13},
-  we:{fontSize:25,fontWeight:'500',letterSpacing:-2,color:'#8A8A8A'},
-  wePay:{minWidth:34,height:15,borderRadius:4,backgroundColor:'#6B2D91',alignItems:'center',justifyContent:'center',paddingHorizontal:4,marginTop:-2},
-  wePayText:{fontSize:11,fontWeight:'700',fontStyle:'italic',color:'#FFFFFF',lineHeight:13},
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10, backgroundColor: BG },
+  back: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  backSpacer: { width: 40, height: 40 },
+
+  band: { height: 14, backgroundColor: BAND },
+  section: { paddingHorizontal: 16, paddingVertical: 16, gap: 10 },
+  title: { textAlign: 'right', alignSelf: 'stretch', color: TEXT },
+  titleInline: { textAlign: 'right', color: TEXT },
+  titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  etaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 },
+
+  addrRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  input: { borderWidth: 1, borderColor: BORDER, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, textAlign: 'right', backgroundColor: '#FFFFFF' },
+
+  payOpt: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: BORDER, backgroundColor: '#FFFFFF' },
+  payOptOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
+  payOptLabel: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  dot: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: '#CFD2D6', alignItems: 'center', justifyContent: 'center' },
+  dotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: BRAND },
+  minChip: { backgroundColor: BAND, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 5 },
+  newBadge: { backgroundColor: '#EAF4F6', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 3 },
+  applePayMark: { borderWidth: 1, borderColor: TEXT, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 },
+  pickedBox: { borderRadius: 12, backgroundColor: BAND, padding: 12, gap: 3, alignItems: 'flex-end' },
+
+  balRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+
+  chips: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  chip: { height: 40, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  chipOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
+
+  promoBox: { flexDirection: 'row', alignItems: 'center', height: 50, borderWidth: 1, borderColor: BORDER, borderRadius: 12, paddingHorizontal: 14, gap: 10 },
+  promoInput: { flex: 1, textAlign: 'right', paddingVertical: 0 },
+
+  noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  noteInput: { alignSelf: 'stretch', textAlign: 'right', paddingVertical: 0, minHeight: 20, color: TEXT },
+
+  sumRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  tag: { backgroundColor: LIME, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 2 },
+  infoDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.2, borderColor: MUTED, alignItems: 'center', justifyContent: 'center' },
+  gem: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#E8742A', transform: [{ rotate: '45deg' }] },
+
+  bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 12, gap: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: -4 }, elevation: 12 },
+  totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  pointsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pointsDot: { width: 18, height: 18, borderRadius: 9, backgroundColor: BRAND, alignItems: 'center', justifyContent: 'center' },
+  cta: { height: 50, borderRadius: 12, backgroundColor: BRAND, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
+
+  sheetBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.38)' },
+  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 10, gap: 12 },
+  sheetHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: '#C9C9C9', marginBottom: 2 },
+  method: { height: 58, borderRadius: 14, borderWidth: 1, borderColor: '#E1E3E6', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFFFFF' },
+  check: { width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: '#C4C8C6', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  checkOn: { backgroundColor: '#E3F4DC', borderColor: '#E3F4DC' },
+  vDiv: { width: 1, height: 32, backgroundColor: '#D8DDD9' },
+  methodText: { flex: 1, minWidth: 0, alignItems: 'flex-end', gap: 2 },
+  logoBox: { width: 56, alignItems: 'center', justifyContent: 'center' },
+  addMethod: { height: 70, borderRadius: 14, borderWidth: 1, borderColor: '#E1E3E6', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: '#FFFFFF' },
+  divLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 2 },
+  divLine: { flex: 1, height: 1, backgroundColor: '#D5D8DC' },
+  sheetBtn: { flex: 1, height: 48, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+
+  threeDSRoot: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.48)' },
+  threeDSSheet: { height: '94%', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: BORDER, overflow: 'hidden', paddingTop: 12, backgroundColor: BG },
+  threeDSHeader: { minHeight: 62, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: BORDER, backgroundColor: BAND, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  threeDSClose: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: BORDER, backgroundColor: BG, alignItems: 'center', justifyContent: 'center' },
+  threeDSEmpty: { width: 38, height: 38 },
+  threeDSWebView: { flex: 1, backgroundColor: '#FFFFFF' },
+  threeDSLoading: { position: 'absolute', top: '48%', left: 0, right: 0, alignItems: 'center', zIndex: 2 },
+  threeDSError: { position: 'absolute', bottom: 20, left: 16, right: 16, padding: 14, borderRadius: 16, gap: 10, backgroundColor: BAND },
 });
