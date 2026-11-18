@@ -1,6 +1,6 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { ActivityIndicator, Image, Modal, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 import { WebView } from 'react-native-webview';
@@ -16,23 +16,28 @@ import { API_URL, api } from '@/lib/api';
 import { cardBrandOf } from '@/data/seed';
 import { useApp } from '@/store/app-store';
 import { family } from '@/theme/typography';
+import { NETWORK_LOGOS, WALLET_LOGOS } from './payment-logos'; // عدّل المسار حسب مكان الملف
 
-/* ───────── Design tokens (taken from the screenshots, 3x px ÷ 3 = pt) ───────── */
-const OLIVE = '#3E4A1D';          // اللون الزيتي الغامق (بدل البنفسجي)
-const OLIVE_SOFT = '#EEF0E4';
+/* ───────── الألوان: مستخرجة من لوجو توصيلة ───────── */
+const BRAND = '#12291F';        // الأخضر الغامق (خلفية اللوجو)
+const BRAND_SOFT = '#EAF0EB';
+const LIME = '#D4EA45';         // الأخضر الليموني (كلمة توصيلة)
 const BG = '#FFFFFF';
-const BAND = '#F2F3F5';           // الشريط الرمادي الفاصل بين الأقسام
+const BAND = '#F2F3F5';
 const BORDER = '#E1E3E6';
 const TEXT = '#1F1F1F';
-const MUTED = '#777777';
-const GREEN = '#2E7D32';          // علامة الصح + وقت التوصيل
+const MUTED = '#7A7A7A';
+const GREEN = '#2E7D32';
 const RED = '#D92D20';
 
-const SERVICE_FEE = 5;            // رسوم خدمة ثابتة على كل الأوردرات
-const MASK_WALLET_PHONE = true;   // false = يعرض رقم المحفظة كامل
+const SERVICE_FEE = 5;
 const TIP_OPTIONS = [10, 15, 20];
 
+/** خط واحد لكل حقول الإدخال (نفس خط باقي نصوص الصفحة) */
+const INPUT_FONT = { fontFamily: family(500), fontSize: 14, color: TEXT } as const;
+
 const egp = (n: number) => `${Number.isInteger(n) ? n : n.toFixed(2)} ج.م`;
+const egp2 = (n: number) => `${n.toFixed(2)} ج.م`;
 
 function clock(d: Date) {
   const h = d.getHours();
@@ -46,6 +51,26 @@ function distanceBetweenKm(lat1: number, lon1: number, lat2: number, lon2: numbe
   const dLon = rad(lon2 - lon1);
   const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
   return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+
+/** يحدد شبكة البطاقة من اسم الـ brand أو من أول أرقام البطاقة */
+function networkOf(brand: string, num: string): 'visa' | 'mastercard' | 'meeza' | 'amex' | '' {
+  const b = (brand || '').toLowerCase();
+  if (b.includes('amex') || b.includes('american')) return 'amex';
+  if (b.includes('master')) return 'mastercard';
+  if (b.includes('visa')) return 'visa';
+  if (b.includes('meeza') || b.includes('ميزة')) return 'meeza';
+  const d = (num || '').replace(/\D/g, '');
+  if (/^3[47]/.test(d)) return 'amex';
+  if (/^4/.test(d)) return 'visa';
+  if (/^(5[1-5]|2[2-7])/.test(d)) return 'mastercard';
+  if (/^507803/.test(d)) return 'meeza';
+  return '';
+}
+
+function Logo({ uri, fallback, width, height }: { uri: string; fallback: React.ReactNode; width: number; height: number }) {
+  if (!uri) return <>{fallback}</>;
+  return <Image source={{ uri }} style={{ width, height }} resizeMode="contain" />;
 }
 
 type Wallet = { id: string; provider: string; phone: string; name: string; isDefault: boolean };
@@ -80,7 +105,7 @@ function Checkout() {
   const set = useApp((st) => st.setCheckout);
   const toast = useApp.getState().showToast;
 
-  /* ───────── وقت التوصيل: تحضير المطعم + 5 دقايق لكل كيلو ───────── */
+  /* ───────── وقت التوصيل ───────── */
   const cartBrandId = s.cart[0] ? useApp.getState().dishOf(s.cart[0].id).brand : '';
   const restaurant = s.brands.find((b) => b.id === cartBrandId);
   const distanceKm =
@@ -93,7 +118,7 @@ function Checkout() {
   const etaFrom = new Date(Date.now() + etaMinutes * 60000);
   const etaTo = new Date(Date.now() + (etaMinutes + 10) * 60000);
 
-  /* ───────── أول طلب؟ (التوصيل مجاني لأول طلب فقط) ───────── */
+  /* ───────── أول طلب ───────── */
   const [isFirstOrder, setIsFirstOrder] = useState(false);
   useEffect(() => {
     let active = true;
@@ -104,7 +129,7 @@ function Checkout() {
     return () => { active = false; };
   }, []);
 
-  /* ───────── الإكرامية + كود الخصم ───────── */
+  /* ───────── إكرامية + كود خصم ───────── */
   const [tip, setTip] = useState(0);
   const [customTip, setCustomTip] = useState(false);
   const [promoText, setPromoText] = useState('');
@@ -116,7 +141,7 @@ function Checkout() {
   const discount = s.promo ? t.disc : 0;
   const total = Math.max(0, t.sub - discount + delivery + SERVICE_FEE + tip);
 
-  /* ───────── طرق الدفع ───────── */
+  /* ───────── الدفع ───────── */
   const [paying, setPaying] = useState(false);
   const [cardsReady, setCardsReady] = useState(false);
   const [payPicked, setPayPicked] = useState<'cash' | 'online' | null>(null);
@@ -171,7 +196,7 @@ function Checkout() {
   const flashSheetError = () => {
     setSheetError(true);
     if (sheetErrorTimer.current) clearTimeout(sheetErrorTimer.current);
-    sheetErrorTimer.current = setTimeout(() => setSheetError(false), 3000); // 3 ثواني
+    sheetErrorTimer.current = setTimeout(() => setSheetError(false), 3000);
   };
 
   const openPaymentSheet = () => { setSheetSelection(''); setSheetError(false); setPaymentSheet(true); };
@@ -202,22 +227,6 @@ function Checkout() {
     setSheetError(false);
   };
 
-  // افترضت إن الـ API فيه DELETE على نفس المسارين — عدّل المسار لو مختلف
-  const removeMethod = async (kind: 'card' | 'wallet', id: string) => {
-    try {
-      await api.delete(kind === 'card' ? `/v1/me/cards/${id}` : `/v1/me/wallets/${id}`);
-      if (kind === 'card') {
-        const cards = useApp.getState().cards.filter((c) => c.id !== id);
-        useApp.setState({ cards, defCard: cards[0]?.id ?? '' });
-      } else {
-        setSavedWallets((w) => w.filter((x) => x.id !== id));
-      }
-      if (sheetSelection.endsWith(id)) setSheetSelection('');
-    } catch {
-      toast('تعذر الحذف', 'حاول مرة أخرى.', 'error');
-    }
-  };
-
   /* ───────── 3DS ───────── */
   const [threeDSUrl, setThreeDSUrl] = useState<string | null>(null);
   const [threeDSError, setThreeDSError] = useState(false);
@@ -244,7 +253,7 @@ function Checkout() {
       return;
     }
     setPaying(true);
-    // ملحوظة: الإكرامية (tip) محتاجة تتبعت للسيرفر داخل placeOrder — شوف الملاحظات
+    // ملحوظة: الإكرامية (tip) لازم تتبعت للسيرفر داخل placeOrder
     const r = await placeOrder(
       s.payM === 0 || s.payM === 1 ? { token: selectedCard!.id, cvv: savedCardCvv } : undefined,
       s.payM === 3 ? walletPhone : undefined,
@@ -269,102 +278,135 @@ function Checkout() {
     ? s.payM === 2 ? 'جارٍ تأكيد الطلب…' : s.payM === 3 ? 'في انتظار موافقة المحفظة…' : 'جارٍ معالجة البطاقة…'
     : 'تنفيذ الطلب';
 
+  const cardLogo = (brand: string, num: string, w: number, h: number) => {
+    const net = networkOf(brand, num);
+    const known = /VISA|MASTER|AMEX|MEEZA|MADA|DISCOVER/.test((net || brand || '').toUpperCase());
+    if (!known) return <Icon name="credit_card" size={26} color={MUTED} />;
+    return (
+      <Logo
+        uri={net ? NETWORK_LOGOS[net] : ''}
+        width={w}
+        height={h}
+        fallback={<PaymentNetworkLogo brand={net ? net.toUpperCase() : brand} width={w} height={h} />}
+      />
+    );
+  };
+  const walletLogo = (name: string, w: number, h: number) => {
+    const uri = WALLET_LOGOS.find((x) => x.match.test(name))?.uri ?? '';
+    return <Logo uri={uri} width={w} height={h} fallback={<WalletProviderLogo provider={name} width={w} height={h} />} />;
+  };
+
+  const soon = (title: string) => () => toast('قريبًا', `${title} هتتوفر قريبًا.`, 'info');
+
   return (
     <View style={{ flex: 1, backgroundColor: BG }}>
       {/* ───────── الهيدر ───────── */}
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
         <View style={styles.backSpacer} />
-        <Txt s={19} w={600} style={{ color: TEXT }}>تنفيذ الطلب</Txt>
+        <Txt s={16} w={600} style={{ color: TEXT }}>تنفيذ الطلب</Txt>
         <PressableScale onPress={() => router.back()} style={styles.back} accessibilityRole="button" accessibilityLabel="رجوع">
-          <Icon name="chevron_right" size={26} color={OLIVE} />
+          <Icon name="chevron_right" size={22} color={BRAND} />
         </PressableScale>
       </View>
 
       <ScrollView
-        contentContainerStyle={{ paddingBottom: 200 + insets.bottom }}
+        contentContainerStyle={{ paddingBottom: 170 + insets.bottom }}
         keyboardShouldPersistTaps="handled"
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
+        <View style={styles.band} />
+
         {/* ───────── وقت التوصيل ───────── */}
         <View style={styles.section}>
           <View style={styles.titleRow}>
-            <PressableScale onPress={() => toast('قريبًا', 'جدولة الطلب هتتوفر قريبًا.', 'info')}>
-              <Txt s={16} w={600} style={{ color: OLIVE }}>اختر موعد آخر</Txt>
+            <PressableScale onPress={soon('جدولة الطلب')}>
+              <Txt s={13} w={600} style={{ color: BRAND }}>اختر موعد آخر</Txt>
             </PressableScale>
-            <Txt s={22} w={800} style={styles.title}>{isDelivery ? 'وقت التوصيل' : 'وقت الاستلام'}</Txt>
+            <Txt s={17} w={700} style={styles.titleInline}>{isDelivery ? 'وقت التوصيل' : 'وقت الاستلام'}</Txt>
           </View>
           <View style={styles.etaRow}>
-            <Txt s={16} w={600} style={{ color: GREEN }}>
-              {`سيصل ${clock(etaFrom)} - ${clock(etaTo)}`}
-            </Txt>
-            <Txt s={16} w={700} style={{ color: TEXT }}> ·  أسرع وقت</Txt>
-            <Icon name="schedule" size={24} color={TEXT} />
+            <Txt s={14} w={600} style={{ color: GREEN }}>{`سيصل ${clock(etaFrom)} - ${clock(etaTo)}`}</Txt>
+            <Txt s={14} w={600} style={{ color: TEXT }}>  ·  أسرع وقت</Txt>
+            <Icon name="schedule" size={20} color={TEXT} />
           </View>
         </View>
         <View style={styles.band} />
 
-        {/* ───────── العنوان + تعليمات المندوب ───────── */}
+        {/* ───────── العنوان ───────── */}
         <View style={styles.section}>
-          <Txt s={22} w={800} style={styles.title}>{isDelivery ? 'عنوان التوصيل' : 'الاستلام من'}</Txt>
+          <Txt s={17} w={700} style={styles.title}>{isDelivery ? 'عنوان التوصيل' : 'الاستلام من'}</Txt>
           {isDelivery ? (
             <PressableScale onPress={() => router.push('/addresses')} style={styles.addrRow}>
-              <View style={{ flex: 1, alignItems: 'flex-end', gap: 2 }}>
-                <Txt s={17} w={700} style={{ color: TEXT }}>{s.addr.tag}</Txt>
-                <Txt s={15} style={{ color: MUTED }} numberOfLines={1}>{s.addr.l1}</Txt>
+              <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
+                <Txt s={15} w={700} style={{ color: TEXT }}>{s.addr.tag}</Txt>
+                <Txt s={13} w={500} style={{ color: MUTED }} numberOfLines={1}>{s.addr.l1}</Txt>
               </View>
-              <Icon name="location_on" size={26} color={TEXT} />
+              <Icon name="location_on" size={22} color={TEXT} />
             </PressableScale>
           ) : (
             <View style={styles.addrRow}>
-              <View style={{ flex: 1, alignItems: 'flex-end', gap: 2 }}>
-                <Txt s={17} w={700} style={{ color: TEXT }}>{restaurant?.name ?? ''}</Txt>
-                <Txt s={15} style={{ color: MUTED }}>{`جاهز خلال ~${s.prep} دقيقة`}</Txt>
+              <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
+                <Txt s={15} w={700} style={{ color: TEXT }}>{restaurant?.name ?? ''}</Txt>
+                <Txt s={13} w={500} style={{ color: MUTED }}>{`جاهز خلال ~${s.prep} دقيقة`}</Txt>
               </View>
-              <Icon name="storefront" size={26} color={TEXT} />
+              <Icon name="storefront" size={22} color={TEXT} />
             </View>
           )}
-          <TextInput
-            value={s.note}
-            onChangeText={(v) => set({ note: v })}
-            placeholder={isDelivery ? 'إضافة تعليمات للمندوب' : 'إضافة ملاحظة للمطعم'}
-            placeholderTextColor={MUTED}
-            multiline
-            style={[styles.input, { fontFamily: family(500) }]}
-          />
         </View>
         <View style={styles.band} />
 
-        {/* ───────── الدفع ───────── */}
+        {/* ───────── الدفع: كلهم تحت بعض ───────── */}
         <View style={styles.section}>
-          <Txt s={22} w={800} style={styles.title}>الدفع</Txt>
+          <Txt s={17} w={700} style={styles.title}>الدفع</Txt>
 
-          <PressableScale onPress={chooseCash} scaleTo={0.98} style={[styles.payOpt, payPicked === 'cash' && styles.payOptOn]}>
-            <Dot on={payPicked === 'cash'} />
+          {/* أقساط بنكية */}
+          <PressableScale onPress={soon('الأقساط البنكية')} scaleTo={0.98} style={styles.payOpt}>
+            <View style={styles.minChip}><Txt s={11} w={500} style={{ color: MUTED }}>الحد الأدنى للطلب 500 ج.م</Txt></View>
             <View style={styles.payOptLabel}>
-              <Txt s={16} w={600} style={{ color: TEXT }}>الدفع عند الاستلام</Txt>
-              <Icon name="payments" size={26} color={TEXT} />
+              <View style={styles.newBadge}><Txt s={11} w={700} style={{ color: '#1F7A7A' }}>New!</Txt></View>
+              <Txt s={14} w={600} style={{ color: TEXT }}>أقساط بنكية</Txt>
+              <Icon name="storefront" size={22} color={TEXT} />
             </View>
           </PressableScale>
 
+          {/* Apple Pay */}
+          <PressableScale onPress={soon('Apple Pay')} scaleTo={0.98} style={styles.payOpt}>
+            <Dot on={false} />
+            <View style={styles.payOptLabel}>
+              <Txt s={14} w={700} style={{ color: TEXT }}>Apple Pay</Txt>
+              <View style={styles.applePayMark}><Txt s={10} w={700} style={{ color: TEXT }}>Pay</Txt></View>
+            </View>
+          </PressableScale>
+
+          {/* الدفع عند الاستلام */}
+          <PressableScale onPress={chooseCash} scaleTo={0.98} style={[styles.payOpt, payPicked === 'cash' && styles.payOptOn]}>
+            <Dot on={payPicked === 'cash'} />
+            <View style={styles.payOptLabel}>
+              <Txt s={14} w={600} style={{ color: TEXT }}>الدفع عند الاستلام</Txt>
+              <Icon name="payments" size={22} color={TEXT} />
+            </View>
+          </PressableScale>
+
+          {/* بطاقة / محفظة */}
           <PressableScale onPress={openPaymentSheet} scaleTo={0.98} style={[styles.payOpt, payPicked === 'online' && styles.payOptOn]}>
             <Dot on={payPicked === 'online'} />
             <View style={styles.payOptLabel}>
-              <Txt s={16} w={600} style={{ color: TEXT }}>بطاقة ائتمان / محفظة كاش</Txt>
-              <Icon name="credit_card" size={26} color={TEXT} />
+              <Txt s={14} w={600} style={{ color: TEXT }}>بطاقة ائتمان / محفظة كاش</Txt>
+              <Icon name="credit_card" size={22} color={TEXT} />
             </View>
           </PressableScale>
 
           {payPicked === 'online' && s.payM === 3 ? (
             <View style={styles.pickedBox}>
-              <Txt s={14} w={700} style={{ color: TEXT }}>{walletProvider || 'محفظة الموبايل'}</Txt>
-              <Txt s={14} style={{ color: MUTED }}>{walletPhone}</Txt>
+              <Txt s={13} w={700} style={{ color: TEXT }}>{walletProvider || 'محفظة الموبايل'}</Txt>
+              <Txt s={13} w={500} style={{ color: MUTED }}>{walletPhone}</Txt>
             </View>
           ) : null}
 
           {payPicked === 'online' && s.payM !== 3 && selectedCard ? (
             <View style={styles.pickedBox}>
-              <Txt s={14} w={700} style={{ color: TEXT }}>{`${selectedCard.name || 'بطاقة محفوظة'} · •••• ${last4(selectedCard.num)}`}</Txt>
+              <Txt s={13} w={700} style={{ color: TEXT }}>{`${selectedCard.name || 'بطاقة محفوظة'} · •••• ${last4(selectedCard.num)}`}</Txt>
               <TextInput
                 value={savedCardCvv}
                 onChangeText={(v) => setSavedCardCvv(v.replace(/[^0-9]/g, '').slice(0, 4))}
@@ -373,37 +415,27 @@ function Checkout() {
                 keyboardType="number-pad"
                 secureTextEntry
                 maxLength={4}
-                style={[styles.input, { minHeight: 52, fontFamily: family(500), marginTop: 6 }]}
+                style={[styles.input, INPUT_FONT, { minHeight: 46, marginTop: 6, alignSelf: 'stretch' }]}
               />
             </View>
           ) : null}
         </View>
         <View style={styles.band} />
 
-        {/* ───────── أقساط بنكية + رصيد توصيلة (شكل فقط) ───────── */}
-        <View style={styles.section}>
-          <PressableScale onPress={() => toast('قريبًا', 'الأقساط البنكية هتتوفر قريبًا.', 'info')} style={styles.installCard}>
-            <View style={styles.minChip}>
-              <Txt s={13} style={{ color: MUTED }}>الحد الأدنى للطلب 500 ج.م</Txt>
-            </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-              <View style={styles.newBadge}><Txt s={14} w={600} style={{ color: '#1F7A7A' }}>New!</Txt></View>
-              <Txt s={17} w={700} style={{ color: TEXT }}>أقساط بنكية</Txt>
-              <Icon name="storefront" size={28} color={TEXT} />
-            </View>
-          </PressableScale>
-
+        {/* ───────── رصيد توصيلة ───────── */}
+        <View style={[styles.section, { paddingVertical: 14 }]}>
           <View style={styles.balRow}>
             <Switch
               value={false}
               onValueChange={() => toast('رصيدك 0 ج.م', 'مفيش رصيد متاح في توصيلة دلوقتي.', 'info')}
-              trackColor={{ false: '#B7B9BD', true: OLIVE }}
+              trackColor={{ false: '#B7B9BD', true: BRAND }}
               thumbColor="#FFFFFF"
               ios_backgroundColor="#B7B9BD"
+              style={{ transform: [{ scaleX: 0.85 }, { scaleY: 0.85 }] }}
             />
-            <View style={{ alignItems: 'flex-end', gap: 4 }}>
-              <Txt s={16} w={700} style={{ color: TEXT }}>استخدم رصيد توصيلة</Txt>
-              <Txt s={16} style={{ color: MUTED }}>{egp(0)}</Txt>
+            <View style={{ alignItems: 'flex-end', gap: 2 }}>
+              <Txt s={14} w={700} style={{ color: TEXT }}>استخدم رصيد توصيلة</Txt>
+              <Txt s={13} w={500} style={{ color: MUTED }}>{egp(0)}</Txt>
             </View>
           </View>
         </View>
@@ -413,14 +445,11 @@ function Checkout() {
         {isDelivery ? (
           <>
             <View style={styles.section}>
-              <Txt s={22} w={800} style={styles.title}>قدم الشكر بإكرامية</Txt>
-              <Txt s={16} style={[styles.title, { color: MUTED, fontWeight: '400' }]}>سيحصل مندوب التوصيل على المبلغ بأكمله.</Txt>
+              <Txt s={17} w={700} style={styles.title}>قدم الشكر بإكرامية</Txt>
+              <Txt s={13} w={500} style={[styles.title, { color: MUTED }]}>سيحصل مندوب التوصيل على المبلغ بأكمله.</Txt>
               <View style={styles.chips}>
-                <PressableScale
-                  onPress={() => { setCustomTip(true); setTip(0); }}
-                  style={[styles.chip, { minWidth: 62 }, customTip && styles.chipOn]}
-                >
-                  <Txt s={17} w={700} style={{ color: TEXT }}>آخر</Txt>
+                <PressableScale onPress={() => { setCustomTip(true); setTip(0); }} style={[styles.chip, { minWidth: 56 }, customTip && styles.chipOn]}>
+                  <Txt s={14} w={700} style={{ color: TEXT }}>آخر</Txt>
                 </PressableScale>
                 {[...TIP_OPTIONS].reverse().map((v) => (
                   <PressableScale
@@ -428,7 +457,7 @@ function Checkout() {
                     onPress={() => { setCustomTip(false); setTip(tip === v ? 0 : v); }}
                     style={[styles.chip, { flex: 1 }, !customTip && tip === v && styles.chipOn]}
                   >
-                    <Txt s={17} w={700} style={{ color: TEXT }}>{egp(v)}</Txt>
+                    <Txt s={14} w={700} style={{ color: TEXT }}>{egp(v)}</Txt>
                   </PressableScale>
                 ))}
               </View>
@@ -439,7 +468,7 @@ function Checkout() {
                   placeholder="اكتب مبلغ الإكرامية"
                   placeholderTextColor={MUTED}
                   keyboardType="number-pad"
-                  style={[styles.input, { minHeight: 52, fontFamily: family(500) }]}
+                  style={[styles.input, INPUT_FONT, { minHeight: 46 }]}
                 />
               ) : null}
             </View>
@@ -450,14 +479,14 @@ function Checkout() {
         {/* ───────── كود الخصم ───────── */}
         <View style={styles.section}>
           <View style={styles.titleRow}>
-            <PressableScale onPress={() => toast('قريبًا', 'برنامج المكافآت هيتوفر قريبًا.', 'info')}>
-              <Txt s={17} w={700} style={{ color: OLIVE }}>مكافآت برنامج توصيلة</Txt>
+            <PressableScale onPress={soon('برنامج المكافآت')}>
+              <Txt s={13} w={700} style={{ color: BRAND }}>مكافآت برنامج توصيلة</Txt>
             </PressableScale>
-            <Txt s={22} w={800} style={styles.title}>كود الخصم</Txt>
+            <Txt s={17} w={700} style={styles.titleInline}>كود الخصم</Txt>
           </View>
           <View style={styles.promoBox}>
             <PressableScale onPress={() => { if (promoText.trim()) set({ promo: promoText.trim() } as never); }}>
-              <Txt s={17} w={700} style={{ color: promoText.trim() ? OLIVE : MUTED }}>تفعيل</Txt>
+              <Txt s={14} w={700} style={{ color: promoText.trim() ? BRAND : MUTED }}>تفعيل</Txt>
             </PressableScale>
             <TextInput
               value={promoText}
@@ -465,76 +494,90 @@ function Checkout() {
               placeholder="اكتب كود الخصم هنا"
               placeholderTextColor={MUTED}
               autoCapitalize="characters"
-              style={[styles.promoInput, { fontFamily: family(500) }]}
+              style={[styles.promoInput, INPUT_FONT]}
             />
           </View>
         </View>
         <View style={styles.band} />
 
-        {/* ───────── ملخص الدفع ───────── */}
-        <View style={[styles.section, { gap: 20 }]}>
-          <Row label="المجموع" value={egp(t.sub)} />
-          {discount > 0 ? <Row label="خصم" value={`− ${egp(discount)}`} valueColor={GREEN} /> : null}
+        {/* ───────── ملاحظات إضافية (نفس تصميم الصورة) ───────── */}
+        <View style={styles.section}>
+          <Txt s={17} w={700} style={styles.title}>ملاحظات إضافية</Txt>
+          <View style={styles.noteRow}>
+            <View style={{ flex: 1, alignItems: 'flex-end', gap: 2 }}>
+              <Txt s={14} w={700} style={{ color: TEXT }}>دوّن ملاحظة</Txt>
+              <TextInput
+                value={s.note}
+                onChangeText={(v) => set({ note: v })}
+                placeholder="هل تود أن تخبرنا أي شيء آخر؟"
+                placeholderTextColor={MUTED}
+                multiline
+                style={[styles.noteInput, INPUT_FONT]}
+              />
+            </View>
+            <Icon name="reviews" size={24} color={TEXT} />
+          </View>
+        </View>
+
+        {/* ───────── ملخّص الدفع (نفس تصميم الصورة) ───────── */}
+        <View style={[styles.section, { gap: 16, paddingTop: 8 }]}>
+          <Txt s={17} w={700} style={styles.title}>ملخّص الدفع</Txt>
+          <Row label="المجموع الفرعي" value={egp2(t.sub)} />
+          {discount > 0 ? <Row label="خصم" gem value={`- ${egp2(discount)}`} valueColor={GREEN} /> : null}
           {isDelivery ? (
             isFirstOrder ? (
-              <Row
-                label="توصيل مجاني"
-                tag="أول طلب"
-                value={egp(0)}
-                strike={baseDelivery > 0 ? egp(baseDelivery) : undefined}
-              />
+              <Row label="توصيل مجاني" tag="أول طلب" info value={egp2(0)} strike={baseDelivery > 0 ? egp2(baseDelivery) : undefined} />
             ) : (
-              <Row label="التوصيل" value={egp(baseDelivery)} />
+              <Row label="التوصيل" info value={egp2(baseDelivery)} />
             )
           ) : null}
-          <Row label="رسوم الخدمة" value={egp(SERVICE_FEE)} />
-          {tip > 0 ? <Row label="إكرامية المندوب" value={egp(tip)} /> : null}
+          <Row label="رسوم الخدمة" info value={egp2(SERVICE_FEE)} />
+          {tip > 0 ? <Row label="إكرامية المندوب" value={egp2(tip)} /> : null}
+          <Row label="المبلغ الإجمالي" value={egp2(total)} bold />
         </View>
       </ScrollView>
 
-      {/* ───────── البار السفلي: المجموع الكلي + زر التنفيذ ───────── */}
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 12 }]}>
-        <View style={{ gap: 4 }}>
+      {/* ───────── البار السفلي ───────── */}
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10 }]}>
+        <View style={{ gap: 2 }}>
           <View style={styles.totalRow}>
-            <Txt s={26} w={800} style={{ color: TEXT }}>{egp(total)}</Txt>
-            <Txt s={22} w={800} style={{ color: TEXT }}>المجموع الكلي</Txt>
+            <Txt s={20} w={800} style={{ color: TEXT }}>{egp(total)}</Txt>
+            <Txt s={17} w={800} style={{ color: TEXT }}>المجموع الكلي</Txt>
           </View>
-          {/* شكل فقط: النسبة 1.4 تقريبية من الصورة، اربطها بنظام النقاط الحقيقي بعدين */}
           <View style={styles.pointsRow}>
-            <Txt s={17} style={{ color: MUTED }}>{`ستكسب ${Math.round(total * 1.4)} من النقاط`}</Txt>
-            <View style={styles.pointsDot}><Icon name="star" size={12} color="#FFFFFF" /></View>
+            <Txt s={13} w={500} style={{ color: MUTED }}>{`ستكسب ${Math.round(total * 1.4)} من النقاط`}</Txt>
+            <View style={styles.pointsDot}><Icon name="star" size={10} color={LIME} /></View>
           </View>
         </View>
         <PressableScale onPress={() => void pay()} style={[styles.cta, paying && { opacity: 0.85 }]}>
-          {paying ? <ActivityIndicator color="#FFFFFF" style={{ marginEnd: 10 }} /> : null}
-          <Txt s={19} w={700} color="#FFFFFF">{payBtnLabel}</Txt>
+          {paying ? <ActivityIndicator color="#FFFFFF" style={{ marginEnd: 8 }} /> : null}
+          <Txt s={16} w={700} color="#FFFFFF">{payBtnLabel}</Txt>
         </PressableScale>
       </View>
 
-      {/* ───────── Bottom sheet: وسائل الدفع المحفوظة ───────── */}
+      {/* ───────── Bottom sheet ───────── */}
       <Modal visible={paymentSheet} transparent animationType="slide" onRequestClose={chooseCash}>
         <View style={styles.sheetBackdrop} />
-        <View style={[styles.sheet, { paddingBottom: insets.bottom + 20 }]}>
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 16 }]}>
           <View style={styles.sheetHandle} />
-          <Txt s={20} w={700} style={{ color: TEXT, textAlign: 'right' }}>اختار طريقة الدفع</Txt>
+          <Txt s={16} w={700} style={{ color: TEXT, textAlign: 'right' }}>اختار طريقة الدفع</Txt>
 
-          <ScrollView style={{ maxHeight: 400 }} contentContainerStyle={{ gap: 10 }} showsVerticalScrollIndicator={false}>
+          <ScrollView style={{ maxHeight: 340 }} contentContainerStyle={{ gap: 8 }} showsVerticalScrollIndicator={false}>
             {s.cards.map((card) => (
               <MethodRow
                 key={card.id}
                 selected={sheetSelection === 'card:' + card.id}
                 onSelect={() => { setSheetSelection('card:' + card.id); setSheetError(false); }}
-                onDelete={() => void removeMethod('card', card.id)}
                 title={card.name || 'بطاقة محفوظة'}
                 sub={`•••• •••• •••• ${last4(card.num)}`}
-                logo={<PaymentNetworkLogo brand={card.brand} width={70} height={42} />}
+                logo={cardLogo(card.brand, card.num, 52, 30)}
               />
             ))}
 
             {savedWallets.length ? (
               <View style={styles.divLabelRow}>
                 <View style={styles.divLine} />
-                <Txt s={16} w={700} style={{ color: OLIVE }}>محافظ إلكترونية</Txt>
+                <Txt s={13} w={700} style={{ color: BRAND }}>محافظ إلكترونية</Txt>
                 <View style={styles.divLine} />
               </View>
             ) : null}
@@ -544,42 +587,29 @@ function Checkout() {
                 key={w.id}
                 selected={sheetSelection === 'wallet:' + w.id}
                 onSelect={() => { setSheetSelection('wallet:' + w.id); setSheetError(false); }}
-                onDelete={() => void removeMethod('wallet', w.id)}
                 title={w.name}
-                sub={MASK_WALLET_PHONE ? `•••• •••• •••• ${last4(w.phone || '')}` : w.phone}
-                logo={<WalletProviderLogo provider={w.name} width={70} height={52} />}
+                sub={w.phone}
+                logo={walletLogo(w.name, 52, 34)}
               />
             ))}
 
-            {/* إضافة طريقة دفع: نفس التصميم وعلامة + مكان اللوجو */}
-            <PressableScale
-              style={styles.method}
-              onPress={() => { setPaymentSheet(false); router.push('/payments'); }}
-            >
-              <View style={{ width: 40 + 8 + 38 }} />
-              <View style={styles.vDiv} />
-              <View style={styles.methodText}>
-                <Txt s={16} w={700} style={{ color: TEXT }}>إضافة طريقة دفع</Txt>
-              </View>
-              <View style={styles.vDiv} />
-              <View style={styles.logoBox}>
-                <Icon name="add" size={34} color={TEXT} />
-              </View>
+            {/* إضافة طريقة دفع: ارتفاع 70، + في النص وتحتها النص */}
+            <PressableScale style={styles.addMethod} onPress={() => { setPaymentSheet(false); router.push('/payments'); }}>
+              <Icon name="add" size={24} color={TEXT} />
+              <Txt s={13} w={600} style={{ color: TEXT }}>إضافة طريقة دفع جديدة</Txt>
             </PressableScale>
           </ScrollView>
 
-          <View style={{ flexDirection: 'row', gap: 12, marginTop: 6 }}>
-            <PressableScale
-              onPress={confirmPaymentSelection}
-              style={[styles.sheetBtn, { backgroundColor: sheetError ? RED : OLIVE, borderColor: sheetError ? RED : OLIVE }]}
-            >
-              <Txt s={16} w={700} color="#FFFFFF">{sheetError ? 'اختار طريقة دفع' : 'متابعة'}</Txt>
+          {/* متابعة على اليمين، رجوع على الشمال */}
+          <View style={{ flexDirection: 'row', gap: 10, marginTop: 4 }}>
+            <PressableScale onPress={chooseCash} style={[styles.sheetBtn, { backgroundColor: '#FFFFFF', borderColor: '#E6E8E6' }]}>
+              <Txt s={15} w={700} style={{ color: TEXT }}>رجوع</Txt>
             </PressableScale>
             <PressableScale
-              onPress={chooseCash}
-              style={[styles.sheetBtn, { backgroundColor: '#FFFFFF', borderColor: '#E6E8E6' }]}
+              onPress={confirmPaymentSelection}
+              style={[styles.sheetBtn, { backgroundColor: sheetError ? RED : BRAND, borderColor: sheetError ? RED : BRAND }]}
             >
-              <Txt s={16} w={700} style={{ color: TEXT }}>رجوع</Txt>
+              <Txt s={15} w={700} color="#FFFFFF">{sheetError ? 'اختار طريقة دفع' : 'متابعة'}</Txt>
             </PressableScale>
           </View>
         </View>
@@ -591,11 +621,11 @@ function Checkout() {
           <View style={styles.threeDSSheet}>
             <View style={styles.threeDSHeader}>
               <PressableScale onPress={finishThreeDS} style={styles.threeDSClose} accessibilityRole="button" accessibilityLabel="إغلاق التحقق">
-                <Icon name="close" size={21} color={TEXT} />
+                <Icon name="close" size={20} color={TEXT} />
               </PressableScale>
               <View style={{ flex: 1, alignItems: 'center', gap: 2 }}>
-                <Txt s={16} w={700}>التحقق من البنك</Txt>
-                <Txt s={11.5} color={MUTED}>أدخل رمز التأكيد داخل التطبيق</Txt>
+                <Txt s={15} w={700}>التحقق من البنك</Txt>
+                <Txt s={11} color={MUTED}>أدخل رمز التأكيد داخل التطبيق</Txt>
               </View>
               <View style={styles.threeDSEmpty} />
             </View>
@@ -632,7 +662,7 @@ function Checkout() {
               <View style={styles.threeDSError}>
                 <Txt s={13} w={600} color={RED}>تعذر تحميل صفحة البنك. تحقق من اتصال الإنترنت وحاول مرة أخرى.</Txt>
                 <PressableScale onPress={() => { setThreeDSError(false); setThreeDSReload((v) => v + 1); }}>
-                  <Txt s={13} w={700} color={OLIVE}>إعادة المحاولة</Txt>
+                  <Txt s={13} w={700} color={BRAND}>إعادة المحاولة</Txt>
                 </PressableScale>
               </View>
             ) : null}
@@ -647,47 +677,54 @@ function Checkout() {
 
 function Dot({ on }: { on: boolean }) {
   return (
-    <View style={[styles.dot, on && { borderColor: OLIVE }]}>
+    <View style={[styles.dot, on && { borderColor: BRAND }]}>
       {on ? <View style={styles.dotInner} /> : null}
     </View>
   );
 }
 
-function Row({ label, value, tag, strike, valueColor }: { label: string; value: string; tag?: string; strike?: string; valueColor?: string }) {
+function InfoDot() {
+  return (
+    <View style={styles.infoDot}>
+      <Txt s={10} w={700} style={{ color: MUTED }}>i</Txt>
+    </View>
+  );
+}
+
+function Row({
+  label, value, tag, strike, valueColor, info, gem, bold,
+}: { label: string; value: string; tag?: string; strike?: string; valueColor?: string; info?: boolean; gem?: boolean; bold?: boolean }) {
+  const fs = bold ? 16 : 14;
+  const fw = bold ? 800 : 500;
   return (
     <View style={styles.sumRow}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        {strike ? <Txt s={17} style={{ color: MUTED, textDecorationLine: 'line-through' }}>{strike}</Txt> : null}
-        <Txt s={17} style={{ color: valueColor ?? TEXT }}>{value}</Txt>
+        {strike ? <Txt s={fs} w={fw} style={{ color: MUTED, textDecorationLine: 'line-through' }}>{strike}</Txt> : null}
+        {!strike ? <Txt s={fs} w={fw} style={{ color: valueColor ?? TEXT }}>{value}</Txt> : null}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        {tag ? (
-          <View style={styles.tag}><Txt s={13} w={700} style={{ color: OLIVE }}>{tag}</Txt></View>
-        ) : null}
-        <Txt s={17} style={{ color: TEXT }}>{label}</Txt>
+        {info ? <InfoDot /> : null}
+        {tag ? <View style={styles.tag}><Txt s={12} w={700} style={{ color: BRAND }}>{tag}</Txt></View> : null}
+        <Txt s={fs} w={fw} style={{ color: TEXT }}>{label}</Txt>
+        {gem ? <View style={styles.gem} /> : null}
       </View>
     </View>
   );
 }
 
-/** صف وسيلة دفع في الـ Sheet: [حذف][صح] | الاسم + الرقم | اللوجو */
+/** صف وسيلة دفع في الـ Sheet (ارتفاع 58): [صح] | الاسم + الرقم | اللوجو */
 function MethodRow({
-  selected, onSelect, onDelete, title, sub, logo,
-}: { selected: boolean; onSelect: () => void; onDelete: () => void; title: string; sub: string; logo: React.ReactNode }) {
+  selected, onSelect, title, sub, logo,
+}: { selected: boolean; onSelect: () => void; title: string; sub: string; logo: React.ReactNode }) {
   return (
-    <PressableScale style={[styles.method, selected && { borderColor: OLIVE, backgroundColor: OLIVE_SOFT }]} onPress={onSelect}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <PressableScale onPress={onDelete} style={styles.trash} accessibilityRole="button" accessibilityLabel="حذف">
-          <Icon name="delete" size={20} color="#E11D1D" />
-        </PressableScale>
-        <View style={[styles.check, selected && styles.checkOn]}>
-          <Icon name="check" size={20} color={selected ? GREEN : '#C4C8C6'} />
-        </View>
+    <PressableScale style={[styles.method, selected && { borderColor: BRAND, backgroundColor: BRAND_SOFT }]} onPress={onSelect}>
+      <View style={[styles.check, selected && styles.checkOn]}>
+        <Icon name="check" size={16} color={selected ? GREEN : '#C4C8C6'} />
       </View>
       <View style={styles.vDiv} />
       <View style={styles.methodText}>
-        <Txt s={17} w={800} style={{ color: TEXT }}>{title}</Txt>
-        <Txt s={15} style={{ color: MUTED, letterSpacing: 0.5 }}>{sub}</Txt>
+        <Txt s={13} w={700} style={{ color: TEXT }} numberOfLines={1}>{title}</Txt>
+        <Txt s={12} w={500} style={{ color: MUTED }} numberOfLines={1}>{sub}</Txt>
       </View>
       <View style={styles.vDiv} />
       <View style={styles.logoBox}>{logo}</View>
@@ -696,65 +733,72 @@ function MethodRow({
 }
 
 const styles = StyleSheet.create({
-  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 12, backgroundColor: BG },
-  back: { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
-  backSpacer: { width: 44, height: 44 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10, backgroundColor: BG },
+  back: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  backSpacer: { width: 40, height: 40 },
 
-  band: { height: 16, backgroundColor: BAND },
-  installCard: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 66, borderRadius: 14, borderWidth: 1, borderColor: BORDER, paddingHorizontal: 16, backgroundColor: '#FFFFFF' },
-  newBadge: { backgroundColor: '#EAF4F6', borderRadius: 8, paddingHorizontal: 10, paddingVertical: 4 },
-  minChip: { backgroundColor: BAND, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 6 },
-  balRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginTop: 6 },
-  pointsRow: { flexDirection: 'row', alignItems: 'center', gap: 8 },
-  pointsDot: { width: 22, height: 22, borderRadius: 11, backgroundColor: OLIVE, alignItems: 'center', justifyContent: 'center' },
-  section: { paddingHorizontal: 16, paddingVertical: 22, gap: 14 },
+  band: { height: 14, backgroundColor: BAND },
+  section: { paddingHorizontal: 16, paddingVertical: 16, gap: 10 },
   title: { textAlign: 'right', alignSelf: 'stretch', color: TEXT },
+  titleInline: { textAlign: 'right', color: TEXT },
   titleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   etaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 6 },
 
-  addrRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  input: { borderWidth: 1, borderColor: BORDER, borderRadius: 14, paddingHorizontal: 16, paddingVertical: 16, minHeight: 58, fontSize: 16, color: TEXT, textAlign: 'right', textAlignVertical: 'top', backgroundColor: '#FFFFFF' },
+  addrRow: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  input: { borderWidth: 1, borderColor: BORDER, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, textAlign: 'right', backgroundColor: '#FFFFFF' },
 
-  payOpt: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 58, paddingHorizontal: 16, borderRadius: 14, borderWidth: 1, borderColor: BORDER, backgroundColor: '#FFFFFF' },
-  payOptOn: { borderColor: OLIVE, backgroundColor: OLIVE_SOFT },
-  payOptLabel: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  dot: { width: 22, height: 22, borderRadius: 11, borderWidth: 1.5, borderColor: '#CFD2D6', alignItems: 'center', justifyContent: 'center' },
-  dotInner: { width: 12, height: 12, borderRadius: 6, backgroundColor: OLIVE },
-  pickedBox: { borderRadius: 14, backgroundColor: BAND, padding: 14, gap: 4, alignItems: 'flex-end' },
+  payOpt: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', minHeight: 52, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: BORDER, backgroundColor: '#FFFFFF' },
+  payOptOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
+  payOptLabel: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  dot: { width: 20, height: 20, borderRadius: 10, borderWidth: 1.5, borderColor: '#CFD2D6', alignItems: 'center', justifyContent: 'center' },
+  dotInner: { width: 10, height: 10, borderRadius: 5, backgroundColor: BRAND },
+  minChip: { backgroundColor: BAND, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 5 },
+  newBadge: { backgroundColor: '#EAF4F6', borderRadius: 7, paddingHorizontal: 8, paddingVertical: 3 },
+  applePayMark: { borderWidth: 1, borderColor: TEXT, borderRadius: 4, paddingHorizontal: 5, paddingVertical: 1 },
+  pickedBox: { borderRadius: 12, backgroundColor: BAND, padding: 12, gap: 3, alignItems: 'flex-end' },
 
-  chips: { flexDirection: 'row', gap: 10, marginTop: 4 },
-  chip: { height: 43, paddingHorizontal: 12, borderRadius: 14, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
-  chipOn: { borderColor: OLIVE, backgroundColor: OLIVE_SOFT },
+  balRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 
-  promoBox: { flexDirection: 'row', alignItems: 'center', height: 58, borderWidth: 1, borderColor: BORDER, borderRadius: 14, paddingHorizontal: 16, gap: 12 },
-  promoInput: { flex: 1, fontSize: 17, color: TEXT, textAlign: 'right', paddingVertical: 0 },
+  chips: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  chip: { height: 40, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  chipOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
+
+  promoBox: { flexDirection: 'row', alignItems: 'center', height: 50, borderWidth: 1, borderColor: BORDER, borderRadius: 12, paddingHorizontal: 14, gap: 10 },
+  promoInput: { flex: 1, textAlign: 'right', paddingVertical: 0 },
+
+  noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  noteInput: { alignSelf: 'stretch', textAlign: 'right', paddingVertical: 0, minHeight: 20, color: TEXT },
 
   sumRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  tag: { backgroundColor: OLIVE_SOFT, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 },
+  tag: { backgroundColor: LIME, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 2 },
+  infoDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.2, borderColor: MUTED, alignItems: 'center', justifyContent: 'center' },
+  gem: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#E8742A', transform: [{ rotate: '45deg' }] },
 
-  bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 16, gap: 14, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: -4 }, elevation: 12 },
+  bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 12, gap: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: -4 }, elevation: 12 },
   totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  cta: { height: 56, borderRadius: 14, backgroundColor: OLIVE, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
+  pointsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  pointsDot: { width: 18, height: 18, borderRadius: 9, backgroundColor: BRAND, alignItems: 'center', justifyContent: 'center' },
+  cta: { height: 50, borderRadius: 12, backgroundColor: BRAND, alignItems: 'center', justifyContent: 'center', flexDirection: 'row' },
 
   sheetBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.38)' },
-  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 12, gap: 14 },
-  sheetHandle: { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: '#C9C9C9', marginBottom: 4 },
-  method: { minHeight: 80, borderRadius: 18, borderWidth: 1, borderColor: '#E1E3E6', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: '#FFFFFF' },
-  trash: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#FBE4E4', alignItems: 'center', justifyContent: 'center' },
-  check: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.5, borderColor: '#C4C8C6', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 24, borderTopRightRadius: 24, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 10, gap: 12 },
+  sheetHandle: { alignSelf: 'center', width: 38, height: 4, borderRadius: 2, backgroundColor: '#C9C9C9', marginBottom: 2 },
+  method: { height: 58, borderRadius: 14, borderWidth: 1, borderColor: '#E1E3E6', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFFFFF' },
+  check: { width: 28, height: 28, borderRadius: 14, borderWidth: 1.5, borderColor: '#C4C8C6', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   checkOn: { backgroundColor: '#E3F4DC', borderColor: '#E3F4DC' },
-  vDiv: { width: 1, height: 44, backgroundColor: '#D8DDD9' },
-  methodText: { flex: 1, minWidth: 0, alignItems: 'flex-end', gap: 4 },
-  logoBox: { width: 76, alignItems: 'center', justifyContent: 'center' },
-  divLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 14, marginVertical: 4 },
+  vDiv: { width: 1, height: 32, backgroundColor: '#D8DDD9' },
+  methodText: { flex: 1, minWidth: 0, alignItems: 'flex-end', gap: 2 },
+  logoBox: { width: 56, alignItems: 'center', justifyContent: 'center' },
+  addMethod: { height: 70, borderRadius: 14, borderWidth: 1, borderColor: '#E1E3E6', alignItems: 'center', justifyContent: 'center', gap: 4, backgroundColor: '#FFFFFF' },
+  divLabelRow: { flexDirection: 'row', alignItems: 'center', gap: 12, marginVertical: 2 },
   divLine: { flex: 1, height: 1, backgroundColor: '#D5D8DC' },
-  sheetBtn: { flex: 1, height: 54, borderRadius: 14, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  sheetBtn: { flex: 1, height: 48, borderRadius: 12, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
 
   threeDSRoot: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.48)' },
   threeDSSheet: { height: '94%', borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: BORDER, overflow: 'hidden', paddingTop: 12, backgroundColor: BG },
-  threeDSHeader: { minHeight: 66, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: BORDER, backgroundColor: BAND, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  threeDSClose: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: BORDER, backgroundColor: BG, alignItems: 'center', justifyContent: 'center' },
-  threeDSEmpty: { width: 40, height: 40 },
+  threeDSHeader: { minHeight: 62, borderBottomWidth: StyleSheet.hairlineWidth, borderColor: BORDER, backgroundColor: BAND, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  threeDSClose: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: BORDER, backgroundColor: BG, alignItems: 'center', justifyContent: 'center' },
+  threeDSEmpty: { width: 38, height: 38 },
   threeDSWebView: { flex: 1, backgroundColor: '#FFFFFF' },
   threeDSLoading: { position: 'absolute', top: '48%', left: 0, right: 0, alignItems: 'center', zIndex: 2 },
   threeDSError: { position: 'absolute', bottom: 20, left: 16, right: 16, padding: 14, borderRadius: 16, gap: 10, backgroundColor: BAND },
