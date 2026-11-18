@@ -56,7 +56,7 @@ export const ALL_EXTRAS: Extra[] = [...EXTRAS.sweet, ...EXTRAS.savory];
 /** Delivery speeds (checkout). Pickup ignores the speed. */
 export const SPEEDS = [
   { t: 'Standard', s: '25–35 min', fee: 0 },
-  { t: 'Priority', s: '15–20 min', fee: 1.99 },
+  { t: 'Priority', s: '15–20 min', fee: 20 },
 ] as const;
 
 /* ---------- rewards (Fig Club) ---------- */
