@@ -94,6 +94,7 @@ function Checkout() {
       customerLocation: st.customerLocation,
       addr: st.addrs[st.addr] ?? st.addrs[0],
       payM: st.payM,
+      speed: st.speed,
       cards: st.cards,
       defCard: st.defCard,
       note: st.note,
@@ -147,7 +148,7 @@ function Checkout() {
   const baseDelivery = isDelivery ? t.fee : 0;
   const delivery = isDelivery && isFirstOrder ? 0 : baseDelivery;
   const discount = s.promo ? t.disc : 0;
-  const total = Math.max(0, t.sub - discount + delivery + SERVICE_FEE + tip + (rushDelivery ? 20 : 0));
+  const total = Math.max(0, t.sub - discount + delivery + (t.speedFee ?? 0) + SERVICE_FEE + tip);
 
   /* ───────── الدفع ───────── */
   const [paying, setPaying] = useState(false);
@@ -520,6 +521,7 @@ function Checkout() {
               <Row label="التوصيل" info value={egp2(baseDelivery)} />
             )
           ) : null}
+          {t.speedFee > 0 ? <Row label="رسوم التوصيل المستعجل" value={egp2(t.speedFee)} valueColor={RED} /> : null}
           <Row label="رسوم الخدمة" info value={egp2(SERVICE_FEE)} />
           {tip > 0 ? <Row label="إكرامية المندوب" value={egp2(tip)} /> : null}
           <Row label="المبلغ الإجمالي" value={egp2(total)} bold />
@@ -554,13 +556,13 @@ function Checkout() {
             <Txt s={12} color={MUTED}>موعد تقديري حسب تجهيز المطعم والتوصيل</Txt>
           </View>
           <View style={{ flexDirection: "row", justifyContent: "space-between" }}><Txt s={11} color={MUTED}>أسرع وقت</Txt><Txt s={11} color={MUTED}>تأجيل حتى ساعتين</Txt></View>
-          <View style={styles.scheduleTrack} onTouchStart={(e) => { setRushDelivery(false); setScheduleOffset(Math.max(0, Math.min(120, Math.round(e.nativeEvent.locationX / 300 * 8) * 15))); }} onTouchMove={(e) => setScheduleOffset(Math.max(0, Math.min(120, Math.round(e.nativeEvent.locationX / 300 * 8) * 15)))}><View style={[styles.scheduleFill, { width: (scheduleOffset / 120 * 100) + "%" }]} /><View style={[styles.scheduleThumb, { left: (scheduleOffset / 120 * 100) + "%" }]} /></View>
+          <View style={styles.scheduleTrack} onTouchStart={(e) => { setRushDelivery(false); setScheduleOffset(Math.max(0, Math.min(120, Math.round(e.nativeEvent.locationX / 300 * 8) * 15))); }} onTouchMove={(e) => { setRushDelivery(false); setScheduleOffset(Math.max(0, Math.min(120, Math.round(e.nativeEvent.locationX / 300 * 8) * 15))); }}><View style={[styles.scheduleFill, { width: (scheduleOffset / 120 * 100) + "%" }]} /><View style={[styles.scheduleThumb, { left: (scheduleOffset / 120 * 100) + "%" }]} /></View>
           <View style={{ flexDirection: "row", gap: 8 }}>
             <PressableScale onPress={() => { setRushDelivery(false); setScheduleOffset(0); }} style={[styles.scheduleChoice, !rushDelivery && scheduleOffset === 0 && styles.scheduleChoiceOn]}><Txt s={13} w={700} color={GREEN}>أسرع وقت</Txt><Txt s={11} color={MUTED}>بدون رسوم إضافية</Txt></PressableScale>
             <PressableScale onPress={() => { setRushDelivery(true); setScheduleOffset(0); }} style={[styles.scheduleChoice, rushDelivery && { borderColor: RED, backgroundColor: "#FFF1F0" }]}><Txt s={13} w={700} color={RED}>توصيل مستعجل</Txt><Txt s={11} color={RED}>+20 ج.م</Txt></PressableScale>
           </View>
           <PressableScale onPress={() => { setRushDelivery(false); setScheduleOffset((v) => v > 0 ? Math.min(120, v + 15) : 15); }} style={[styles.scheduleChoice, scheduleOffset > 0 && !rushDelivery && styles.scheduleChoiceOn]}><Txt s={13} w={700} color={TEXT}>تأجيل الطلب · {scheduleOffset} دقيقة</Txt><Txt s={11} color={MUTED}>اسحب المؤشر لاختيار موعد لاحق</Txt></PressableScale>
-          <PressableScale onPress={() => setScheduleSheet(false)} style={[styles.cta, { marginTop: 4 }]}><Txt s={15} w={700} color="#FFFFFF">تأكيد الموعد</Txt></PressableScale>
+          <PressableScale onPress={() => { set({ speed: rushDelivery ? 1 : 0 }); setScheduleSheet(false); }} style={[styles.cta, { marginTop: 4 }]}><Txt s={15} w={700} color="#FFFFFF">تأكيد الموعد</Txt></PressableScale>
         </View>
       </Modal>
       {/* ───────── Bottom sheet ───────── */}
