@@ -1,5 +1,6 @@
-import { router } from 'expo-router';
-import { type ReactNode } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, type ReactNode } from 'react';
+import * as Location from 'expo-location';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 
@@ -36,6 +37,26 @@ export default function HomeScreen() {
   const { c } = useTheme();
   const chrome = useChrome();
   const user = useSession((s) => s.user);
+  useFocusEffect(useCallback(() => {
+    let cancelled = false;
+    const refreshCustomerLocation = async () => {
+      if (!user) return;
+      let permission = await Location.getForegroundPermissionsAsync();
+      if (!permission.granted && permission.status === 'undetermined') {
+        permission = await Location.requestForegroundPermissionsAsync();
+      }
+      if (!permission.granted) return;
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      if (!cancelled) {
+        useApp.setState({ customerLocation: {
+          latitude: position.coords.latitude,
+          longitude: position.coords.longitude,
+        } });
+      }
+    };
+    void refreshCustomerLocation().catch(() => undefined);
+    return () => { cancelled = true; };
+  }, [user?.uid]));
   const unread = useApp(selectUnread);
   const secs = useApp((s) => s.secs);
   const has = useApp(
