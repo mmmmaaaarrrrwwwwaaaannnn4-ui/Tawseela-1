@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import * as Location from 'expo-location';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
 import { AddressSheet, blankAddress } from '@/components/account/address-sheet';
@@ -22,6 +23,28 @@ export default function AddressesScreen() {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<NewAddress>(() => blankAddress());
   const [err, setErr] = useState(false);
+
+  const useCurrentLocation = async () => {
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (!permission.granted) { useApp.getState().showToast('Location permission needed', 'Allow location access to use your current position.', 'error'); return; }
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const latitude = position.coords.latitude;
+      const longitude = position.coords.longitude;
+      const places = await Location.reverseGeocodeAsync({ latitude, longitude });
+      const place = places[0];
+      startAddr({ latitude, longitude, l1: [place?.streetNumber, place?.street].filter(Boolean).join(' ') || place?.name || 'Pinned location', city: [place?.district, place?.city, place?.region, place?.country].filter(Boolean).join(', '), zip: place?.postalCode || '', tag: 'Other', custom: 'Current location' });
+    } catch { useApp.getState().showToast('Could not get location', 'Try moving the pin on the map.', 'error'); }
+  };
+
+  const selectMapPoint = async (latitude: number, longitude: number) => {
+    setDraft((d) => ({ ...d, latitude, longitude }));
+    try {
+      const places = await Location.reverseGeocodeAsync({ latitude, longitude });
+      const place = places[0];
+      if (place) setDraft((d) => ({ ...d, latitude, longitude, l1: [place.streetNumber, place.street].filter(Boolean).join(' ') || place.name || 'Pinned location', city: [place.district, place.city, place.region, place.country].filter(Boolean).join(', '), zip: place.postalCode || '' }));
+    } catch { /* Keep the selected coordinates; the customer can type the address. */ }
+  };
 
   const startAddr = (prefill?: Partial<NewAddress>) => {
     setDraft(blankAddress(prefill));
@@ -48,10 +71,7 @@ export default function AddressesScreen() {
         >
           <PressableScale
             scaleTo={0.98}
-            onPress={() => {
-              useApp.getState().showToast('Location found', '232 Mercer St, New York', 'my_location');
-              startAddr({ l1: '232 Mercer St', zip: '10012', tag: 'Other', custom: 'Current location' });
-            }}
+            onPress={() => { void useCurrentLocation(); }}
             style={[styles.locate, { borderColor: c.line, backgroundColor: c.surface1 }]}
           >
             <View style={styles.locateTile}>
@@ -138,6 +158,7 @@ export default function AddressesScreen() {
           showErrors={err}
           onSave={save}
           onClose={() => setOpen(false)}
+          onMapSelect={(latitude, longitude) => { void selectMapPoint(latitude, longitude); }}
         />
       </View>
     </RevealScope>
