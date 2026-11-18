@@ -369,25 +369,6 @@ function Checkout() {
         <View style={styles.section}>
           <Txt s={17} w={700} style={styles.title}>الدفع</Txt>
 
-          {/* أقساط بنكية */}
-          <PressableScale onPress={soon('الأقساط البنكية')} scaleTo={0.98} style={styles.payOpt}>
-            <View style={styles.minChip}><Txt s={11} w={500} style={{ color: MUTED }}>الحد الأدنى للطلب 500 ج.م</Txt></View>
-            <View style={styles.payOptLabel}>
-              <View style={styles.newBadge}><Txt s={11} w={700} style={{ color: '#1F7A7A' }}>New!</Txt></View>
-              <Txt s={14} w={600} style={{ color: TEXT }}>أقساط بنكية</Txt>
-              <Icon name="storefront" size={22} color={TEXT} />
-            </View>
-          </PressableScale>
-
-          {/* Apple Pay */}
-          <PressableScale onPress={soon('Apple Pay')} scaleTo={0.98} style={styles.payOpt}>
-            <Dot on={false} />
-            <View style={styles.payOptLabel}>
-              <Txt s={14} w={700} style={{ color: TEXT }}>Apple Pay</Txt>
-              <View style={styles.applePayMark}><Txt s={10} w={700} style={{ color: TEXT }}>Pay</Txt></View>
-            </View>
-          </PressableScale>
-
           {/* الدفع عند الاستلام */}
           <PressableScale onPress={chooseCash} scaleTo={0.98} style={[styles.payOpt, payPicked === 'cash' && styles.payOptOn]}>
             <Dot on={payPicked === 'cash'} />
@@ -406,28 +387,26 @@ function Checkout() {
             </View>
           </PressableScale>
 
-          {payPicked === 'online' && s.payM === 3 ? (
-            <View style={styles.pickedBox}>
-              <Txt s={13} w={700} style={{ color: TEXT }}>{walletProvider || 'محفظة الموبايل'}</Txt>
-              <Txt s={13} w={500} style={{ color: MUTED }}>{walletPhone}</Txt>
+          {/* Apple Pay */}
+          <PressableScale onPress={soon('Apple Pay')} scaleTo={0.98} style={styles.payOpt}>
+            <Dot on={false} />
+            <View style={styles.payOptLabel}>
+              <Txt s={14} w={700} style={{ color: TEXT }}>Apple Pay</Txt>
+              <View style={styles.applePayMark}><Txt s={10} w={700} style={{ color: TEXT }}>Pay</Txt></View>
             </View>
-          ) : null}
+          </PressableScale>
 
-          {payPicked === 'online' && s.payM !== 3 && selectedCard ? (
-            <View style={styles.pickedBox}>
-              <Txt s={13} w={700} style={{ color: TEXT }}>{`${selectedCard.name || 'بطاقة محفوظة'} · •••• ${last4(selectedCard.num)}`}</Txt>
-              <TextInput
-                value={savedCardCvv}
-                onChangeText={(v) => setSavedCardCvv(v.replace(/[^0-9]/g, '').slice(0, 4))}
-                placeholder="رمز الأمان CVV"
-                placeholderTextColor={MUTED}
-                keyboardType="number-pad"
-                secureTextEntry
-                maxLength={4}
-                style={[styles.input, INPUT_FONT, { minHeight: 46, marginTop: 6, alignSelf: 'stretch' }]}
-              />
+          {/* أقساط بنكية */}
+          <PressableScale onPress={soon('الأقساط البنكية')} scaleTo={0.98} style={styles.payOpt}>
+            <View style={styles.minChip}><Txt s={11} w={500} style={{ color: MUTED }}>الحد الأدنى للطلب 500 ج.م</Txt></View>
+            <View style={styles.payOptLabel}>
+              <View style={styles.newBadge}><Txt s={11} w={700} style={{ color: '#1F7A7A' }}>New!</Txt></View>
+              <Txt s={14} w={600} style={{ color: TEXT }}>أقساط بنكية</Txt>
+              <Icon name="storefront" size={22} color={TEXT} />
             </View>
-          ) : null}
+          </PressableScale>
+
+
         </View>
         <View style={styles.band} />
 
