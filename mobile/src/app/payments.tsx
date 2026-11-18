@@ -3,7 +3,7 @@ import * as Crypto from 'expo-crypto';
 import { router } from 'expo-router';
 import { Image, ScrollView, StyleSheet, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Svg, { Circle, Defs, Ellipse, G, LinearGradient as SvgGradient, Path, Rect, Stop } from 'react-native-svg';
+import Svg, { Circle, Path } from 'react-native-svg';
 import { useShallow } from 'zustand/react/shallow';
 
 import { blankCard, CardSheet } from '@/components/account/card-sheet';
@@ -31,6 +31,11 @@ const GREEN = '#153222';
 const LIME = '#CDEB3B';
 const CREAM = '#F4F0E4';
 const BORDER = '#DADDE1';
+// الصورتين متخزنين جوه الملف نفسه (base64) — مفيش ملفات برّه ولا require.
+const LOGO = { uri: 'data:image/png;base64,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' };
+const RECEIPT = { uri: 'data:image/png;base64,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' };
+// مسافة بيضا بين معاينة البطاقة وعنوان "طريقة الدفع" (بالبكسل) — زوّدها أو قلّلها حسب رغبتك.
+const CARD_GAP = 20;
 const NETWORKS = ['MADA', 'VISA', 'AMEX', 'MASTERCARD', 'DISCOVER'];
 
 type ServerCard = { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string };
@@ -72,11 +77,35 @@ function validCardExpiry(value: string) {
   return year > now.getFullYear() || (year === now.getFullYear() && month >= now.getMonth() + 1);
 }
 
+// توحيد اسم نوع البطاقة: السيرفر ممكن يرجّع "Mastercard" أو "master" أو "MC" أو "American Express"...
+// وكمان الرقم ممكن يجي مخفي، فنجرب الاسم الأول وبعدين أول أرقام الرقم.
+function normalizeBrand(raw: unknown, number: string): string {
+  const t = String(raw ?? '').toUpperCase().replace(/[^A-Z]/g, '');
+  if (t.includes('MASTER') || t === 'MC' || t === 'MAESTRO') return 'MASTERCARD';
+  if (t.includes('VISA')) return 'VISA';
+  if (t.includes('AMEX') || t.includes('AMERICANEXPRESS')) return 'AMEX';
+  if (t.includes('MADA')) return 'MADA';
+  if (t.includes('DISCOVER')) return 'DISCOVER';
+  if (t.includes('MEEZA')) return 'MEEZA';
+  const d = number.replace(/\D/g, '');
+  if (/^4/.test(d)) return 'VISA';
+  if (/^(5[1-5]|2(2[2-9]|[3-6]\d|7[01]|720))/.test(d)) return 'MASTERCARD';
+  if (/^3[47]/.test(d)) return 'AMEX';
+  if (/^(6011|65|64[4-9])/.test(d)) return 'DISCOVER';
+  return t || 'CARD';
+}
+
+// رقم نموذجي لكل شبكة عشان نجيب نفس خلفية الكارت من cardBrandOf لو الرقم الحقيقي مخفي.
+const BRAND_SAMPLE: Record<string, string> = { VISA: '4000000000000000', MASTERCARD: '5100000000000000', AMEX: '340000000000000', DISCOVER: '6011000000000000' };
+
 // تحويل واحد فقط لرد /v1/me/cards.
 function mapCard(x: ServerCard) {
-  const b = cardBrandOf(x.number.replace(/\D/g, ''));
+  const digits = x.number.replace(/\D/g, '');
+  let b = cardBrandOf(digits);
+  const brand = b.name !== 'CARD' ? normalizeBrand(b.name, digits) : normalizeBrand(x.brand, x.number);
+  if (b.name === 'CARD' && BRAND_SAMPLE[brand]) b = cardBrandOf(BRAND_SAMPLE[brand]);
   const exp = x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '';
-  return { id: x.id, brand: b.name !== 'CARD' ? b.name : (x.brand || b.name), num: x.number, exp, bg: b.bg, nick: '', name: x.name };
+  return { id: x.id, brand, num: x.number, exp, bg: b.bg, nick: '', name: x.name };
 }
 
 const last4 = (v: string) => v.replace(/\D/g, '').slice(-4);
@@ -119,101 +148,6 @@ function InfoIcon() {
       <Circle cx={12} cy={12} r={10} stroke={LIME} strokeWidth={2} />
       <Path d="M12 11v6" stroke={LIME} strokeWidth={2.4} strokeLinecap="round" />
       <Circle cx={12} cy={7.3} r={1.3} fill={LIME} />
-    </Svg>
-  );
-}
-
-/**
- * لوجو "توصيلة باي" مرسوم بالكامل بـ SVG (حروف بخطوط سميكة مدورة + خط سفلي + كبسولة "باي").
- * الرسم يدوي تقريبي من الصورة. لو عندك ملف SVG الأصلي للوجو، حط الـ paths بتاعته هنا مكان الرسم ده.
- */
-function LogoArt() {
-  const lime = '#D4F03C';
-  const ink = GREEN;
-  return (
-    <Svg width={121} height={28.2} viewBox="0 0 450 105">
-      {/* الخط السفلي */}
-      <Path d="M128 100 Q290 98 448 90 L448 99 Q290 106 128 106 Z" fill={lime} />
-
-      {/* الكبسولة */}
-      <G rotation={-4} origin="75, 64">
-        <Rect x={2} y={26} width={146} height={74} rx={37} fill={CREAM} />
-      </G>
-
-      {/* كلمة "باي" */}
-      <G skewX={-8} origin="0, 63" stroke={ink} strokeWidth={8} strokeLinecap="round" strokeLinejoin="round" fill="none">
-        <Path d="M128 52 L128 70 L100 70 L100 36" />
-        <Path d="M84 56 L84 70 C84 80 60 82 44 70" />
-        <Circle cx={116} cy={87} r={4.5} fill={ink} stroke="none" />
-        <Circle cx={62} cy={92} r={4} fill={ink} stroke="none" />
-        <Circle cx={75} cy={92} r={4} fill={ink} stroke="none" />
-      </G>
-
-      {/* كلمة "توصيلة" */}
-      <G skewX={-8} origin="0, 70" stroke={lime} strokeWidth={14} strokeLinecap="round" strokeLinejoin="round" fill="none">
-        {/* ت */}
-        <Path d="M436 56 L436 78 L400 78 L391 72" />
-        <Circle cx={424} cy={34} r={6} fill={lime} stroke="none" />
-        <Circle cx={440} cy={34} r={6} fill={lime} stroke="none" />
-        {/* و */}
-        <Circle cx={380} cy={64} r={12} strokeWidth={10} />
-        <Path d="M391 72 C394 90 388 99 374 98" strokeWidth={12} />
-        {/* ص */}
-        <Ellipse cx={326} cy={65} rx={20} ry={12} strokeWidth={10} />
-        <Path d="M332 78 L262 78" />
-        {/* ي */}
-        <Path d="M262 78 L252 78 L246 62 L240 78 L228 78" />
-        <Circle cx={240} cy={97} r={5.5} fill={lime} stroke="none" />
-        <Circle cx={254} cy={97} r={5.5} fill={lime} stroke="none" />
-        {/* ل */}
-        <Path d="M228 78 L214 78 L210 8" />
-        {/* ة */}
-        <Path d="M214 78 L192 78" />
-        <Ellipse cx={178} cy={64} rx={14} ry={11} strokeWidth={10} />
-        <Circle cx={170} cy={34} r={6.5} fill={lime} stroke="none" />
-        <Circle cx={186} cy={34} r={6.5} fill={lime} stroke="none" />
-      </G>
-    </Svg>
-  );
-}
-
-function EmptyCardsArt() {
-  return (
-    <Svg width={61} height={48} viewBox="0 0 61 48">
-      <Defs>
-        <SvgGradient id="g1" x1="0" y1="0" x2="1" y2="1">
-          <Stop offset="0" stopColor="#E3E3E3" />
-          <Stop offset="1" stopColor="#B9B9B9" />
-        </SvgGradient>
-      </Defs>
-      <Rect x={10} y={9} width={51} height={39} rx={8} fill="#D3D3D3" />
-      <Rect x={0} y={0} width={51} height={37} rx={7} fill="url(#g1)" />
-      <Rect x={0} y={9} width={51} height={5} fill="#F2F2F2" opacity={0.55} />
-    </Svg>
-  );
-}
-
-function ReceiptArt() {
-  const dark = '#1F4D2B';
-  return (
-    <Svg width={100} height={106} viewBox="0 0 100 106" fill="none">
-      <Ellipse cx={50} cy={97} rx={40} ry={6} fill="#E8F5C8" />
-      <G rotation={-8} origin="50, 52">
-        <Path
-          d="M27 20 Q27 10 39 11 L70 13 Q79 14 78 24 L73 80 L67 86 L61 80 L55 86 L49 80 L43 86 L37 80 L31 86 L27 80 Z"
-          fill="#F7F6EE"
-          stroke={dark}
-          strokeWidth={4}
-          strokeLinejoin="round"
-        />
-        <Path d="M22 30 C20 16 32 8 42 13 L40 27 Z" fill={dark} />
-        <Circle cx={42} cy={38} r={6} fill="#B4E34A" />
-        <Rect x={52} y={35} width={19} height={6} rx={3} fill={dark} />
-        <Rect x={36} y={50} width={36} height={7} rx={3.5} fill={dark} />
-        <Rect x={40} y={63} width={32} height={7} rx={3.5} fill={dark} />
-      </G>
-      <Path d="M66 31A10 10 0 0 1 76 41" stroke="#A8DC3A" strokeWidth={5} strokeLinecap="round" />
-      <Path d="M66 20A21 21 0 0 1 87 41" stroke="#A8DC3A" strokeWidth={5} strokeLinecap="round" />
     </Svg>
   );
 }
@@ -296,6 +230,7 @@ export default function PaymentsScreen() {
 
   const loadCards = useCallback(async () => {
     const res = await api.get<{ cards: ServerCard[] }>('/v1/me/cards');
+    console.log('CARDS RESPONSE:', JSON.stringify(res, null, 2)); // مؤقت للتشخيص — امسحه بعد ما نخلص
     const next = (res.cards ?? []).map(mapCard);
     const current = useApp.getState().defCard;
     useApp.setState({ cards: next, defCard: next.some((x) => x.id === current) ? current : (next[0]?.id ?? '') });
@@ -408,13 +343,15 @@ export default function PaymentsScreen() {
       .catch((e) => useApp.getState().showToast('تعذر حفظ المحفظة', errMsg(e, 'حاول مرة أخرى.'), 'error'));
   };
 
-  const curBrand = cur ? String(cur.brand).toUpperCase() : '';
+  const curBrand = cur ? normalizeBrand(cur.brand, cur.num) : '';
 
   return (
     <View style={styles.root}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
+      {/* ستاتس بار ثابت حقيقي: مش جوه الـ ScrollView فمبينزلش مع السكرول */}
+      <View style={{ height: insets.top, backgroundColor: GREEN }} />
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
         {/* ───── الهيدر ───── */}
-        <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
+        <View style={[styles.header, { paddingTop: 6 }]}>
           <View style={styles.headTop}>
             <View style={styles.headBtns}>
               <PressableScale scaleTo={0.92} onPress={() => router.push(ROUTES.support as never)} style={styles.circle}>
@@ -424,7 +361,7 @@ export default function PaymentsScreen() {
                 <MoreDots />
               </PressableScale>
             </View>
-            <LogoArt />
+            <Image source={LOGO} resizeMode="contain" style={{ width: 121, height: 29 }} />
           </View>
 
           <View style={styles.headBottom}>
@@ -465,24 +402,10 @@ export default function PaymentsScreen() {
             </View>
             {cards.length > 1 ? <PagerDots count={cards.length} index={safeIdx} onPick={setIdx} activeWidth={20} /> : null}
           </>
-        ) : (
-          <View style={styles.emptyHero}>
-            {!cardsLoading ? (
-              <>
-                <EmptyCardsArt />
-                <View style={{ marginTop: 17 }}>
-                  <Txt s={20} w={800} color="#1B1B1B" align="center">ليس هناك بطاقات محفوظة</Txt>
-                </View>
-                <View style={{ marginTop: 9, paddingHorizontal: 30 }}>
-                  <Txt s={13} color="#666666" align="center">يمكنك حفظ بطاقة خصم او ائتمان بكل امان لإجراء طلباتك بشكل اسرع.</Txt>
-                </View>
-              </>
-            ) : null}
-          </View>
-        )}
+        ) : null}
 
         {/* ───── طريقة الدفع ───── */}
-        <View style={[styles.sectionHead, { marginTop: hasCards ? 18 : 10.5 }]}>
+        <View style={[styles.sectionHead, { marginTop: hasCards ? 18 + CARD_GAP : 16 }]}>
           <Txt s={19} w={800} color="#111111" align="right">طريقة الدفع</Txt>
           <Txt s={13} color="#333333" align="right">بيانات بطاقتك مشفرة ومحمية معنا</Txt>
         </View>
@@ -491,7 +414,7 @@ export default function PaymentsScreen() {
           {/* صف واحد بس للبطاقة المختارة في الكاروسيل (بدل تكرار كل البطاقات) */}
           {hasCards && cur ? (
             <MethodRow
-              logo={NETWORKS.includes(curBrand) ? <PaymentNetworkLogo brand={curBrand as any} width={42} height={31} /> : <Ic d={P.card} size={26} color="#555" />}
+              logo={NETWORKS.includes(curBrand) ? <PaymentNetworkLogo brand={curBrand as any} width={42} height={31} /> : <Txt s={10} w={800} color="#555555" align="center" numberOfLines={1}>{curBrand && curBrand !== 'CARD' ? curBrand : 'CARD'}</Txt>}
               title={cur.name || curBrand}
               subtitle={`•••• •••• •••• ${last4(cur.num)}`}
               isDefault={payM === PAY_CARD && defCard === cur.id}
@@ -555,7 +478,7 @@ export default function PaymentsScreen() {
           </View>
         ) : (
           <View style={styles.emptyHistory}>
-            <ReceiptArt />
+            <Image source={RECEIPT} resizeMode="contain" style={{ width: 100, height: 105 }} />
             <View style={{ marginTop: 14 }}>
               <Txt s={20} w={800} color="#1B1B1B" align="center">لا توجد معاملات حتى الآن</Txt>
             </View>
@@ -605,8 +528,6 @@ const styles = StyleSheet.create({
   balanceBox: { alignItems: 'flex-end', gap: 4 },
   balanceLbl: { height: 22, flexDirection: 'row', alignItems: 'center', gap: 6 },
   balanceAmt: { height: 36, flexDirection: 'row', alignItems: 'center', gap: 6.5 },
-
-  emptyHero: { marginTop: 7, height: 214.5, paddingTop: 57, alignItems: 'center' },
 
   sectionHead: { paddingHorizontal: 12, gap: 3, alignItems: 'flex-end' },
 
