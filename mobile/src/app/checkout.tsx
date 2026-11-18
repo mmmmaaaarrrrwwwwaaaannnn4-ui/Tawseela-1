@@ -104,13 +104,33 @@ function Checkout() {
   const t = useApp((st) => st.totals)();
   const set = useApp((st) => st.setCheckout);
   const toast = useApp.getState().showToast;
+  const [roadDistanceKm, setRoadDistanceKm] = useState<number | null>(null);
 
   /* ───────── وقت التوصيل ───────── */
   const cartBrandId = s.cart[0] ? useApp.getState().dishOf(s.cart[0].id).brand : '';
   const restaurant = s.brands.find((b) => b.id === cartBrandId);
+  useEffect(() => {
+    let active = true;
+    const customer = s.customerLocation;
+    if (restaurant?.lat == null || restaurant?.lng == null || !customer) {
+      setRoadDistanceKm(null);
+      return () => { active = false; };
+    }
+    setRoadDistanceKm(null);
+    const url = `https://router.project-osrm.org/route/v1/driving/${restaurant.lng},${restaurant.lat};${customer.longitude},${customer.latitude}?overview=false`;
+    fetch(url)
+      .then((response) => response.ok ? response.json() : Promise.reject(new Error('Route unavailable')))
+      .then((data: { routes?: { distance?: number }[] }) => {
+        const meters = data.routes?.[0]?.distance;
+        if (active && typeof meters === 'number' && Number.isFinite(meters) && meters > 0) setRoadDistanceKm(meters / 1000);
+      })
+      .catch(() => { if (active) setRoadDistanceKm(null); });
+    return () => { active = false; };
+  }, [restaurant?.lat, restaurant?.lng, s.customerLocation?.latitude, s.customerLocation?.longitude]);
+
   const distanceKm =
     restaurant?.lat != null && restaurant?.lng != null && s.customerLocation
-      ? distanceBetweenKm(s.customerLocation.latitude, s.customerLocation.longitude, restaurant.lat, restaurant.lng)
+      ? roadDistanceKm ?? distanceBetweenKm(s.customerLocation.latitude, s.customerLocation.longitude, restaurant.lat, restaurant.lng)
       : null;
   const etaMinutes = restaurant
     ? Math.max(1, Math.ceil((restaurant.prepTime || s.prep) + (distanceKm == null ? 0 : distanceKm * 5)))
