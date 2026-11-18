@@ -560,7 +560,7 @@ function Checkout() {
           <PressableScale onPress={() => set({ speed: rushDelivery ? 0 : 1 })} style={[styles.scheduleChoice, { borderColor: rushDelivery ? RED : BORDER, backgroundColor: rushDelivery ? '#FFF1F0' : '#FFFFFF' }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Icon name={rushDelivery ? 'check_circle' : 'radio_button_unchecked'} size={22} color={rushDelivery ? RED : MUTED} />
+                <Icon name="check_circle" size={22} color={rushDelivery ? RED : MUTED} />
                 <Txt s={14} w={700} color={RED}>توصيل مستعجل</Txt>
               </View>
               <Txt s={14} w={800} color={RED}>+20 ج.م</Txt>
