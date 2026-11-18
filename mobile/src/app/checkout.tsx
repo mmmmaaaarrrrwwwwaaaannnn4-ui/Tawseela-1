@@ -111,7 +111,9 @@ function Checkout() {
   const restaurant = s.brands.find((b) => b.id === cartBrandId);
   useEffect(() => {
     let active = true;
-    const customer = s.customerLocation;
+    const customer = s.addr?.latitude != null && s.addr?.longitude != null
+      ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
+      : s.customerLocation;
     if (restaurant?.lat == null || restaurant?.lng == null || !customer) {
       setRoadDistanceKm(null);
       return () => { active = false; };
@@ -126,14 +128,17 @@ function Checkout() {
       })
       .catch(() => { if (active) setRoadDistanceKm(null); });
     return () => { active = false; };
-  }, [restaurant?.lat, restaurant?.lng, s.customerLocation?.latitude, s.customerLocation?.longitude]);
+  }, [restaurant?.lat, restaurant?.lng, s.addr?.latitude, s.addr?.longitude, s.customerLocation?.latitude, s.customerLocation?.longitude]);
 
+  const deliveryPoint = s.addr?.latitude != null && s.addr?.longitude != null
+    ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
+    : s.customerLocation;
   const distanceKm =
-    restaurant?.lat != null && restaurant?.lng != null && s.customerLocation
-      ? roadDistanceKm ?? distanceBetweenKm(s.customerLocation.latitude, s.customerLocation.longitude, restaurant.lat, restaurant.lng)
+    restaurant?.lat != null && restaurant?.lng != null && deliveryPoint
+      ? roadDistanceKm ?? distanceBetweenKm(deliveryPoint.latitude, deliveryPoint.longitude, restaurant.lat, restaurant.lng)
       : null;
   const etaMinutes = restaurant
-    ? Math.max(1, Math.ceil((restaurant.prepTime || s.prep) + (distanceKm == null ? 0 : distanceKm * 5)))
+    ? Math.max(1, Math.ceil((restaurant.prepTime || s.prep) + (distanceKm == null ? 0 : distanceKm * 5 * (s.speed === 1 ? 0.5 : 1))))
     : s.prep;
   const etaFrom = new Date(Date.now() + etaMinutes * 60000);
   const etaTo = new Date(Date.now() + (etaMinutes + 10) * 60000);
