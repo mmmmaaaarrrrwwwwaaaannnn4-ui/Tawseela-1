@@ -14,13 +14,16 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIDesignRequiresCompatibility": false,
-        "NSLocationWhenInUseUsageDescription": "نحتاج موقعك لتحديد موقع المطبخ على الخريطة."
+        "NSLocationWhenInUseUsageDescription": "تحتاج توصيلة إلى موقعك لتحديد عنوان التوصيل وحساب وقت الوصول بدقة."
       },
       "usesAppleSignIn": true
     },
     "android": {
       "package": "com.tawseela.app",
-      "permissions": ["ACCESS_FINE_LOCATION", "ACCESS_COARSE_LOCATION"],
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
       "adaptiveIcon": {
         "backgroundColor": "#FFF000",
         "foregroundImage": "./assets/images/android-icon-foreground.png",
@@ -55,6 +58,12 @@
           "photosPermission": "Tawseela needs access to your photos to add profile pictures and order images.",
           "cameraPermission": false,
           "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "تحتاج توصيلة إلى موقعك لتحديد عنوان التوصيل وحساب وقت الوصول بدقة."
         }
       ]
     ],
