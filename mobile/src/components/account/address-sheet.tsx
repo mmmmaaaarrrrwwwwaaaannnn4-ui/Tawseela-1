@@ -18,11 +18,11 @@ export const blankAddress = (prefill?: Partial<NewAddress>): NewAddress => ({
   custom: '',
   l1: '',
   apt: '',
-  city: 'New York, NY',
+  city: 'مصر',
   zip: '',
   note: '',
   door: true,
-  phone: '+1 (212) 555‑0142',
+  phone: '',
   def: true,
   ...prefill,
 });
@@ -123,9 +123,9 @@ export function AddressSheet({
             icon="pin"
             value={n.zip}
             onChangeText={(z) => onChange({ zip: z.replace(/\D/g, '').slice(0, 5) })}
-            placeholder="ZIP *"
+            placeholder="Postal code"
             keyboardType="number-pad"
-            error={showErrors && !/^\d{5}$/.test(n.zip)}
+            error={showErrors && !!n.zip.trim() && !/^\d{5}$/.test(n.zip)}
             style={{ flex: 1 }}
           />
         </View>
