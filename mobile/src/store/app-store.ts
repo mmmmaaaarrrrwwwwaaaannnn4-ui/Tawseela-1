@@ -97,6 +97,8 @@ export interface NewAddress {
   door: boolean;
   phone: string;
   def: boolean;
+  latitude?: number;
+  longitude?: number;
 }
 
 export interface NewCard {
@@ -632,7 +634,7 @@ export const useApp = create<AppStore>()(
         addAddress: (n) => {
           const miss: string[] = [];
           if (!n.l1.trim()) miss.push('a street');
-          if (!/^\d{5}$/.test(n.zip.trim())) miss.push('a 5‑digit ZIP');
+          if (n.zip.trim() && !/^\d{5}$/.test(n.zip.trim())) miss.push('a valid 5‑digit postal code');
           if (miss.length) {
             toast('Almost there', 'Add ' + miss.join(' and '), 'error');
             return miss.join(' and ');
@@ -646,6 +648,8 @@ export const useApp = create<AppStore>()(
             note: n.note.trim(),
             door: n.door,
             phone: n.phone,
+            latitude: n.latitude,
+            longitude: n.longitude,
           };
           set((s) => ({ addrs: [...s.addrs, a], addr: n.def ? s.addrs.length : s.addr }));
           toast('Address saved', a.l1, 'location_on');
