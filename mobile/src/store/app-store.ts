@@ -1259,6 +1259,7 @@ export const useApp = create<AppStore>()(
         fee: s.fee,
         freeAt: s.freeAt,
         sound: s.sound,
+        customerLocation: s.customerLocation,
         saved: s.saved,
         cart: s.cart,
         mode: s.mode,
