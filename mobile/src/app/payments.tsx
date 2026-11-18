@@ -104,7 +104,7 @@ function mapCard(x: ServerCard) {
   let b = cardBrandOf(digits);
   let brand = b.name !== 'CARD' ? normalizeBrand(b.name, digits) : normalizeBrand(x.brand, x.number);
   if (brand === 'CARD') {
-    // Fallback to network/BIN metadata when the API masks the card number.
+    // fallback: دوّر في باقي حقول رد السيرفر (scheme / type / bin / first6 ...) على اسم الشبكة أو أول أرقام البطاقة.
     const rest = Object.entries(x).filter(([k]) => !['name', 'id', 'number'].includes(k));
     const bin = rest.find(([k, v]) => /bin|first|prefix/i.test(k) && /^\d{1,9}$/.test(String(v ?? '')));
     brand = normalizeBrand(JSON.stringify(rest.map(([, v]) => v)), bin ? String(bin[1]) : digits);
@@ -353,53 +353,51 @@ export default function PaymentsScreen() {
 
   return (
     <View style={styles.root}>
-      {/* ستاتس بار ثابت حقيقي: مش جوه الـ ScrollView فمبينزلش مع السكرول */}
-      <View style={{ height: insets.top, backgroundColor: GREEN }} />
-      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: 40 + insets.bottom }}>
-        {/* ───── الهيدر ───── */}
-        <View style={[styles.header, { paddingTop: 6 }]}>
-          <View style={styles.headTop}>
-            <View style={styles.headBtns}>
-              <PressableScale scaleTo={0.92} onPress={() => router.push(ROUTES.support as never)} style={styles.circle}>
-                <Ic d={P.headset} size={18} color={GREEN} />
-              </PressableScale>
-              <PressableScale scaleTo={0.92} onPress={() => router.push(ROUTES.more as never)} style={styles.circle}>
-                <MoreDots />
-              </PressableScale>
-            </View>
-            <Image source={LOGO} resizeMode="contain" style={{ width: 121, height: 29 }} />
+      {/* ───── الهيدر الأخضر كله ثابت (ستاتس بار + لوجو + رصيد) ومش جوه الـ ScrollView ───── */}
+      <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
+        <View style={styles.headTop}>
+          <View style={styles.headBtns}>
+            <PressableScale scaleTo={0.92} onPress={() => router.push(ROUTES.support as never)} style={styles.circle}>
+              <Ic d={P.headset} size={18} color={GREEN} />
+            </PressableScale>
+            <PressableScale scaleTo={0.92} onPress={() => router.push(ROUTES.more as never)} style={styles.circle}>
+              <MoreDots />
+            </PressableScale>
+          </View>
+          <Image source={LOGO} resizeMode="contain" style={{ width: 121, height: 29 }} />
+        </View>
+
+        <View style={styles.headBottom}>
+          {/* الأيقونتين: دايرة 36 ومتمركزة على نفس خط مبلغ الرصيد */}
+          <View style={styles.quick}>
+            <PressableScale scaleTo={0.94} onPress={startCard} style={styles.quickCol}>
+              <View style={[styles.quickCircle, { backgroundColor: CREAM }]}>
+                <Ic d={P.card} size={20} color={GREEN} sw={2.2} />
+              </View>
+              <Txt s={10} w={500} color={CREAM} align="center" numberOfLines={2}>البطاقات المحفوظة</Txt>
+            </PressableScale>
+            <PressableScale scaleTo={0.94} onPress={() => router.push(ROUTES.topUp as never)} style={styles.quickCol}>
+              <View style={[styles.quickCircle, { backgroundColor: LIME }]}>
+                <Ic d={P.plus} size={21} color={GREEN} sw={2.2} />
+              </View>
+              <Txt s={10} w={500} color={CREAM} align="center" numberOfLines={2}>إضافة إلى الرصيد</Txt>
+            </PressableScale>
           </View>
 
-          <View style={styles.headBottom}>
-            {/* الأيقونتين: دايرة 36 ومتمركزة على نفس خط مبلغ الرصيد */}
-            <View style={styles.quick}>
-              <PressableScale scaleTo={0.94} onPress={startCard} style={styles.quickCol}>
-                <View style={[styles.quickCircle, { backgroundColor: CREAM }]}>
-                  <Ic d={P.card} size={20} color={GREEN} sw={2.2} />
-                </View>
-                <Txt s={10} w={500} color={CREAM} align="center" numberOfLines={2}>البطاقات المحفوظة</Txt>
-              </PressableScale>
-              <PressableScale scaleTo={0.94} onPress={() => router.push(ROUTES.topUp as never)} style={styles.quickCol}>
-                <View style={[styles.quickCircle, { backgroundColor: LIME }]}>
-                  <Ic d={P.plus} size={21} color={GREEN} sw={2.2} />
-                </View>
-                <Txt s={10} w={500} color={CREAM} align="center" numberOfLines={2}>إضافة إلى الرصيد</Txt>
-              </PressableScale>
+          <View style={styles.balanceBox}>
+            <View style={styles.balanceLbl}>
+              <InfoIcon />
+              <Txt s={16} w={500} color={CREAM} align="right">رصيدك هو</Txt>
             </View>
-
-            <View style={styles.balanceBox}>
-              <View style={styles.balanceLbl}>
-                <InfoIcon />
-                <Txt s={16} w={500} color={CREAM} align="right">رصيدك هو</Txt>
-              </View>
-              <View style={styles.balanceAmt}>
-                <Txt s={22} w={700} color={CREAM}>ج.م</Txt>
-                <Txt s={26} w={700} color={LIME} tabular>{fmtBalance(credit)}</Txt>
-              </View>
+            <View style={styles.balanceAmt}>
+              <Txt s={22} w={700} color={CREAM}>ج.م</Txt>
+              <Txt s={26} w={700} color={LIME} tabular>{fmtBalance(credit)}</Txt>
             </View>
           </View>
         </View>
+      </View>
 
+      <ScrollView style={{ flex: 1 }} showsVerticalScrollIndicator={false} contentContainerStyle={{ flexGrow: 1, paddingBottom: 40 + insets.bottom }}>
         {/* ───── كاروسيل البطاقات (نفس الـ Wallet القديم: سحب + فليب لضهر البطاقة) ───── */}
         {hasCards ? (
           <>
@@ -462,37 +460,40 @@ export default function PaymentsScreen() {
           </PressableScale>
         ) : null}
 
-        {/* ───── معاملات رصيد طلبات ───── */}
-        <View style={[styles.sectionHead, { marginTop: noMethods ? 20 : 24 }]}>
-          <Txt s={19} w={800} color="#111111" align="right">معاملات رصيد طلبات ·</Txt>
-        </View>
+        {/* لو مفيش معاملات: القسم كله بيتوسّط في المساحة اللي باقية في الصفحة */}
+        <View style={history.length ? undefined : { flex: 1, justifyContent: 'center', paddingBottom: 60 }}>
+          {/* ───── معاملات رصيد طلبات ───── */}
+          <View style={[styles.sectionHead, { marginTop: noMethods ? 20 : 24 }]}>
+            <Txt s={19} w={800} color="#111111" align="right">معاملات رصيد طلبات ·</Txt>
+          </View>
 
-        {history.length ? (
-          <View style={{ paddingHorizontal: 12, marginTop: 12, gap: 8 }}>
-            {history.map((o) => {
-              const refund = o.step === 4;
-              return (
-                <HistoryRow
-                  key={o.no}
-                  refund={refund}
-                  title={`${refund ? 'استرداد' : 'طلب'} ${o.no}`}
-                  subtitle={`${orderTime(o.placedAt)} · ${o.pay}`}
-                  amount={(refund ? '+' : '−') + money(o.total)}
-                />
-              );
-            })}
-          </View>
-        ) : (
-          <View style={styles.emptyHistory}>
-            <Image source={RECEIPT} resizeMode="contain" style={{ width: 100, height: 105 }} />
-            <View style={{ marginTop: 14 }}>
-              <Txt s={20} w={800} color="#1B1B1B" align="center">لا توجد معاملات حتى الآن</Txt>
+          {history.length ? (
+            <View style={{ paddingHorizontal: 12, marginTop: 12, gap: 8 }}>
+              {history.map((o) => {
+                const refund = o.step === 4;
+                return (
+                  <HistoryRow
+                    key={o.no}
+                    refund={refund}
+                    title={`${refund ? 'استرداد' : 'طلب'} ${o.no}`}
+                    subtitle={`${orderTime(o.placedAt)} · ${o.pay}`}
+                    amount={(refund ? '+' : '−') + money(o.total)}
+                  />
+                );
+              })}
             </View>
-            <View style={{ marginTop: 8, paddingHorizontal: 24 }}>
-              <Txt s={13} color="#666666" align="center">ستجد جميع دفعاتك من الاستردادات وشحن الرصيد وغيرها هنا</Txt>
+          ) : (
+            <View style={styles.emptyHistory}>
+              <Image source={RECEIPT} resizeMode="contain" style={{ width: 100, height: 105 }} />
+              <View style={{ marginTop: 14 }}>
+                <Txt s={20} w={800} color="#1B1B1B" align="center">لا توجد معاملات حتى الآن</Txt>
+              </View>
+              <View style={{ marginTop: 8, paddingHorizontal: 24 }}>
+                <Txt s={13} color="#666666" align="center">ستجد جميع دفعاتك من الاستردادات وشحن الرصيد وغيرها هنا</Txt>
+              </View>
             </View>
-          </View>
-        )}
+          )}
+        </View>
       </ScrollView>
 
       <CardSheet
@@ -526,9 +527,9 @@ const styles = StyleSheet.create({
   headBtns: { flexDirection: 'row', gap: 7.5 },
   circle: { width: 32, height: 32, borderRadius: 16, backgroundColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center' },
 
-  headBottom: { marginTop: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headBottom: { marginTop: 14, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   // 26 = ارتفاع سطر "رصيدك هو" (22) + المسافة (4) → مركز الدايرة (36) = مركز مبلغ الرصيد (36)
-  quick: { flexDirection: 'row', marginLeft: -11, marginTop: 26 },
+  quick: { flexDirection: 'row', marginLeft: -11 },
   quickCol: { width: 58, alignItems: 'center', gap: 4 },
   quickCircle: { width: 36, height: 36, borderRadius: 18, alignItems: 'center', justifyContent: 'center' },
   balanceBox: { alignItems: 'flex-end', gap: 4 },
