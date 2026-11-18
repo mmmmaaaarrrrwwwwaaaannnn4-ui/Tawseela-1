@@ -1,5 +1,5 @@
-import { router } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Modal, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useShallow } from 'zustand/react/shallow';
 import { WebView } from 'react-native-webview';
@@ -72,13 +72,14 @@ function Checkout() {
   const [sheetSelection, setSheetSelection] = useState('');
   const [sheetError, setSheetError] = useState(false);
   const sheetErrorTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  useEffect(() => {
+  useFocusEffect(useCallback(() => {
     let active = true;
     api.get<{ wallets: { id: string; provider: string; phone: string; name: string; isDefault: boolean }[] }>('/v1/me/wallets')
       .then((result) => { if (active) setSavedWallets(Array.isArray(result.wallets) ? result.wallets : []); })
       .catch(() => { if (active) setSavedWallets([]); });
-    return () => { active = false; if (sheetErrorTimer.current) clearTimeout(sheetErrorTimer.current); };
-  }, []);
+    return () => { active = false; };
+  }, []));
+  useEffect(() => () => { if (sheetErrorTimer.current) clearTimeout(sheetErrorTimer.current); }, []);
   const openPaymentSheet = () => {
     const currentCard = s.cards.find((card) => card.id === s.defCard);
     const currentWallet = savedWallets.find((wallet) => wallet.phone === walletPhone);
