@@ -38,6 +38,8 @@ function Checkout() {
     useShallow((st) => ({
       mode: st.mode,
       prep: st.prep,
+      brands: st.brands,
+      customerLocation: st.customerLocation,
       addr: st.addrs[st.addr] ?? st.addrs[0],
       speed: st.speed,
       payM: st.payM,
@@ -51,6 +53,14 @@ function Checkout() {
     })),
   );
   const t = useApp((st) => st.totals)();
+  const cartBrandId = s.cart[0] ? useApp.getState().dishOf(s.cart[0].id).brand : '';
+  const restaurant = s.brands.find((brand) => brand.id === cartBrandId);
+  const distanceKm = restaurant?.lat != null && restaurant?.lng != null && s.customerLocation
+    ? distanceBetweenKm(s.customerLocation.latitude, s.customerLocation.longitude, restaurant.lat, restaurant.lng)
+    : null;
+  const etaMinutes = restaurant
+    ? Math.max(1, Math.ceil((restaurant.prepTime || s.prep) + (distanceKm == null ? 0 : distanceKm * 5)))
+    : s.prep;
   const [paying, setPaying] = useState(false);
   const [cardsReady, setCardsReady] = useState(false);
   useEffect(() => { useApp.setState({ cards: [], defCard: '' }); let active = true; api.get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards').then((result) => { if (!active) return; const next = result.cards.map((x) => { const b = cardBrandOf(x.number.replace(/\D/g, '')); return { id: x.id, brand: b.name !== 'CARD' ? b.name : (x.brand || b.name), num: x.number, exp: x.expiry ? `${String(x.expiry.month ?? '').padStart(2, '0')}/${String(x.expiry.year ?? '').slice(-2)}` : '', bg: b.bg, nick: '', name: x.name }; }); useApp.setState({ cards: next, defCard: next.some((x) => x.id === useApp.getState().defCard) ? useApp.getState().defCard : (next[0]?.id ?? '') }); }).catch(() => { if (active) useApp.setState({ cards: [], defCard: '' }); }).finally(() => { if (active) setCardsReady(true); }); return () => { active = false; }; }, []);
@@ -415,6 +425,14 @@ function Checkout() {
       </FloatingBar>
     </View>
   );
+}
+
+function distanceBetweenKm(lat1: number, lon1: number, lat2: number, lon2: number) {
+  const rad = (value: number) => value * Math.PI / 180;
+  const dLat = rad(lat2 - lat1);
+  const dLon = rad(lon2 - lon1);
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(rad(lat1)) * Math.cos(rad(lat2)) * Math.sin(dLon / 2) ** 2;
+  return 6371 * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
 const styles = StyleSheet.create({
