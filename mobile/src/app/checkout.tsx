@@ -32,6 +32,8 @@ export default function CheckoutScreen() {
 
 function Checkout() {
   useStatusBar();
+  const checkoutAccent = '#0D3B2E';
+  const checkoutAccentSoft = '#EAF1EC';
   const { c } = useTheme();
   const chrome = useChrome();
   const s = useApp(
@@ -83,7 +85,7 @@ function Checkout() {
   const openPaymentSheet = () => {
     const currentCard = s.cards.find((card) => card.id === s.defCard);
     const currentWallet = savedWallets.find((wallet) => wallet.phone === walletPhone);
-    setSheetSelection(s.payM === 3 && currentWallet ? 'wallet:' + currentWallet.id : currentCard ? 'card:' + currentCard.id : '');
+    setSheetSelection('');
     setSheetError(false);
     setPaymentSheet(true);
   };
@@ -168,7 +170,7 @@ function Checkout() {
     { name: 'Etisalat Cash' },
     { name: 'WE Pay' },
   ];
-  const sel = (on: boolean) => ({ borderColor: on ? c.accent : c.line, backgroundColor: on ? c.accentSoft : c.surface1 });
+  const sel = (on: boolean) => ({ borderColor: on ? checkoutAccent : '#DDE5DE', backgroundColor: on ? checkoutAccentSoft : '#FFFDF5' });
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
@@ -184,8 +186,8 @@ function Checkout() {
               Pick up at
             </Txt>
             <Card radius={20} style={styles.addrCard}>
-              <View style={[styles.tile, { backgroundColor: c.accentSoft }]}>
-                <Icon name="storefront" size={23} fill color={c.accent} />
+              <View style={[styles.tile, { backgroundColor: checkoutAccentSoft }]}>
+                <Icon name="storefront" size={23} fill color={checkoutAccent} />
               </View>
               <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                 <Txt s={15} w={700}>
@@ -205,8 +207,8 @@ function Checkout() {
                 Deliver to
               </Txt>
               <Card radius={20} style={styles.addrCard}>
-                <View style={[styles.tile, { backgroundColor: c.accentSoft }]}>
-                  <Icon name={s.addr.icon} size={23} fill color={c.accent} />
+                <View style={[styles.tile, { backgroundColor: checkoutAccentSoft }]}>
+                  <Icon name={s.addr.icon} size={23} fill color={checkoutAccent} />
                 </View>
                 <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
                   <Txt s={15} w={700}>
@@ -250,13 +252,13 @@ function Checkout() {
           <View style={{ flexDirection: 'row', gap: 10 }}>
             <PressableScale onPress={() => { set({ payM: 2 }); setPaymentSheet(false); }} scaleTo={0.98}
               style={[styles.choice, sel(s.payM === 2)]}>
-              <Icon name="payments" size={22} color={s.payM === 2 ? c.accent : c.text1} />
+              <Icon name="payments" size={22} color={s.payM === 2 ? checkoutAccent : c.text1} />
               <Txt s={13} w={700} align="center">الدفع النقدي عند الاستلام</Txt>
               <Radio on={s.payM === 2} />
             </PressableScale>
             <PressableScale onPress={openPaymentSheet} scaleTo={0.98}
               style={[styles.choice, sel(s.payM !== 2)]}>
-              <Icon name="credit_card" size={22} color={s.payM !== 2 ? c.accent : c.text1} />
+              <Icon name="credit_card" size={22} color={s.payM !== 2 ? checkoutAccent : c.text1} />
               <Txt s={13} w={700} align="center">اختيار طريقة دفع</Txt>
               <Radio on={s.payM !== 2} />
             </PressableScale>
@@ -273,8 +275,8 @@ function Checkout() {
             <Card radius={20} style={{ padding: 16, gap: 10 }}>
               <Txt s={14} w={700}>بطاقات الدفع المحفوظة</Txt>
               {s.cards.length ? s.cards.map((card) => (
-                <PressableScale key={card.id} onPress={() => { useApp.getState().makeDefaultCard(card.id); set({ payM: 1 }); }} style={[styles.sheetRow, { borderColor: card.id === s.defCard ? c.accent : c.line, backgroundColor: card.id === s.defCard ? c.accentSoft : c.surface1 }]}>
-                  <Icon name="credit_card" size={22} color={c.accent} />
+                <PressableScale key={card.id} onPress={() => { useApp.getState().makeDefaultCard(card.id); set({ payM: 1 }); }} style={[styles.sheetRow, { borderColor: card.id === s.defCard ? checkoutAccent : c.line, backgroundColor: card.id === s.defCard ? checkoutAccentSoft : c.surface1 }]}>
+                  <Icon name="credit_card" size={22} color={checkoutAccent} />
                   <View style={{ flex: 1, gap: 2 }}>
                     <Txt s={14} w={700}>{card.brand} · {card.num}</Txt>
                     <Txt s={11.5} color={c.text3}>{card.name}</Txt>
@@ -335,29 +337,38 @@ function Checkout() {
           <View style={styles.sheetHandle} />
           <Txt s={19} w={700}>اختار طريقة الدفع</Txt>
           <ScrollView style={{ maxHeight: 360 }} contentContainerStyle={{ gap: 9 }} showsVerticalScrollIndicator={false}>
-            {s.cards.map((card) => (
-              <PressableScale key={card.id} style={[styles.sheetRow, { borderColor: sheetSelection === 'card:' + card.id ? c.accent : c.line, backgroundColor: sheetSelection === 'card:' + card.id ? c.accentSoft : c.surface1 }]} onPress={() => { setSheetSelection('card:' + card.id); setSheetError(false); }}>
-                <PaymentNetworkLogo brand={card.brand} width={48} height={34} />
-                <View style={{ flex: 1, gap: 2 }}><Txt s={14} w={700}>{card.brand} ···· {card.num.replace(/\D/g, '').slice(-4)}</Txt><Txt s={11.5} color={c.text3}>{card.name}</Txt></View>
-                <Radio on={sheetSelection === 'card:' + card.id} />
-              </PressableScale>
-            ))}
-            {savedWallets.map((wallet) => (
-              <PressableScale key={wallet.id} style={[styles.sheetRow, { borderColor: sheetSelection === 'wallet:' + wallet.id ? c.accent : c.line, backgroundColor: sheetSelection === 'wallet:' + wallet.id ? c.accentSoft : c.surface1 }]} onPress={() => { setSheetSelection('wallet:' + wallet.id); setSheetError(false); }}>
-                <WalletProviderLogo provider={wallet.name} width={48} height={42} />
-                <View style={{ flex: 1, gap: 2 }}><Txt s={14} w={700}>{wallet.name}</Txt><Txt s={12} color={c.text3}>{wallet.phone}</Txt></View>
-                <Radio on={sheetSelection === 'wallet:' + wallet.id} />
-              </PressableScale>
-            ))}
-            <PressableScale style={styles.sheetRow} onPress={() => { setPaymentSheet(false); router.push('/payments'); }}>
-              <View style={[styles.brandMark, { backgroundColor: c.accentSoft }]}><Icon name="add" size={24} color={c.accent} /></View>
-              <View style={{ flex: 1 }}><Txt s={15} w={700}>إضافة طريقة دفع</Txt></View>
-              <Icon name="chevron_right" size={20} color={c.text3} />
+            {s.cards.map((card) => {
+              const selected = sheetSelection === 'card:' + card.id;
+              return (
+                <PressableScale key={card.id} style={[styles.sheetRow, { borderColor: selected ? checkoutAccent : '#E5E7E5', backgroundColor: selected ? checkoutAccentSoft : '#FFFFFF' }]} onPress={() => { setSheetSelection('card:' + card.id); setSheetError(false); }}>
+                  <View style={[styles.sheetCheck, selected && styles.sheetCheckOn]}>{selected ? <Icon name="check" size={16} color="#FFFFFF" /> : null}</View>
+                  <View style={styles.sheetRowText}><Txt s={14} w={700}>{card.name || 'بطاقة محفوظة'}</Txt><Txt s={12} color="#777777">•••• •••• •••• {card.num.replace(/\D/g, '').slice(-4)}</Txt></View>
+                  <View style={styles.sheetVDiv} />
+                  <View style={styles.sheetLogo}><PaymentNetworkLogo brand={card.brand} width={58} height={34} /></View>
+                </PressableScale>
+              );
+            })}
+            {savedWallets.map((wallet) => {
+              const selected = sheetSelection === 'wallet:' + wallet.id;
+              return (
+                <PressableScale key={wallet.id} style={[styles.sheetRow, { borderColor: selected ? checkoutAccent : '#E5E7E5', backgroundColor: selected ? checkoutAccentSoft : '#FFFFFF' }]} onPress={() => { setSheetSelection('wallet:' + wallet.id); setSheetError(false); }}>
+                  <View style={[styles.sheetCheck, selected && styles.sheetCheckOn]}>{selected ? <Icon name="check" size={16} color="#FFFFFF" /> : null}</View>
+                  <View style={styles.sheetRowText}><Txt s={14} w={700}>{wallet.name}</Txt><Txt s={12} color="#777777">{wallet.phone}</Txt></View>
+                  <View style={styles.sheetVDiv} />
+                  <View style={styles.sheetLogo}><WalletProviderLogo provider={wallet.name} width={58} height={42} /></View>
+                </PressableScale>
+              );
+            })}
+            <PressableScale style={[styles.sheetRow, { backgroundColor: '#FFFFFF' }]} onPress={() => { setPaymentSheet(false); router.push('/payments'); }}>
+              <View style={styles.sheetCheck}><Icon name="add" size={19} color={checkoutAccent} /></View>
+              <View style={styles.sheetRowText}><Txt s={14} w={700}>إضافة طريقة دفع</Txt></View>
+              <View style={styles.sheetVDiv} />
+              <View style={styles.sheetLogo}><View style={[styles.addPaymentMark, { borderColor: checkoutAccent }]}><Icon name="add" size={23} color={checkoutAccent} /></View></View>
             </PressableScale>
           </ScrollView>
           {sheetError ? <Txt s={13} w={700} color="#D92D20" align="center">اختار طريقة دفع</Txt> : null}
           <View style={{ flexDirection: 'row', gap: 10, marginTop: 6 }}>
-            <PressableScale onPress={confirmPaymentSelection} style={[styles.sheetAction, { backgroundColor: c.accent, borderColor: c.accent }]}><Txt s={15} w={700} color="#FFFFFF">متابعة</Txt></PressableScale>
+            <PressableScale onPress={confirmPaymentSelection} style={[styles.sheetAction, { backgroundColor: checkoutAccent, borderColor: checkoutAccent }]}><Txt s={15} w={700} color="#FFFFFF">متابعة</Txt></PressableScale>
             <PressableScale onPress={closePaymentSheetToCash} style={[styles.sheetAction, { backgroundColor: 'transparent', borderColor: '#D7DCD8' }]}><Txt s={15} w={700} color={c.text1}>رجوع</Txt></PressableScale>
           </View>
         </View>
@@ -407,7 +418,7 @@ function Checkout() {
           {threeDSError ? (
             <View style={[styles.threeDSError, { backgroundColor: c.surface1 }]}>
               <Txt s={13} w={600} color={c.err}>تعذر تحميل صفحة البنك. تحقق من اتصال الإنترنت وحاول مرة أخرى.</Txt>
-              <PressableScale onPress={() => { setThreeDSError(false); setThreeDSReload((v) => v + 1); }}><Txt s={13} w={700} color={c.accent}>إعادة المحاولة</Txt></PressableScale>
+              <PressableScale onPress={() => { setThreeDSError(false); setThreeDSReload((v) => v + 1); }}><Txt s={13} w={700} color={checkoutAccent}>إعادة المحاولة</Txt></PressableScale>
             </View>
           ) : null}
           </View>
@@ -452,12 +463,18 @@ const styles = StyleSheet.create({
   pay: { flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, paddingHorizontal: 14, borderRadius: 18, borderWidth: 1.5 },
   choice: { flex: 1, minHeight: 116, padding: 12, borderRadius: 18, borderWidth: 1.5, alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   sheetBackdrop: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.38)' },
-  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, padding: 20, paddingBottom: 34, gap: 10 },
+  sheet: { position: 'absolute', left: 0, right: 0, bottom: 0, borderTopLeftRadius: 28, borderTopRightRadius: 28, borderWidth: 1, borderColor: '#E4E8E4', padding: 20, paddingBottom: 34, gap: 12, backgroundColor: '#FFFDF8' },
   sheetHandle: { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: '#B8B8B8', marginBottom: 8 },
-  sheetRow: { minHeight: 62, borderRadius: 16, borderWidth: 1, borderColor: '#E6E6E6', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  sheetRow: { minHeight: 78, borderRadius: 14, borderWidth: 1, borderColor: '#E5E7E5', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
+  sheetCheck: { width: 25, height: 25, borderRadius: 13, borderWidth: 1.5, borderColor: '#C8CECA', alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  sheetCheckOn: { backgroundColor: '#278447', borderColor: '#278447' },
+  sheetRowText: { flex: 1, minWidth: 0, alignItems: 'flex-end', gap: 4 },
+  sheetVDiv: { width: 1, height: 44, backgroundColor: '#D8DDD9' },
+  sheetLogo: { width: 68, alignItems: 'center', justifyContent: 'center' },
+  addPaymentMark: { width: 42, height: 42, borderRadius: 21, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   brandMark: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
   sheetClose: { height: 48, alignItems: 'center', justifyContent: 'center' },
-  sheetAction: { flex: 1, height: 52, borderRadius: 15, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
+  sheetAction: { flex: 1, height: 54, borderRadius: 14, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   payTile: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   note: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14.5, minHeight: 76, textAlignVertical: 'top' },
 });
