@@ -455,7 +455,8 @@ const styles = StyleSheet.create({
   sheetHandle: { alignSelf: 'center', width: 42, height: 5, borderRadius: 3, backgroundColor: '#B8B8B8', marginBottom: 8 },
   sheetRow: { minHeight: 62, borderRadius: 16, borderWidth: 1, borderColor: '#E6E6E6', paddingHorizontal: 12, flexDirection: 'row', alignItems: 'center', gap: 12 },
   brandMark: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
-  sheetClose: { height: 48, alignItems: 'center', justifyContent: 'center' },\n  sheetAction: { flex: 1, height: 52, borderRadius: 15, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },\n  brandMark: { width: 42, height: 42, borderRadius: 13, alignItems: 'center', justifyContent: 'center' },
+  sheetClose: { height: 48, alignItems: 'center', justifyContent: 'center' },
+  sheetAction: { flex: 1, height: 52, borderRadius: 15, borderWidth: 2, alignItems: 'center', justifyContent: 'center' },
   payTile: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
   note: { borderWidth: 1, borderRadius: 18, paddingHorizontal: 16, paddingVertical: 14, fontSize: 14.5, minHeight: 76, textAlignVertical: 'top' },
 });
