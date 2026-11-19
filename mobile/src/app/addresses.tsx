@@ -2,8 +2,6 @@ import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
-import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { Icon } from '@/components/icons/icon';
 import { CircleButton } from '@/components/ui/buttons';
@@ -83,7 +81,7 @@ export default function AddressesScreen() {
     >
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 18, gap: 12 }} showsVerticalScrollIndicator={false}>
         {home ? (
-          <AddressRow title="المنزل" address={home.l1 + (home.l2 ? '، ' + home.l2 : '')} icon="home" selected={selected === homeIndex} onPress={() => { useApp.getState().setCheckout({ addr: homeIndex }); router.back(); }} onDelete={() => removeAddress(homeIndex)} />
+          <AddressRow title="المنزل" address={home.l1 + (home.l2 ? '، ' + home.l2 : '')} icon="home" selected={selected === homeIndex} onPress={() => { useApp.getState().setCheckout({ addr: homeIndex }); router.back(); }} />
         ) : (
           <View style={[styles.emptyHome, { borderColor: c.line }]}>
             <Icon name="home" size={23} color={c.text3} />
@@ -111,45 +109,40 @@ export default function AddressesScreen() {
 
 function AddressRow({ title, address, icon, selected, onPress, onDelete, current = false }: { title: string; address: string; icon: 'home' | 'location_on'; selected: boolean; onPress: () => void; onDelete?: () => void; current?: boolean }) {
   const { c } = useTheme();
-  const row = (
-    <PressableScale onPress={onPress} style={[styles.row, { borderColor: selected ? c.accent : c.line, backgroundColor: selected ? c.accentSoft : c.surface1 }]}>
-      <Icon name={icon} size={25} color={selected || current ? c.accent : c.text1} fill={selected || current} />
-      <View style={{ flex: 1, gap: 4 }}>
-        <View style={styles.rowTitle}>
-          <Txt s={16} w={700}>{title}</Txt>
-          {selected ? <Txt s={11} w={700} color={c.accent}>محدد</Txt> : current ? <Txt s={11} w={600} color={c.accent}>مباشر</Txt> : null}
-        </View>
-        <Txt s={13} color={c.text2} numberOfLines={2}>{address}</Txt>
-      </View>
-      {selected ? <Icon name="check_circle" size={22} color={c.accent} fill /> : <Icon name="arrow_back_ios_new" size={20} color={c.text3} />}
-    </PressableScale>
-  );
-  if (!onDelete || current) return row;
+  const canDelete = !!onDelete && !current && !selected;
   return (
-    <Animated.View layout={LinearTransition.springify()}>
-    <ReanimatedSwipeable
-      friction={1.8}
-      leftThreshold={64}
-      renderLeftActions={() => (
-        <View style={styles.deleteAction}>
-          <Icon name="delete" size={23} color="#FFFFFF" />
-          <Txt s={12} w={700} color="#FFFFFF">حذف</Txt>
+    <View style={[styles.row, { borderColor: selected ? c.accent : c.line, backgroundColor: selected ? c.accentSoft : c.surface1 }]}>
+      <PressableScale onPress={onPress} style={styles.rowContent}>
+        <Icon name={icon} size={25} color={selected || current ? c.accent : c.text1} fill={selected || current} />
+        <View style={{ flex: 1, gap: 4 }}>
+          <View style={styles.rowTitle}>
+            <Txt s={16} w={700}>{title}</Txt>
+            {selected ? <Txt s={11} w={700} color={c.accent}>محدد</Txt> : current ? <Txt s={11} w={600} color={c.accent}>مباشر</Txt> : null}
+          </View>
+          <Txt s={13} color={c.text2} numberOfLines={2}>{address}</Txt>
         </View>
-      )}
-      onSwipeableOpen={(direction) => { if (direction === 'right') onDelete(); }}
-      overshootLeft={false}
-    >
-      {row}
-    </ReanimatedSwipeable>
-    </Animated.View>
+        {selected ? <Icon name="check_circle" size={22} color={c.accent} fill /> : !canDelete ? <Icon name="arrow_back_ios_new" size={20} color={c.text3} /> : null}
+      </PressableScale>
+      {canDelete ? (
+        <PressableScale
+          onPress={onDelete!}
+          accessibilityRole="button"
+          accessibilityLabel={`حذف عنوان ${title}`}
+          style={styles.deleteButton}
+        >
+          <Icon name="delete" size={20} color="#202020" />
+        </PressableScale>
+      ) : null}
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   header: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 18 },
-  row: { minHeight: 86, borderRadius: 17, borderWidth: 1.5, paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row-reverse', alignItems: 'center', gap: 13 },
+  row: { minHeight: 86, borderRadius: 17, borderWidth: 1.5, paddingHorizontal: 12, paddingVertical: 10, flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  rowContent: { flex: 1, minHeight: 62, flexDirection: 'row-reverse', alignItems: 'center', gap: 13 },
+  deleteButton: { width: 38, height: 38, borderRadius: 19, borderWidth: 1, borderColor: '#F1F1F1', backgroundColor: '#FAFAFA', alignItems: 'center', justifyContent: 'center' },
   rowTitle: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' },
   emptyHome: { minHeight: 78, borderRadius: 17, borderWidth: 1, padding: 15, flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
   add: { minHeight: 52, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8 },
-  deleteAction: { width: 86, marginVertical: 2, borderRadius: 17, backgroundColor: '#D92D20', alignItems: 'center', justifyContent: 'center', gap: 5 },
 });
