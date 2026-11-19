@@ -18,7 +18,7 @@ export const blankAddress = (prefill?: Partial<NewAddress>): NewAddress => ({
   custom: '',
   l1: '',
   apt: '',
-  city: 'مصر',
+  city: 'بلبيس، الشرقية',
   zip: '',
   note: '',
   door: true,
