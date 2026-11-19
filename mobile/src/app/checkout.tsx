@@ -1127,7 +1127,7 @@ const styles = StyleSheet.create({
   sumRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   tag: { backgroundColor: LIME, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 2 },
   tawseelaPin: { width: 78, height: 92, alignItems: 'center', justifyContent: 'flex-start' },
-  tawseelaPinPhotoFrame: { width: 76, height: 68, padding: 5, borderRadius: 22, borderWidth: 4, borderColor: '#255942', backgroundColor: '#255942', overflow: 'hidden', zIndex: 2, elevation: 8 },
+  tawseelaPinPhotoFrame: { width: 76, height: 68, padding: 5, borderRadius: 22, borderWidth: 4, borderColor: '#D8F000', backgroundColor: '#003D27', overflow: 'hidden', zIndex: 2, elevation: 8 },
   tawseelaPinPhoto: { width: '100%', height: '100%', borderRadius: 13 },
   tawseelaPinTail: { width: 0, height: 0, marginTop: -2, borderLeftWidth: 18, borderRightWidth: 18, borderTopWidth: 27, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#255942', zIndex: 1 },
   infoDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.2, borderColor: MUTED, alignItems: 'center', justifyContent: 'center' },
