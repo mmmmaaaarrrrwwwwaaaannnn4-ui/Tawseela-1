@@ -118,9 +118,10 @@ function Checkout() {
   }, []);
   const restaurant = restaurants[0];
   const isDelivery = s.mode !== 'pickup';
-  const deliveryPoint = s.addr?.latitude != null && s.addr?.longitude != null
+  // A saved delivery address is authoritative. Never draw a route to the phone's live location instead.
+  const deliveryPoint = isDelivery && s.addr?.latitude != null && s.addr?.longitude != null
     ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
-    : s.customerLocation;
+    : null;
   const routeStops = deliveryPoint ? restaurants
     .filter((item) => item.lat != null && item.lng != null)
     .sort((a, b) => distanceBetweenKm(b.lat!, b.lng!, deliveryPoint.latitude, deliveryPoint.longitude) - distanceBetweenKm(a.lat!, a.lng!, deliveryPoint.latitude, deliveryPoint.longitude)) : [];
@@ -172,6 +173,8 @@ function Checkout() {
   /* ───────── إكرامية + كود خصم ───────── */
   const [tip, setTip] = useState(0);
   const [customTip, setCustomTip] = useState(false);
+  const [deliveryInstruction, setDeliveryInstruction] = useState<'call' | 'no_bell' | 'reception' | 'ring' | null>('call');
+  const [saveDeliveryInstruction, setSaveDeliveryInstruction] = useState(false);
   const [promoText, setPromoText] = useState('');
   const [scheduleSheet, setScheduleSheet] = useState(false);
   const [scheduleOffsetMinutes, setScheduleOffsetMinutes] = useState(0);
@@ -396,6 +399,10 @@ function Checkout() {
       return;
     }
     setPaying(true);
+    // Persist the selected doorstep instruction in the order note without changing the customer's saved free-text note.
+    const originalNote = useApp.getState().note;
+    const instructionLabels = { call: 'اتصل عند الوصول', no_bell: 'لا تطرق الجرس', reception: 'اتركه بالاستقبال', ring: 'اطرق الجرس' } as const;
+    if (isDelivery && deliveryInstruction) useApp.getState().setCheckout({ note: [originalNote, instructionLabels[deliveryInstruction]].filter(Boolean).join(' · ') });
     // ملحوظة: الإكرامية (tip) لازم تتبعت للسيرفر داخل placeOrder
     const r = await placeOrder(
       s.payM === 0 || s.payM === 1 ? { token: selectedCard!.id, cvv: savedCardCvv } : undefined,
@@ -406,6 +413,7 @@ function Checkout() {
         setThreeDSUrl(url);
       }),
     );
+    useApp.getState().setCheckout({ note: originalNote });
     setSavedCardCvv('');
     setWalletPhone('');
     setPaying(false);
@@ -486,107 +494,110 @@ function Checkout() {
         </View>
         <View style={styles.band} />
 
-        {/* ───────── العنوان ───────── */}
-        <View style={styles.section}>
-          <Txt s={17} w={700} style={styles.title}>{isDelivery ? 'عنوان التوصيل' : 'الاستلام من'}</Txt>
-          {isDelivery ? (
-            <View style={[styles.addrRow, { direction: 'rtl' }]}>
-              <PressableScale onPress={() => router.push('/addresses')} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-                <Icon name="location_on" size={22} color={TEXT} />
-                <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
-                  <Txt s={15} w={700} style={{ color: TEXT, textAlign: 'right' }}>{s.addr.tag}</Txt>
-                  <Txt s={13} w={500} style={{ color: GREEN, textAlign: 'right', writingDirection: 'ltr' }} numberOfLines={1}>{s.addr.l1}</Txt>
-                </View>
-              </PressableScale>
-              <PressableScale onPress={() => router.push('/addresses')}>
-                <Txt s={12} w={600} style={{ color: TEXT }}>تغيير المكان</Txt>
-              </PressableScale>
-            </View>
-          ) : (
-            <View style={styles.addrRow}>
-              <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
-                <Txt s={15} w={700} style={{ color: TEXT }}>{restaurant?.name ?? ''}</Txt>
-                <Txt s={13} w={500} style={{ color: MUTED }}>{`جاهز خلال ~${s.prep} دقيقة`}</Txt>
-              </View>
-              <Icon name="storefront" size={22} color={TEXT} />
-            </View>
-          )}
-        </View>
-        {hasMapRoute && mapCenter ? (
+        {/* العنوان والخريطة: لا نعرض مسارًا إلا من إحداثيات العنوان المحفوظ والمطعم الفعلية */}
+        {isDelivery ? (
           <View style={styles.section}>
-            <Txt s={17} w={700} style={styles.title}>مسار الطلب على الخريطة</Txt>
-            <View style={styles.orderMap}>
-              <MapLibre mapStyle="https://tiles.openfreemap.org/styles/bright" attribution logo={false} compass style={StyleSheet.absoluteFill}>
-                <MapCamera initialViewState={{ center: mapCenter, zoom: 11.5, pitch: 0, bearing: 0 }} />
-                {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" paint={{ "line-color": "#315B45", "line-width": 5, "line-opacity": 0.92 }} layout={{ "line-cap": "round", "line-join": "round" }} /></GeoJSONSource> : null}
-                {routeStops.map((stop) => (
-                  <ViewAnnotation key={stop.id} lngLat={[stop.lng!, stop.lat!]} anchor="bottom">
-                    <View style={styles.tawseelaPin}>
-                      <View style={styles.tawseelaPinPhotoFrame}><Image source={{ uri: stop.img }} style={styles.tawseelaPinPhoto} contentFit="cover" /></View>
-                      <View style={styles.tawseelaPinTail} />
-                    </View>
-                  </ViewAnnotation>
-                ))}
-                <ViewAnnotation lngLat={[deliveryPoint!.longitude, deliveryPoint!.latitude]} anchor="bottom">
-                  <View style={styles.tawseelaPin}>
-                    <View style={styles.tawseelaPinPhotoFrame}><Image source={customerPhoto ? { uri: customerPhoto } : require('../../assets/images/icon.png')} style={styles.tawseelaPinPhoto} contentFit="cover" /></View>
-                    <View style={styles.tawseelaPinTail} />
-                  </View>
-                </ViewAnnotation>
-              </MapLibre>
-            </View>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
-              <Txt s={12} color={MUTED}>{routeCoordinates.length > 1 ? 'المسار الفعلي على الطرق' : 'جارٍ تحميل الطريق من خدمة التوجيه…'}</Txt>
-              <Txt s={12} w={700} color={BRAND}>{roadDistanceKm != null ? `${roadDistanceKm.toFixed(1)} كم` : 'المسافة غير متاحة'}</Txt>
+            <View style={styles.checkoutCard}>
+              {hasMapRoute && mapCenter ? (
+                <View style={styles.orderMap}>
+                  <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}>
+                    <MapCamera initialViewState={{ center: mapCenter, zoom: 12, pitch: 0, bearing: 0 }} />
+                    {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" paint={{ "line-color": "#4C5B42", "line-width": 5, "line-opacity": 0.95 }} layout={{ "line-cap": "round", "line-join": "round" }} /></GeoJSONSource> : null}
+                    {routeStops.map((stop) => (
+                      <ViewAnnotation key={stop.id} lngLat={[stop.lng!, stop.lat!]} anchor="bottom">
+                        <View style={styles.tawseelaPin}>
+                          <View style={styles.tawseelaPinPhotoFrame}><Image source={{ uri: stop.img }} style={styles.tawseelaPinPhoto} contentFit="cover" /></View>
+                          <View style={styles.tawseelaPinTail} />
+                        </View>
+                      </ViewAnnotation>
+                    ))}
+                    <ViewAnnotation lngLat={[deliveryPoint!.longitude, deliveryPoint!.latitude]} anchor="bottom">
+                      <View style={styles.tawseelaPin}>
+                        <View style={styles.tawseelaPinPhotoFrame}><Image source={customerPhoto ? { uri: customerPhoto } : require('../../assets/images/icon.png')} style={styles.tawseelaPinPhoto} contentFit="cover" /></View>
+                        <View style={styles.tawseelaPinTail} />
+                      </View>
+                    </ViewAnnotation>
+                  </MapLibre>
+                </View>
+              ) : (
+                <View style={[styles.orderMap, styles.mapUnavailable]}>
+                  <Icon name="location_off" size={28} color={MUTED} />
+                  <Txt s={13} w={600} color={TEXT}>لا يمكن رسم الطريق بعد</Txt>
+                  <Txt s={11.5} color={MUTED}>اختر عنوانًا محفوظًا بموقع محدد، وتأكد من إضافة موقع المطعم من لوحة الإدارة.</Txt>
+                </View>
+              )}
+              <View style={styles.addressDetails}>
+                <View style={{ flex: 1, gap: 4, alignItems: 'flex-end' }}>
+                  <Txt s={16} w={700} color={TEXT}>{s.addr?.tag ?? 'عنوان التوصيل'}</Txt>
+                  <Txt s={13} w={500} color={MUTED} style={{ textAlign: 'right' }}>{s.addr?.l1 || 'لم يتم تحديد الشارع'}</Txt>
+                  <Txt s={12} color={MUTED} style={{ textAlign: 'right' }}>{s.addr?.l2 || 'لم يتم تحديد المنطقة والمدينة'}</Txt>
+                  {s.addr?.phone ? <Txt s={12} color={MUTED}>{s.addr.phone}</Txt> : null}
+                </View>
+                <Icon name="location_on" size={22} color={BRAND} />
+              </View>
+              <View style={styles.addressActions}>
+                <PressableScale onPress={() => router.push('/addresses')}><Txt s={13} w={700} color={BRAND}>تغيير العنوان</Txt></PressableScale>
+                {routeCoordinates.length > 1 ? <Txt s={11.5} color={MUTED}>{roadDistanceKm != null ? `المسافة عبر الطريق ${roadDistanceKm.toFixed(1)} كم` : 'مسار الطرق متاح'}</Txt> : <Txt s={11.5} color={MUTED}>المسار الفعلي غير متاح حاليًا</Txt>}
+              </View>
+              {!deliveryPoint ? <View style={styles.addressWarning}><Txt s={12} color={TEXT}>العنوان لا يحتوي على إحداثيات دقيقة. افتح تغيير العنوان وحدد نقطة التوصيل على الخريطة.</Txt></View> : null}
             </View>
           </View>
-        ) : isDelivery ? (
-          <View style={styles.section}><Txt s={12} color={MUTED}>حدد موقع المطعم وعنوان التوصيل على الخريطة لعرض مسار الرحلة.</Txt></View>
-        ) : null}
+        ) : (
+          <View style={styles.section}>
+            <View style={styles.checkoutCard}>
+              <Txt s={16} w={700} color={TEXT}>{restaurant?.name ?? 'مكان الاستلام'}</Txt>
+              <Txt s={13} color={MUTED}>{restaurant?.address || `جاهز خلال حوالي ${s.prep} دقيقة`}</Txt>
+            </View>
+          </View>
+        )}
         <View style={styles.band} />
 
-        {/* ───────── الدفع: كلهم تحت بعض ───────── */}
+        {/* تعليمات التوصيل */}
+        {isDelivery ? (
+          <View style={styles.section}>
+            <View style={styles.checkoutCard}>
+              <Txt s={17} w={700} color={TEXT}>تعليمات التوصيل</Txt>
+              <View style={styles.instructionGrid}>
+                {([
+                  ['call', 'اتصل عند الوصول', 'call'],
+                  ['no_bell', 'لا تطرق الجرس', 'notifications_off'],
+                  ['reception', 'اتركه بالاستقبال', 'room_service'],
+                  ['ring', 'اطرق الجرس', 'notifications'],
+                ] as const).map(([key, label, icon]) => (
+                  <PressableScale key={key} onPress={() => setDeliveryInstruction(key)} style={[styles.instructionTile, deliveryInstruction === key && styles.instructionTileOn]}>
+                    <Icon name={icon} size={23} color={deliveryInstruction === key ? BRAND : TEXT} />
+                    <Txt s={13} w={700} color={TEXT} style={{ textAlign: 'center' }}>{label}</Txt>
+                  </PressableScale>
+                ))}
+              </View>
+              <PressableScale onPress={() => setSaveDeliveryInstruction((v) => !v)} style={styles.saveInstruction}>
+                <View style={[styles.instructionCheck, saveDeliveryInstruction && styles.instructionCheckOn]}>{saveDeliveryInstruction ? <Icon name="check" size={13} color="#FFFFFF" /> : null}</View>
+                <Txt s={13} color={TEXT}>استخدم تعليماتي لهذا العنوان في المرة القادمة</Txt>
+              </PressableScale>
+            </View>
+          </View>
+        ) : null}
+
+        {/* طرق الدفع بنفس ترتيب المرجع */}
         <View style={styles.section}>
-          <Txt s={17} w={700} style={styles.title}>الدفع</Txt>
-
-          {/* الدفع عند الاستلام */}
-          <PressableScale onPress={chooseCash} scaleTo={0.98} style={[styles.payOpt, payPicked === 'cash' && styles.payOptOn]}>
-            <Dot on={payPicked === 'cash'} />
-            <View style={styles.payOptLabel}>
-              <Txt s={14} w={600} style={{ color: TEXT }}>الدفع عند الاستلام</Txt>
-              <Icon name="payments" size={22} color={TEXT} />
-            </View>
-          </PressableScale>
-
-          {/* بطاقة / محفظة */}
-          <PressableScale onPress={openPaymentSheet} scaleTo={0.98} style={[styles.payOpt, payPicked === 'online' && styles.payOptOn]}>
-            <Dot on={payPicked === 'online'} />
-            <View style={styles.payOptLabel}>
-              <Txt s={14} w={600} style={{ color: TEXT }}>بطاقة ائتمان / محفظة كاش</Txt>
-              <Icon name="credit_card" size={22} color={TEXT} />
-            </View>
-          </PressableScale>
-
-          {/* Apple Pay */}
-          <PressableScale onPress={soon('Apple Pay')} scaleTo={0.98} style={styles.payOpt}>
-            <Dot on={false} />
-            <View style={styles.payOptLabel}>
-              <Txt s={14} w={700} style={{ color: TEXT }}>Apple Pay</Txt>
-              <View style={styles.applePayMark}><Txt s={10} w={700} style={{ color: TEXT }}>Pay</Txt></View>
-            </View>
-          </PressableScale>
-
-          {/* أقساط بنكية */}
-          <PressableScale onPress={soon('الأقساط البنكية')} scaleTo={0.98} style={styles.payOpt}>
-            <View style={styles.minChip}><Txt s={11} w={500} style={{ color: MUTED }}>الحد الأدنى للطلب 500 ج.م</Txt></View>
-            <View style={styles.payOptLabel}>
-              <View style={styles.newBadge}><Txt s={11} w={700} style={{ color: '#1F7A7A' }}>New!</Txt></View>
-              <Txt s={14} w={600} style={{ color: TEXT }}>أقساط بنكية</Txt>
-              <Icon name="storefront" size={22} color={TEXT} />
-            </View>
-          </PressableScale>
-
-
+          <Txt s={18} w={800} color={TEXT} style={styles.title}>الدفع من خلال</Txt>
+          <View style={styles.paymentCard}>
+            <PressableScale onPress={soon('Apple Pay')} style={styles.paymentRow}>
+              <Dot on={false} />
+              <View style={styles.payOptLabel}><Txt s={15} w={600} color={TEXT}>Apple Pay</Txt><View style={styles.applePayMark}><Txt s={10} w={700} color={TEXT}>Pay</Txt></View></View>
+            </PressableScale>
+            <View style={styles.paymentDivider} />
+            <PressableScale onPress={() => { setPayPicked('online'); openPaymentSheet(); }} style={styles.paymentRow}>
+              <Dot on={payPicked === 'online'} />
+              <View style={styles.payOptLabel}><Txt s={15} w={700} color={TEXT}>أضف بطاقة جديدة / محفظة</Txt><Icon name="add_circle_outline" size={23} color={TEXT} /></View>
+            </PressableScale>
+            <View style={styles.paymentDivider} />
+            <PressableScale onPress={chooseCash} style={styles.paymentRow}>
+              <Dot on={payPicked === 'cash'} />
+              <View style={styles.payOptLabel}><Txt s={15} w={700} color={TEXT}>نقدًا</Txt><Icon name="payments" size={23} color={TEXT} /></View>
+            </PressableScale>
+            <View style={styles.pciStrip}><Icon name="info" size={17} color="#1266B3" /><Txt s={12} w={600} color="#1266B3">مؤمّن وفق معايير حماية بيانات الدفع (PCI)</Txt><Icon name="verified_user" size={18} color="#1266B3" /></View>
+          </View>
         </View>
         <View style={styles.band} />
 
@@ -961,7 +972,22 @@ function MethodRow({
 }
 
 const styles = StyleSheet.create({
-  orderMap: { height: 230, overflow: 'hidden', borderRadius: 18, backgroundColor: '#EAF0E8', marginTop: 10 },
+  orderMap: { height: 220, overflow: 'hidden', borderTopLeftRadius: 18, borderTopRightRadius: 18, backgroundColor: '#F4F5F3' },
+  checkoutCard: { borderWidth: 1, borderColor: BORDER, borderRadius: 18, backgroundColor: '#FFFFFF', overflow: 'hidden', gap: 14, padding: 14 },
+  mapUnavailable: { alignItems: 'center', justifyContent: 'center', padding: 20, gap: 8 },
+  addressDetails: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, paddingTop: 14 },
+  addressActions: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: BORDER, paddingTop: 12 },
+  addressWarning: { backgroundColor: '#FFF2D8', borderRadius: 14, padding: 12 },
+  instructionGrid: { flexDirection: 'row', gap: 8 },
+  instructionTile: { flex: 1, minHeight: 94, borderWidth: 1, borderColor: BORDER, borderRadius: 14, padding: 8, alignItems: 'center', justifyContent: 'center', gap: 10, backgroundColor: '#FFFFFF' },
+  instructionTileOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
+  saveInstruction: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 9, paddingTop: 4 },
+  instructionCheck: { width: 20, height: 20, borderRadius: 5, borderWidth: 1.5, borderColor: '#BFC3C0', alignItems: 'center', justifyContent: 'center' },
+  instructionCheckOn: { backgroundColor: BRAND, borderColor: BRAND },
+  paymentCard: { borderWidth: 1, borderColor: BORDER, borderRadius: 20, overflow: 'hidden', paddingHorizontal: 14, backgroundColor: '#FFFFFF' },
+  paymentRow: { minHeight: 62, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 10 },
+  paymentDivider: { height: 1, backgroundColor: BORDER },
+  pciStrip: { marginHorizontal: -14, paddingHorizontal: 14, minHeight: 42, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#F4F5F6', gap: 8 },
   mapPinCard: { width: 64, alignItems: 'center', padding: 4, borderRadius: 13, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', elevation: 5 },
   mapPinImage: { width: 42, height: 42, borderRadius: 10, backgroundColor: '#EAF0E8' },
   mapPinLabel: { color: '#173D2A', marginTop: 2 },
