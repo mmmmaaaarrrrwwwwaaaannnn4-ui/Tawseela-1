@@ -74,7 +74,7 @@ function EditBrand() {
       const lat = Number(place?.lat), lng = Number(place?.lon);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error('not-found');
       setDraft((d) => ({ ...d, lat, lng, address: place?.display_name ?? d.address }));
-      mapCamera.current?.fly({ center: [lng, lat], zoom: 16, duration: 900 });
+      mapCamera.current?.flyTo({ center: [lng, lat], zoom: 16, duration: 900 });
     } catch {
       useApp.getState().showToast('لم يتم العثور على العنوان', 'جرّب كتابة اسم الشارع أو المنطقة بشكل أوضح.', 'error');
     } finally { setMapSearching(false); }
