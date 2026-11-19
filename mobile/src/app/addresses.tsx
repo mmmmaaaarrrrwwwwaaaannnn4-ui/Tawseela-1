@@ -24,7 +24,7 @@ export default function AddressesScreen() {
     let active = true;
     (async () => {
       try {
-        const permission = await Location.getForegroundPermissionsAsync();
+        const permission = await Location.requestForegroundPermissionsAsync();
         if (!permission.granted) return;
         const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         const rows = await Location.reverseGeocodeAsync({ latitude: p.coords.latitude, longitude: p.coords.longitude });
@@ -36,10 +36,13 @@ export default function AddressesScreen() {
           latitude: p.coords.latitude,
           longitude: p.coords.longitude,
         });
+        if (addrs.length === 0) {
+          useApp.getState().addAddress({ tag: 'Home', custom: '', l1: [place?.streetNumber, place?.street, place?.name].filter(Boolean).join(' ') || 'موقع المنزل', apt: '', city: [place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'بلبيس، الشرقية', zip: '', note: '', door: true, phone: '', def: true, latitude: p.coords.latitude, longitude: p.coords.longitude });
+        }
       } catch { /* Location is optional until the customer grants permission. */ }
     })();
     return () => { active = false; };
-  }, []);
+  }, [addrs.length]);
 
   const useCurrent = async () => {
     setLocating(true);
