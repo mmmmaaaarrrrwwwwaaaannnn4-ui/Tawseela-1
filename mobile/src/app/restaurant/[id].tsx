@@ -34,7 +34,7 @@ export default function RestaurantScreen() {
         <View style={styles.hero}>
           <Image source={{ uri: brand.img }} style={StyleSheet.absoluteFill} contentFit="cover" />
           <View style={styles.heroTop}>
-            <CircleButton icon="arrow_back" size={42} iconSize={21} variant="soft" label="رجوع" onPress={() => router.back()} />
+            <CircleButton icon="arrow_back_ios_new" size={42} iconSize={21} variant="soft" label="رجوع" onPress={() => router.back()} />
           </View>
           <View style={styles.heroShade} />
         </View>
