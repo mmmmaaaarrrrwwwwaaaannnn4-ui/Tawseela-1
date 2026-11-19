@@ -165,15 +165,15 @@ function EditBrand() {
             <PressableScale onPress={() => void locateKitchen()} style={{ width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: c.accentSoft }}><Icon name="my_location" size={19} color={c.accentText} /></PressableScale>
           </View>
           <View style={{ height: 260, overflow: 'hidden', borderRadius: 18, borderWidth: 1, borderColor: c.line }}>
-            <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}
+            <MapLibre mapStyle="https://tiles.openfreemap.org/styles/bright" attribution logo={false} compass style={StyleSheet.absoluteFill}
               onRegionDidChange={(event) => { const center = event.nativeEvent.center; if (Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1])) setDraft((d) => ({ ...d, lng: center[0], lat: center[1] })); }}>
               <MapCamera ref={mapCamera} initialViewState={{ center: [draft.lng ?? 31.557884, draft.lat ?? 30.42292], zoom: draft.lat != null && draft.lng != null ? 16 : 11, pitch: 0, bearing: 0 }} />
             </MapLibre>
-            <View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -21, marginTop: -48, alignItems: 'center' }}>
-              <View style={{ width: 46, height: 46, borderRadius: 16, padding: 3, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', elevation: 6 }}>
-                <Photo uri={draft.img} radius={11} style={{ width: 36, height: 36 }} />
+            <View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -39, marginTop: -46, width: 78, height: 92, alignItems: 'center' }}>
+              <View style={{ width: 76, height: 68, padding: 5, borderRadius: 22, borderWidth: 4, borderColor: '#D8F000', backgroundColor: '#003D27', overflow: 'hidden', elevation: 8, zIndex: 2 }}>
+                <Photo uri={draft.img} radius={13} style={{ width: '100%', height: '100%' }} />
               </View>
-              <View style={{ width: 3, height: 9, backgroundColor: '#315B45', marginTop: -1 }} />
+              <View style={{ width: 0, height: 0, marginTop: -2, borderLeftWidth: 18, borderRightWidth: 18, borderTopWidth: 27, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#003D27' }} />
             </View>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}><View style={{ flex: 1 }}><FieldLabel>Latitude</FieldLabel><AdminInput value={draft.lat == null ? '' : String(draft.lat)} onChangeText={(v) => setDraft((d) => ({ ...d, lat: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="30.0444" /></View><View style={{ flex: 1 }}><FieldLabel>Longitude</FieldLabel><AdminInput value={draft.lng == null ? '' : String(draft.lng)} onChangeText={(v) => setDraft((d) => ({ ...d, lng: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="31.2357" /></View></View>
