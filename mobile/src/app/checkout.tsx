@@ -109,20 +109,33 @@ function Checkout() {
   const customerPhoto = useSession((st) => st.user?.photo ?? null);
 
   /* ───────── وقت التوصيل ───────── */
-  const cartBrandId = s.cart[0] ? useApp.getState().dishOf(s.cart[0].id).brand : '';
-  const restaurant = s.brands.find((b) => b.id === cartBrandId);
+  const restaurants = s.cart.reduce<typeof s.brands>((list, item) => {
+    const brandId = useApp.getState().dishOf(item.id).brand;
+    const brand = s.brands.find((candidate) => candidate.id === brandId);
+    if (brand && !list.some((candidate) => candidate.id === brand.id)) list.push(brand);
+    return list;
+  }, []);
+  const restaurant = restaurants[0];
+  const isDelivery = s.mode !== 'pickup';
+  const deliveryPoint = s.addr?.latitude != null && s.addr?.longitude != null
+    ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
+    : s.customerLocation;
+  const routeStops = deliveryPoint ? restaurants
+    .filter((item) => item.lat != null && item.lng != null)
+    .sort((a, b) => distanceBetweenKm(b.lat!, b.lng!, deliveryPoint.latitude, deliveryPoint.longitude) - distanceBetweenKm(a.lat!, a.lng!, deliveryPoint.latitude, deliveryPoint.longitude)) : [];
+  const routeKey = routeStops.map((item) => `${item.id}:${item.lat}:${item.lng}`).join('|') + `|${deliveryPoint?.latitude ?? ''}:${deliveryPoint?.longitude ?? ''}`;
   useEffect(() => {
     let active = true;
-    const customer = s.addr?.latitude != null && s.addr?.longitude != null
-      ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
-      : s.customerLocation;
-    if (restaurant?.lat == null || restaurant?.lng == null || !customer) {
+    if (!isDelivery || routeStops.length === 0 || !deliveryPoint) {
       setRoadDistanceKm(null);
+      setRouteCoordinates([]);
       return () => { active = false; };
     }
     setRoadDistanceKm(null);
     setRouteCoordinates([]);
-    const url = `https://router.project-osrm.org/route/v1/driving/${restaurant.lng},${restaurant.lat};${customer.longitude},${customer.latitude}?overview=full&geometries=geojson`;
+    const stops = [...routeStops.map((item) => [item.lng!, item.lat!] as [number, number]), [deliveryPoint.longitude, deliveryPoint.latitude] as [number, number]];
+    const coordinates = stops.map(([lng, lat]) => `${lng},${lat}`).join(';');
+    const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=false`;
     fetch(url)
       .then((response) => response.ok ? response.json() : Promise.reject(new Error('Route unavailable')))
       .then((data: { routes?: { distance?: number; geometry?: { coordinates?: [number, number][] } }[] }) => {
@@ -133,16 +146,11 @@ function Checkout() {
       })
       .catch(() => { if (active) { setRoadDistanceKm(null); setRouteCoordinates([]); } });
     return () => { active = false; };
-  }, [restaurant?.lat, restaurant?.lng, s.addr?.latitude, s.addr?.longitude, s.customerLocation?.latitude, s.customerLocation?.longitude]);
-
-  const isDelivery = s.mode !== 'pickup';
-  const deliveryPoint = s.addr?.latitude != null && s.addr?.longitude != null
-    ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
-    : s.customerLocation;
+  }, [routeKey, isDelivery]);
   const distanceKm = roadDistanceKm;
-  const hasMapRoute = isDelivery && restaurant?.lat != null && restaurant?.lng != null && !!deliveryPoint;
+  const hasMapRoute = isDelivery && routeStops.length > 0 && !!deliveryPoint;
   const mapCenter: [number, number] | null = hasMapRoute
-    ? [(restaurant!.lng! + deliveryPoint!.longitude) / 2, (restaurant!.lat! + deliveryPoint!.latitude) / 2]
+    ? [(routeStops.reduce((sum, item) => sum + item.lng!, deliveryPoint!.longitude) / (routeStops.length + 1)), (routeStops.reduce((sum, item) => sum + item.lat!, deliveryPoint!.latitude) / (routeStops.length + 1))]
     : null;
   const routeFeature = routeCoordinates.length > 1 ? {
     type: 'Feature' as const,
@@ -413,14 +421,22 @@ function Checkout() {
           <View style={styles.section}>
             <Txt s={17} w={700} style={styles.title}>مسار الطلب على الخريطة</Txt>
             <View style={styles.orderMap}>
-              <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}>
+              <MapLibre mapStyle="https://tiles.openfreemap.org/styles/bright" attribution logo={false} compass style={StyleSheet.absoluteFill}>
                 <MapCamera initialViewState={{ center: mapCenter, zoom: 11.5, pitch: 0, bearing: 0 }} />
-                {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" paint={{ "line-color": "#315B45", "line-width": 5, "line-opacity": 0.9 }} layout={{ "line-cap": "round", "line-join": "round" }} /></GeoJSONSource> : null}
-                <ViewAnnotation lngLat={[restaurant!.lng!, restaurant!.lat!]} anchor="bottom">
-                  <View style={styles.mapPinCard}><Image source={{ uri: restaurant!.img }} style={styles.mapPinImage} contentFit="cover" /><Txt s={10} w={700} style={styles.mapPinLabel} numberOfLines={1}>المطعم</Txt></View>
-                </ViewAnnotation>
+                {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" paint={{ "line-color": "#315B45", "line-width": 5, "line-opacity": 0.92 }} layout={{ "line-cap": "round", "line-join": "round" }} /></GeoJSONSource> : null}
+                {routeStops.map((stop) => (
+                  <ViewAnnotation key={stop.id} lngLat={[stop.lng!, stop.lat!]} anchor="bottom">
+                    <View style={styles.tawseelaPin}>
+                      <View style={styles.tawseelaPinPhotoFrame}><Image source={{ uri: stop.img }} style={styles.tawseelaPinPhoto} contentFit="cover" /></View>
+                      <View style={styles.tawseelaPinTail} />
+                    </View>
+                  </ViewAnnotation>
+                ))}
                 <ViewAnnotation lngLat={[deliveryPoint!.longitude, deliveryPoint!.latitude]} anchor="bottom">
-                  <View style={styles.mapPinCard}><Image source={customerPhoto ? { uri: customerPhoto } : require('../../assets/images/icon.png')} style={styles.mapPinImage} contentFit="cover" /><Txt s={10} w={700} style={styles.mapPinLabel} numberOfLines={1}>أنت</Txt></View>
+                  <View style={styles.tawseelaPin}>
+                    <View style={styles.tawseelaPinPhotoFrame}><Image source={customerPhoto ? { uri: customerPhoto } : require('../../assets/images/icon.png')} style={styles.tawseelaPinPhoto} contentFit="cover" /></View>
+                    <View style={styles.tawseelaPinTail} />
+                  </View>
                 </ViewAnnotation>
               </MapLibre>
             </View>
@@ -897,6 +913,10 @@ const styles = StyleSheet.create({
 
   sumRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   tag: { backgroundColor: LIME, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 2 },
+  tawseelaPin: { width: 78, height: 92, alignItems: 'center', justifyContent: 'flex-start' },
+  tawseelaPinPhotoFrame: { width: 76, height: 68, padding: 5, borderRadius: 22, borderWidth: 4, borderColor: '#D8F000', backgroundColor: '#003D27', overflow: 'hidden', zIndex: 2, elevation: 8 },
+  tawseelaPinPhoto: { width: '100%', height: '100%', borderRadius: 13 },
+  tawseelaPinTail: { width: 0, height: 0, marginTop: -2, borderLeftWidth: 18, borderRightWidth: 18, borderTopWidth: 27, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#003D27', zIndex: 1 },
   infoDot: { width: 16, height: 16, borderRadius: 8, borderWidth: 1.2, borderColor: MUTED, alignItems: 'center', justifyContent: 'center' },
   gem: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#E8742A', transform: [{ rotate: '45deg' }] },
 
