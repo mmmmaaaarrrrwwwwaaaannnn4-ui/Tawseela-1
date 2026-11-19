@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
-import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera as MapCamera, Map as MapLibre } from '@maplibre/maplibre-react-native';
 
@@ -31,7 +31,6 @@ export default function AddressMapScreen() {
   const pinBounce = useSharedValue(0);
   const pinMotion = useAnimatedStyle(() => ({ transform: [{ translateY: pinLift.value + pinBounce.value }] }));
   const insets = useSafeAreaInsets();
-  const { width } = useWindowDimensions();
   const camera = useRef<React.ComponentRef<typeof MapCamera>>(null);
   const searchRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const reverseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -76,8 +75,12 @@ export default function AddressMapScreen() {
             setForm((f) => ({ ...f, l1: street, city: [place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'بلبيس، الشرقية', latitude: p.coords.latitude, longitude: p.coords.longitude }));
             if (inBilbeis) setDetailsOpen(true);
             else useApp.getState().showToast('الموقع خارج نطاق التوصيل', 'توصيلة متاحة حاليًا داخل بلبيس والمناطق المغطاة فقط.', 'error');
-          } catch { setForm((f) => ({ ...f, latitude: p.coords.latitude, longitude: p.coords.longitude })); }
-          setDetailsOpen(true);
+          } catch {
+            setAddressVerified(false);
+            setOutside(true);
+            setAddressText('تعذر التحقق من موقعك الحالي. حاول تحديده مرة أخرى.');
+            useApp.getState().showToast('تعذر التحقق من الموقع', 'لم نتمكن من تأكيد أن موقعك داخل نطاق التوصيل.', 'error');
+          }
         }
       } catch { /* Map selection remains available without GPS. */ }
     })();
