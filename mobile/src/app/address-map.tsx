@@ -46,7 +46,7 @@ export default function AddressMapScreen() {
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [searching, setSearching] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(params.current === '1');
+  const [detailsOpen, setDetailsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<NewAddress>({
     tag: 'Home', custom: '', l1: '', apt: '', city: 'بلبيس، الشرقية', zip: '', note: '', door: true, phone: '', def: true,
@@ -68,8 +68,14 @@ export default function AddressMapScreen() {
             const rows = await Location.reverseGeocodeAsync({ latitude: p.coords.latitude, longitude: p.coords.longitude });
             const place = rows[0];
             const street = [place?.streetNumber, place?.street, place?.name].filter(Boolean).join(' ') || 'الموقع الحالي';
+            const region = [place?.district, place?.city, place?.subregion, place?.region].filter(Boolean).join(' ');
+            const inBilbeis = /بلبيس/.test(region);
             setAddressText([street, place?.district, place?.city, place?.region].filter(Boolean).join('، '));
+            setAddressVerified(true);
+            setOutside(!inBilbeis);
             setForm((f) => ({ ...f, l1: street, city: [place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'بلبيس، الشرقية', latitude: p.coords.latitude, longitude: p.coords.longitude }));
+            if (inBilbeis) setDetailsOpen(true);
+            else useApp.getState().showToast('الموقع خارج نطاق التوصيل', 'توصيلة متاحة حاليًا داخل بلبيس والمناطق المغطاة فقط.', 'error');
           } catch { setForm((f) => ({ ...f, latitude: p.coords.latitude, longitude: p.coords.longitude })); }
           setDetailsOpen(true);
         }
