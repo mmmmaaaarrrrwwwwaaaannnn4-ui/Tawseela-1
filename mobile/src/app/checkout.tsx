@@ -4,6 +4,7 @@ import { ActivityIndicator, Modal, ScrollView, StyleSheet, Switch, TextInput, Vi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 import { Map as MapLibre, Camera as MapCamera, GeoJSONSource, Layer, ViewAnnotation } from '@maplibre/maplibre-react-native';
+import { WebView } from 'react-native-webview';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { Camera, ImagePlus, Mic, X } from 'lucide-react-native';
