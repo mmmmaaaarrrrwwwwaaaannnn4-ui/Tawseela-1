@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
-import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { ActivityIndicator, Keyboard, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useShallow } from 'zustand/react/shallow';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -11,6 +11,7 @@ import { Camera as MapCamera, Map as MapLibre, Marker } from '@maplibre/maplibre
 import { Icon } from '@/components/icons/icon';
 import { CircleButton } from '@/components/ui/buttons';
 import { PressableScale } from '@/components/ui/pressable-scale';
+import { Sheet } from '@/components/ui/overlays';
 import { Txt } from '@/components/ui/txt';
 import { useStatusBar } from '@/hooks/use-status-bar';
 import { useApp, type NewAddress } from '@/store/app-store';
@@ -214,7 +215,8 @@ export default function AddressMapScreen() {
   };
 
   return (
-    <View style={[styles.screen, { backgroundColor: c.bg }]}>
+    <View pointerEvents="box-none" style={styles.routeOverlay}>
+    <View style={[styles.screen, { backgroundColor: c.bg, marginTop: insets.top + 8, borderTopLeftRadius: 22, borderTopRightRadius: 22, overflow: 'hidden' }]}>
       <View style={[styles.top, { paddingTop: Math.max(0, insets.top - 14) }]}>
         <PressableScale onPress={() => { setSearchOpen(true); setTimeout(() => searchRef.current?.focus(), 250); }} style={[styles.round, { borderColor: c.line }]}>
           <Icon name="search" size={19} color={c.text1} />
@@ -280,7 +282,7 @@ export default function AddressMapScreen() {
         </PressableScale>
       </View>
 
-      <Modal visible={searchOpen} animationType="slide" onRequestClose={() => setSearchOpen(false)}>
+      <Sheet visible={searchOpen} onClose={() => setSearchOpen(false)} fullScreen scroll={false}>
         <View style={[styles.searchPage, { paddingTop: insets.top + 10, backgroundColor: c.bg }]}>
           <View style={styles.searchHeader}>
             <CircleButton icon="close" size={40} iconSize={19} variant="soft" label="إغلاق البحث" onPress={() => setSearchOpen(false)} />
@@ -304,9 +306,9 @@ export default function AddressMapScreen() {
             {!searching && query.trim() && hits.length === 0 ? <Txt s={14} color={c.text3} align="center" style={{ marginTop: 30 }}>لا توجد نتائج. جرّب كتابة اسم شارع أو مكان آخر.</Txt> : null}
           </ScrollView>
         </View>
-      </Modal>
+      </Sheet>
 
-      <Modal visible={detailsOpen} animationType="slide" onRequestClose={() => setDetailsOpen(false)}>
+      <Sheet visible={detailsOpen} onClose={() => setDetailsOpen(false)} fullScreen scroll={false}>
         <ScrollView style={[styles.formPage, { backgroundColor: c.bg }]} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: insets.bottom + 26, gap: 14 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
           <View style={styles.formHeader}>
             <CircleButton icon="chevron_right" size={42} iconSize={22} variant="soft" label="رجوع" onPress={() => setDetailsOpen(false)} />
@@ -344,7 +346,8 @@ export default function AddressMapScreen() {
           <FormField label="تسمية العنوان (اختياري)" value={form.custom} onChange={(custom) => update({ custom })} placeholder="مثلاً: منزل العائلة" />
           <PressableScale disabled={saving} onPress={() => { void saveAddress(); }} style={[styles.confirm, { backgroundColor: c.accent, opacity: saving ? 0.82 : 1 }]}>{saving ? <ActivityIndicator color="#FFFFFF" /> : <Txt s={17} w={700} color="#FFFFFF">حفظ العنوان</Txt>}</PressableScale>
         </ScrollView>
-      </Modal>
+      </Sheet>
+    </View>
     </View>
   );
 }
@@ -364,6 +367,7 @@ function FormField({ label, value, onChange, placeholder, keyboardType, error }:
 }
 
 const styles = StyleSheet.create({
+  routeOverlay: { flex: 1, justifyContent: 'flex-end' },
   screen: { flex: 1 },
   top: { minHeight: 46, paddingHorizontal: 16, paddingBottom: 2, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   round: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.25, alignItems: 'center', justifyContent: 'center' },
