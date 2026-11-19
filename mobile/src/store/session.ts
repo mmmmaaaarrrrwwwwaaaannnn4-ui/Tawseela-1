@@ -1,5 +1,5 @@
 import type { Href } from 'expo-router';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -80,7 +80,15 @@ export const currentUser = () => useSession.getState().user;
 /** Where each role works: the console for admins, the team queue for staff, the app for customers. */
 export const homeFor = (role: Role): Href => (role === 'admin' ? '/admin' : isStaff(role) ? '/staff' : '/home');
 
-const subscribeHydration = (cb: () => void) => useSession.persist.onFinishHydration(cb);
-const getHydrated = () => useSession.persist.hasHydrated();
 /** The saved session has loaded from the device (route guards wait for it, so nobody is bounced on launch). */
-export const useSessionHydrated = () => useSyncExternalStore(subscribeHydration, getHydrated, getHydrated);
+export const useSessionHydrated = () => {
+  const [hydrated, setHydrated] = useState(() => useSession.persist.hasHydrated());
+  useEffect(() => {
+    if (useSession.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+    return useSession.persist.onFinishHydration(() => setHydrated(true));
+  }, []);
+  return hydrated;
+};
