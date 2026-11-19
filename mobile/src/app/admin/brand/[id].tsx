@@ -74,7 +74,7 @@ function EditBrand() {
       const lat = Number(place?.lat), lng = Number(place?.lon);
       if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error('not-found');
       setDraft((d) => ({ ...d, lat, lng, address: place?.display_name ?? d.address }));
-      mapCamera.current?.flyTo({ center: [lng, lat], zoom: 16, duration: 900 });
+      mapCamera.current?.fly({ center: [lng, lat], zoom: 16, duration: 900 });
     } catch {
       useApp.getState().showToast('لم يتم العثور على العنوان', 'جرّب كتابة اسم الشارع أو المنطقة بشكل أوضح.', 'error');
     } finally { setMapSearching(false); }
@@ -160,7 +160,7 @@ function EditBrand() {
         <Reveal i={2} style={{ gap: 8 }}>
           <FieldLabel>Kitchen location — tap the map to place the pin</FieldLabel>
           <View style={{ flexDirection: 'row', gap: 7, alignItems: 'center' }}>
-            <View style={{ flex: 1 }}><AdminInput value={mapSearch} onChangeText={setMapSearch} placeholder="ابحث عن عنوان المطعم أو المنطقة" /></View>
+            <View style={{ flex: 1 }}><AdminInput value={mapSearch} onChangeText={setMapSearch} placeholder="ابحث عن عنوان المطعم أو المنطقة" style={{ height: 44 }} /></View>
             <PressableScale onPress={() => void searchMapLocation()} style={{ paddingHorizontal: 13, height: 44, borderRadius: 12, justifyContent: 'center', backgroundColor: c.accentSoft }}><Txt s={12} w={700} color={c.accentText}>{mapSearching ? '...' : 'بحث'}</Txt></PressableScale>
             <PressableScale onPress={() => void locateKitchen()} style={{ width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: c.accentSoft }}><Icon name="my_location" size={19} color={c.accentText} /></PressableScale>
           </View>
@@ -170,10 +170,10 @@ function EditBrand() {
               <MapCamera ref={mapCamera} initialViewState={{ center: [draft.lng ?? 31.557884, draft.lat ?? 30.42292], zoom: draft.lat != null && draft.lng != null ? 16 : 11, pitch: 0, bearing: 0 }} />
             </MapLibre>
             <View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -39, marginTop: -46, width: 78, height: 92, alignItems: 'center' }}>
-              <View style={{ width: 76, height: 68, padding: 5, borderRadius: 22, borderWidth: 4, borderColor: '#D8F000', backgroundColor: '#003D27', overflow: 'hidden', elevation: 8, zIndex: 2 }}>
+              <View style={{ width: 76, height: 68, padding: 5, borderRadius: 22, borderWidth: 4, borderColor: c.accent, backgroundColor: c.accent, overflow: 'hidden', elevation: 8, zIndex: 2 }}>
                 <Photo uri={draft.img} radius={13} style={{ width: '100%', height: '100%' }} />
               </View>
-              <View style={{ width: 0, height: 0, marginTop: -2, borderLeftWidth: 18, borderRightWidth: 18, borderTopWidth: 27, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#003D27' }} />
+              <View style={{ width: 0, height: 0, marginTop: -2, borderLeftWidth: 18, borderRightWidth: 18, borderTopWidth: 27, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: c.accent }} />
             </View>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}><View style={{ flex: 1 }}><FieldLabel>Latitude</FieldLabel><AdminInput value={draft.lat == null ? '' : String(draft.lat)} onChangeText={(v) => setDraft((d) => ({ ...d, lat: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="30.0444" /></View><View style={{ flex: 1 }}><FieldLabel>Longitude</FieldLabel><AdminInput value={draft.lng == null ? '' : String(draft.lng)} onChangeText={(v) => setDraft((d) => ({ ...d, lng: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="31.2357" /></View></View>
