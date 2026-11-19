@@ -613,7 +613,7 @@ function Checkout() {
               <View style={styles.instructionGrid}>
                 {([
                   ['call', 'اتصل عند الوصول', 'call'],
-                  ['no_bell', 'لا تطرق الجرس', 'notifications_off'],
+                  ['no_bell', 'لا تطرق الجرس', 'notifications'],
                   ['reception', 'اتركه بالاستقبال', 'room_service'],
                   ['ring', 'اطرق الجرس', 'notifications'],
                 ] as const).map(([key, label, icon]) => (
