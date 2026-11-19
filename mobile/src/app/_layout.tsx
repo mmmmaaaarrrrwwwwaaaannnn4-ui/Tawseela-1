@@ -116,6 +116,8 @@ function RootNavigator() {
         {/* the customer's own account: signed-in only */}
         <Stack.Protected guard={signedIn} redirectTo="/home">
           <Stack.Screen name="checkout" />
+          <Stack.Screen name="addresses" options={{ presentation: "transparentModal", animation: "slide_from_bottom" }} />
+          <Stack.Screen name="address-map" options={{ animation: "slide_from_right" }} />
           <Stack.Screen name="success" options={{ ...rise, gestureEnabled: false }} />
           <Stack.Screen name="orders" />
           <Stack.Screen name="track/[no]" />
