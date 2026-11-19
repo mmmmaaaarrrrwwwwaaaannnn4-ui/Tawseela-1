@@ -89,7 +89,7 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 18, padding: 24 },
   hero: { height: 245, overflow: 'hidden' },
   heroTop: { position: 'absolute', zIndex: 2, top: 16, left: 18 },
-  heroShade: { ...StyleSheet.absoluteFillObject, backgroundColor: 'rgba(0,0,0,0.08)' },
+  heroShade: { ...StyleSheet.absoluteFill, backgroundColor: 'rgba(0,0,0,0.08)' },
   body: { paddingHorizontal: 20, paddingTop: 20, gap: 10 },
   info: { borderWidth: 1, borderRadius: 18, padding: 15, gap: 12, marginTop: 6 },
   infoRow: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10, minHeight: 28 },
