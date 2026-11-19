@@ -1,4 +1,5 @@
 import { router, useLocalSearchParams } from 'expo-router';
+import { useShallow } from 'zustand/react/shallow';
 import { Image } from 'expo-image';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -15,7 +16,7 @@ export default function RestaurantScreen() {
   const { c } = useTheme();
   const { id } = useLocalSearchParams<{ id: string }>();
   const brand = useApp((s) => s.brands.find((item) => item.id === id));
-  const dishes = useApp((s) => s.menu.filter((item) => item.brand === id && item.avail));
+  const dishes = useApp(useShallow((s) => s.menu.filter((item) => item.brand === id && item.avail)));
   if (!brand) {
     return (
       <View style={[styles.empty, { backgroundColor: c.bg }]}>
