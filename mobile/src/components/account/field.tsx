@@ -1,5 +1,5 @@
-import { useState, type Ref } from 'react';
-import { StyleSheet, TextInput, View, type StyleProp, type TextInputInstance, type TextInputProps, type ViewStyle } from 'react-native';
+import { useState, type ComponentRef, type Ref } from 'react';
+import { StyleSheet, TextInput, View, type StyleProp, type TextInputProps, type ViewStyle } from 'react-native';
 
 import { Icon, type IconName } from '@/components/icons/icon';
 import { useTheme } from '@/theme/theme';
@@ -22,7 +22,7 @@ interface FieldProps extends Omit<TextInputProps, 'style'> {
   bg?: string;
   focusColor?: string;
   style?: StyleProp<ViewStyle>;
-  ref?: Ref<TextInputInstance>;
+  ref?: Ref<ComponentRef<typeof TextInput>>;
 }
 
 /** Single-line input with a leading Material Symbol, matching the design's form fields. */
