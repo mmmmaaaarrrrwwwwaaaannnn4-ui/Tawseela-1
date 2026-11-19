@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
 import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
+import { useShallow } from 'zustand/react/shallow';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera as MapCamera, Map as MapLibre, Marker } from '@maplibre/maplibre-react-native';
 
@@ -27,7 +28,7 @@ const kmBetween = (a: number, b: number, c: number, d: number) => {
 export default function AddressMapScreen() {
   useStatusBar();
   const { c } = useTheme();
-  const nearbyBrands = useApp((s) => s.brands.filter((b) => b.on && b.lat != null && b.lng != null));
+  const nearbyBrands = useApp(useShallow((s) => s.brands.filter((b) => b.on && b.lat != null && b.lng != null)));
   const customerLocation = useApp((s) => s.customerLocation);
   const params = useLocalSearchParams<{ current?: string }>();
   const pinLift = useSharedValue(0);
