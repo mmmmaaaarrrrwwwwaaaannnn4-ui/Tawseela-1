@@ -63,6 +63,7 @@ export default function AddressMapScreen() {
         const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         if (!active) return;
         setCurrent({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+        useApp.setState({ customerLocation: { latitude: p.coords.latitude, longitude: p.coords.longitude } });
         setPoint({ latitude: p.coords.latitude, longitude: p.coords.longitude });
         camera.current?.fly({ center: [p.coords.longitude, p.coords.latitude], zoom: 16, duration: 700 });
         if (params.current === '1') {
@@ -143,12 +144,20 @@ export default function AddressMapScreen() {
 
   const warning = zoom < 13
     ? 'قرّب الخريطة أكثر حتى يظهر الشارع ويمكن تحديد نقطة التسليم بدقة'
-    : outside
-      ? 'تعذر التحقق من العنوان أو أن الموقع خارج نطاق التوصيل في بلبيس'
-      : far
-        ? 'الموقع يبعد أكثر من 5 كم عن موقعك الحالي. اختر نقطة أقرب أو تأكد من العنوان'
-        : null;
+    : !addressVerified
+      ? 'جارٍ التحقق من العنوان ونطاق التوصيل…'
+      : outside
+        ? 'تعذر التحقق من العنوان أو أن الموقع خارج نطاق التوصيل في بلبيس'
+        : far
+          ? 'الموقع يبعد أكثر من 5 كم عن موقعك الحالي. اختر نقطة أقرب أو تأكد من العنوان'
+          : null;
   const canConfirm = zoom >= 13 && addressVerified && !outside && !far;
+  const sortedBrands = [...nearbyBrands].sort((a, b) => {
+    if (!customerLocation) return 0;
+    const da = kmBetween(customerLocation.latitude, customerLocation.longitude, a.lat!, a.lng!);
+    const db = kmBetween(customerLocation.latitude, customerLocation.longitude, b.lat!, b.lng!);
+    return da - db;
+  });
   const update = (p: Partial<NewAddress>) => setForm((f) => ({ ...f, ...p }));
   const chooseHit = (hit: SearchHit) => {
     Keyboard.dismiss();
@@ -185,6 +194,7 @@ export default function AddressMapScreen() {
       if (!permission.granted) { useApp.getState().showToast('إذن الموقع مطلوب', 'اسمح بالوصول إلى موقعك لتحديد مكانك الحالي.', 'error'); return; }
       const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
       setCurrent({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+      useApp.setState({ customerLocation: { latitude: p.coords.latitude, longitude: p.coords.longitude } });
       await refreshPoint(p.coords.latitude, p.coords.longitude, 17);
     } catch { useApp.getState().showToast('تعذر تحديد الموقع', 'حاول مرة أخرى أو حرّك الخريطة يدويًا.', 'error'); }
   };
@@ -216,7 +226,7 @@ export default function AddressMapScreen() {
           style={StyleSheet.absoluteFill}
         >
           <MapCamera ref={camera} initialViewState={{ center: [point.longitude, point.latitude], zoom: 14, pitch: 0, bearing: 0 }} />
-          {nearbyBrands.map((brand) => {
+          {sortedBrands.map((brand) => {
             const distance = customerLocation ? kmBetween(customerLocation.latitude, customerLocation.longitude, brand.lat!, brand.lng!) : null;
             return (
               <Marker key={brand.id} lngLat={[brand.lng!, brand.lat!]} anchor="bottom">
