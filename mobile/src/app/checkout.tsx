@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Modal, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
-import { WebView } from 'react-native-webview';
+import { Map as MapLibre, Camera as MapCamera, GeoJSONSource, Layer, ViewAnnotation } from '@maplibre/maplibre-react-native';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { Camera, ImagePlus, Mic, X } from 'lucide-react-native';
@@ -18,6 +18,7 @@ import { placeOrder } from '@/lib/checkout';
 import { API_URL, api } from '@/lib/api';
 import { cardBrandOf } from '@/data/seed';
 import { useApp } from '@/store/app-store';
+import { useSession } from '@/store/session';
 import { family } from '@/theme/typography';
 
 /* ───────── الألوان: مستخرجة من لوجو توصيلة ───────── */
@@ -103,6 +104,8 @@ function Checkout() {
   const set = useApp((st) => st.setCheckout);
   const toast = useApp.getState().showToast;
   const [roadDistanceKm, setRoadDistanceKm] = useState<number | null>(null);
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
+  const customerPhoto = useSession((st) => st.user?.photo ?? null);
 
   /* ───────── وقت التوصيل ───────── */
   const cartBrandId = s.cart[0] ? useApp.getState().dishOf(s.cart[0].id).brand : '';
@@ -117,24 +120,33 @@ function Checkout() {
       return () => { active = false; };
     }
     setRoadDistanceKm(null);
-    const url = `https://router.project-osrm.org/route/v1/driving/${restaurant.lng},${restaurant.lat};${customer.longitude},${customer.latitude}?overview=false`;
+    setRouteCoordinates([]);
+    const url = `https://router.project-osrm.org/route/v1/driving/${restaurant.lng},${restaurant.lat};${customer.longitude},${customer.latitude}?overview=full&geometries=geojson`;
     fetch(url)
       .then((response) => response.ok ? response.json() : Promise.reject(new Error('Route unavailable')))
-      .then((data: { routes?: { distance?: number }[] }) => {
-        const meters = data.routes?.[0]?.distance;
+      .then((data: { routes?: { distance?: number; geometry?: { coordinates?: [number, number][] } }[] }) => {
+        const route = data.routes?.[0];
+        const meters = route?.distance;
         if (active && typeof meters === 'number' && Number.isFinite(meters) && meters > 0) setRoadDistanceKm(meters / 1000);
+        if (active && Array.isArray(route?.geometry?.coordinates) && route.geometry.coordinates.length > 1) setRouteCoordinates(route.geometry.coordinates);
       })
-      .catch(() => { if (active) setRoadDistanceKm(null); });
+      .catch(() => { if (active) { setRoadDistanceKm(null); setRouteCoordinates([]); } });
     return () => { active = false; };
   }, [restaurant?.lat, restaurant?.lng, s.addr?.latitude, s.addr?.longitude, s.customerLocation?.latitude, s.customerLocation?.longitude]);
 
   const deliveryPoint = s.addr?.latitude != null && s.addr?.longitude != null
     ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
     : s.customerLocation;
-  const distanceKm =
-    restaurant?.lat != null && restaurant?.lng != null && deliveryPoint
-      ? roadDistanceKm ?? distanceBetweenKm(deliveryPoint.latitude, deliveryPoint.longitude, restaurant.lat, restaurant.lng)
-      : null;
+  const distanceKm = roadDistanceKm;
+  const hasMapRoute = isDelivery && restaurant?.lat != null && restaurant?.lng != null && !!deliveryPoint;
+  const mapCenter: [number, number] | null = hasMapRoute
+    ? [(restaurant!.lng! + deliveryPoint!.longitude) / 2, (restaurant!.lat! + deliveryPoint!.latitude) / 2]
+    : null;
+  const routeFeature = routeCoordinates.length > 1 ? {
+    type: 'Feature' as const,
+    properties: {},
+    geometry: { type: 'LineString' as const, coordinates: routeCoordinates },
+  } : null;
   /* ───────── أول طلب ───────── */
   const [isFirstOrder, setIsFirstOrder] = useState(false);
   useEffect(() => {
@@ -396,6 +408,29 @@ function Checkout() {
             </View>
           )}
         </View>
+        {hasMapRoute && mapCenter ? (
+          <View style={styles.section}>
+            <Txt s={17} w={700} style={styles.title}>مسار الطلب على الخريطة</Txt>
+            <View style={styles.orderMap}>
+              <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}>
+                <MapCamera initialViewState={{ center: mapCenter, zoom: 11.5, pitch: 0, bearing: 0 }} />
+                {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" style={{ lineColor: '#315B45', lineWidth: 5, lineOpacity: 0.9, lineCap: 'round', lineJoin: 'round' }} /></GeoJSONSource> : null}
+                <ViewAnnotation lngLat={[restaurant!.lng!, restaurant!.lat!]} anchor="bottom">
+                  <View style={styles.mapPinCard}><Image source={{ uri: restaurant!.img }} style={styles.mapPinImage} contentFit="cover" /><Txt s={10} w={700} style={styles.mapPinLabel} numberOfLines={1}>المطعم</Txt></View>
+                </ViewAnnotation>
+                <ViewAnnotation lngLat={[deliveryPoint!.longitude, deliveryPoint!.latitude]} anchor="bottom">
+                  <View style={styles.mapPinCard}><Image source={customerPhoto ? { uri: customerPhoto } : require('../../assets/images/icon.png')} style={styles.mapPinImage} contentFit="cover" /><Txt s={10} w={700} style={styles.mapPinLabel} numberOfLines={1}>أنت</Txt></View>
+                </ViewAnnotation>
+              </MapLibre>
+            </View>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 8 }}>
+              <Txt s={12} color={MUTED}>{routeCoordinates.length > 1 ? 'المسار الفعلي على الطرق' : 'جارٍ تحميل الطريق من خدمة التوجيه…'}</Txt>
+              <Txt s={12} w={700} color={BRAND}>{roadDistanceKm != null ? `${roadDistanceKm.toFixed(1)} كم` : 'المسافة غير متاحة'}</Txt>
+            </View>
+          </View>
+        ) : isDelivery ? (
+          <View style={styles.section}><Txt s={12} color={MUTED}>حدد موقع المطعم وعنوان التوصيل على الخريطة لعرض مسار الرحلة.</Txt></View>
+        ) : null}
         <View style={styles.band} />
 
         {/* ───────── الدفع: كلهم تحت بعض ───────── */}
@@ -808,6 +843,10 @@ function MethodRow({
 }
 
 const styles = StyleSheet.create({
+  orderMap: { height: 230, overflow: 'hidden', borderRadius: 18, backgroundColor: '#EAF0E8', marginTop: 10 },
+  mapPinCard: { width: 64, alignItems: 'center', padding: 4, borderRadius: 13, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', elevation: 5 },
+  mapPinImage: { width: 42, height: 42, borderRadius: 10, backgroundColor: '#EAF0E8' },
+  mapPinLabel: { color: '#173D2A', marginTop: 2 },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, paddingBottom: 10, backgroundColor: BG },
   back: { width: 40, height: 40, borderRadius: 20, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   backSpacer: { width: 40, height: 40 },
