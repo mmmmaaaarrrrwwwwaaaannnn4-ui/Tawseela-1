@@ -151,10 +151,11 @@ function Checkout() {
   const [customTip, setCustomTip] = useState(false);
   const [promoText, setPromoText] = useState('');
   const [scheduleSheet, setScheduleSheet] = useState(false);
-  const rushDelivery = s.speed === 1;
+  const [scheduleOffsetMinutes, setScheduleOffsetMinutes] = useState(0);
+  const rushDelivery = s.speed === 1 || scheduleOffsetMinutes < 0;
   const [noteExpanded, setNoteExpanded] = useState(false);
   const [noteImages, setNoteImages] = useState<string[]>([]);
-  const scheduledFrom = new Date(Date.now() + ((restaurant?.prepTime ?? s.prep) + (distanceKm == null ? 0 : distanceKm * 5 * (rushDelivery ? 0.5 : 1))) * 60000);
+  const scheduledFrom = new Date(Date.now() + ((restaurant?.prepTime ?? s.prep) + (distanceKm == null ? 0 : distanceKm * 5 * (s.speed === 1 ? 0.5 : 1)) + scheduleOffsetMinutes) * 60000);
   const scheduledTo = new Date(scheduledFrom.getTime() + 10 * 60000);
   const scheduleLabel = rushDelivery ? 'توصيل مستعجل' : 'التوصيل العادي';
   const scheduleColor = rushDelivery ? RED : GREEN;
@@ -373,7 +374,7 @@ function Checkout() {
         <View style={styles.section}>
           <Txt s={17} w={700} style={styles.title}>{isDelivery ? 'عنوان التوصيل' : 'الاستلام من'}</Txt>
           {isDelivery ? (
-            <View style={styles.addrRow}>
+            <View style={[styles.addrRow, { direction: 'rtl' }]}>
               <PressableScale onPress={() => router.push('/addresses')} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Icon name="location_on" size={22} color={TEXT} />
                 <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
@@ -601,9 +602,27 @@ function Checkout() {
         <View style={[styles.sheet, { paddingBottom: insets.bottom + 18 }]}><View style={styles.sheetHandle} />
           <Txt s={17} w={700} style={{ color: TEXT, textAlign: "right" }}>تغيير موعد التوصيل</Txt>
           <View style={{ alignItems: "center", gap: 6, paddingVertical: 10 }}>
-            <Txt s={13} w={700} style={{ color: scheduleColor }}>{scheduleLabel}</Txt>
-            <Txt s={24} w={800} style={{ color: scheduleColor }}>{clock(scheduledFrom)} - {clock(scheduledTo)}</Txt>
-            <Txt s={12} color={MUTED}>موعد تقديري حسب تجهيز المطعم والتوصيل</Txt>
+            <Txt s={13} w={600} style={{ color: scheduleOffsetMinutes < 0 ? RED : BRAND }}>{scheduleOffsetMinutes < 0 ? 'موعد مستعجل' : scheduleOffsetMinutes > 0 ? 'موعد لاحق' : scheduleLabel}</Txt>
+            <Txt s={22} w={600} style={{ color: scheduleOffsetMinutes < 0 ? RED : BRAND }}>{clock(scheduledFrom)} - {clock(scheduledTo)}</Txt>
+            <Txt s={12} color={MUTED}>اسحب عجلة الوقت لاختيار موعد أبكر أو لاحق</Txt>
+          </View>
+          <View style={styles.timeWheelFrame}>
+            <ScrollView style={{ height: 126 }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 42 }} showsVerticalScrollIndicator={false} snapToInterval={42} decelerationRate="fast"
+              onMomentumScrollEnd={(event) => {
+                const index = Math.round(event.nativeEvent.contentOffset.y / 42);
+                const minutes = Math.max(-30, Math.min(600, index * 15));
+                setScheduleOffsetMinutes(minutes);
+                set({ speed: minutes < 0 ? 1 : 0 });
+              }}>
+              {Array.from({ length: 43 }, (_, index) => (index - 2) * 15).map((minutes) => (
+                <View key={minutes} style={{ height: 42, justifyContent: 'center' }}>
+                  <Txt s={minutes === scheduleOffsetMinutes ? 20 : 15} w={minutes === scheduleOffsetMinutes ? 600 : 400} style={{ color: minutes < 0 ? RED : minutes === scheduleOffsetMinutes ? BRAND : MUTED }}>
+                    {minutes === 0 ? 'الوقت الطبيعي' : minutes < 0 ? `قبل الموعد بـ ${Math.abs(minutes)} دقيقة` : `بعد ${Math.floor(minutes / 60) ? `${Math.floor(minutes / 60)} ساعة ` : ''}${minutes % 60 ? `${minutes % 60} دقيقة` : ''}`}
+                  </Txt>
+                </View>
+              ))}
+            </ScrollView>
+            <View pointerEvents="none" style={styles.timeWheelSelection} />
           </View>
           <PressableScale onPress={() => set({ speed: rushDelivery ? 0 : 1 })} style={[styles.scheduleChoice, { borderColor: rushDelivery ? RED : BORDER, backgroundColor: rushDelivery ? '#FFF1F0' : '#FFFFFF' }]}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
@@ -832,11 +851,13 @@ const styles = StyleSheet.create({
   promoInput: { flex: 1, textAlign: 'right', paddingVertical: 0 },
 
   noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  timeWheelFrame: { height: 126, overflow: 'hidden', borderRadius: 14, borderWidth: 1, borderColor: BORDER, backgroundColor: '#FFFFFF' },
+  timeWheelSelection: { position: 'absolute', top: 42, left: 8, right: 8, height: 42, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#DCE4DE' },
   scheduleChoice: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12, alignItems: 'center', gap: 4 },
   scheduleChoiceOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
   noteInput: { alignSelf: 'stretch', textAlign: 'right', paddingVertical: 0, minHeight: 20, color: TEXT },
   noteTools: { flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: 'stretch', paddingTop: 8 },
-  noteTool: { width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  noteTool: { width: 30, height: 30, borderRadius: 8, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   noteImages: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignSelf: 'stretch', paddingTop: 8 },
   noteImageWrap: { width: 68, height: 68, borderRadius: 10, overflow: 'visible' },
   noteImage: { width: 68, height: 68, borderRadius: 10, borderWidth: 1, borderColor: BORDER },
