@@ -1,7 +1,8 @@
 import { useLocalSearchParams } from 'expo-router';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
+import * as Location from 'expo-location';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Map as MapLibre, Camera as MapCamera } from '@maplibre/maplibre-react-native';
+import { Map as MapLibre, Camera as MapCamera, type CameraRef } from '@maplibre/maplibre-react-native';
 
 import { AdminHeader, AdminInput, FieldLabel, openItemEditor, ToggleCardRow, useAdminPadding } from '@/components/admin/admin-ui';
 import { PhotoButton } from '@/components/admin/photo-button';
@@ -59,6 +60,37 @@ function EditBrand() {
     return found ? { ...found, manualStatus: found.manualStatus ?? 'auto' } : { id: 'new', name: '', tag: '', icon: b[0]?.icon ?? 'storefront', img: b[0]?.img ?? '', on: true, lat: null, lng: null, address: '', phone: '', description: '', workDays: ['sat', 'sun', 'mon', 'tue', 'wed', 'thu', 'fri'], openTime: '09:00', closeTime: '23:00', manualStatus: 'auto', deliveryFee: 0, prepTime: 30 };
   });
   const dishes = menu.filter((m) => m.brand === draft.id);
+  const mapCamera = useRef<CameraRef>(null);
+  const [mapSearch, setMapSearch] = useState('');
+  const [mapSearching, setMapSearching] = useState(false);
+  const searchMapLocation = async () => {
+    const query = mapSearch.trim();
+    if (!query || mapSearching) return;
+    setMapSearching(true);
+    try {
+      const response = await fetch(`https://nominatim.openstreetmap.org/search?format=jsonv2&limit=1&countrycodes=eg&accept-language=ar&q=${encodeURIComponent(query)}`);
+      const rows = await response.json() as { lat?: string; lon?: string; display_name?: string }[];
+      const place = rows[0];
+      const lat = Number(place?.lat), lng = Number(place?.lon);
+      if (!Number.isFinite(lat) || !Number.isFinite(lng)) throw new Error('not-found');
+      setDraft((d) => ({ ...d, lat, lng, address: place?.display_name ?? d.address }));
+      mapCamera.current?.flyTo({ center: [lng, lat], zoom: 16, duration: 900 });
+    } catch {
+      useApp.getState().showToast('لم يتم العثور على العنوان', 'جرّب كتابة اسم الشارع أو المنطقة بشكل أوضح.', 'error');
+    } finally { setMapSearching(false); }
+  };
+  const locateKitchen = async () => {
+    try {
+      const permission = await Location.requestForegroundPermissionsAsync();
+      if (!permission.granted) throw new Error('permission');
+      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const lat = position.coords.latitude, lng = position.coords.longitude;
+      setDraft((d) => ({ ...d, lat, lng }));
+      mapCamera.current?.flyTo({ center: [lng, lat], zoom: 16, duration: 900 });
+    } catch {
+      useApp.getState().showToast('تعذر تحديد الموقع', 'اسمح بالوصول للموقع أو حدد مكان المطعم بتحريك الخريطة.', 'error');
+    }
+  };
 
 
   const [saving, setSaving] = useState(false);
@@ -127,10 +159,15 @@ function EditBrand() {
         </Reveal>
         <Reveal i={2} style={{ gap: 8 }}>
           <FieldLabel>Kitchen location — tap the map to place the pin</FieldLabel>
+          <View style={{ flexDirection: 'row', gap: 7, alignItems: 'center' }}>
+            <View style={{ flex: 1 }}><AdminInput value={mapSearch} onChangeText={setMapSearch} placeholder="ابحث عن عنوان المطعم أو المنطقة" /></View>
+            <PressableScale onPress={() => void searchMapLocation()} style={{ paddingHorizontal: 13, height: 44, borderRadius: 12, justifyContent: 'center', backgroundColor: c.accentSoft }}><Txt s={12} w={700} color={c.accentText}>{mapSearching ? '...' : 'بحث'}</Txt></PressableScale>
+            <PressableScale onPress={() => void locateKitchen()} style={{ width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', backgroundColor: c.accentSoft }}><Icon name="my_location" size={19} color={c.accentText} /></PressableScale>
+          </View>
           <View style={{ height: 260, overflow: 'hidden', borderRadius: 18, borderWidth: 1, borderColor: c.line }}>
             <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}
               onRegionDidChange={(event) => { const center = event.nativeEvent.center; if (Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1])) setDraft((d) => ({ ...d, lng: center[0], lat: center[1] })); }}>
-              <MapCamera initialViewState={{ center: [draft.lng ?? 31.557884, draft.lat ?? 30.42292], zoom: draft.lat != null && draft.lng != null ? 16 : 11, pitch: 0, bearing: 0 }} />
+              <MapCamera ref={mapCamera} initialViewState={{ center: [draft.lng ?? 31.557884, draft.lat ?? 30.42292], zoom: draft.lat != null && draft.lng != null ? 16 : 11, pitch: 0, bearing: 0 }} />
             </MapLibre>
             <View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -21, marginTop: -48, alignItems: 'center' }}>
               <View style={{ width: 46, height: 46, borderRadius: 16, padding: 3, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', elevation: 6 }}>
