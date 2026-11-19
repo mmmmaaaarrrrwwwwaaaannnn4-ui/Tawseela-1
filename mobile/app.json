@@ -14,7 +14,9 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
         "UIDesignRequiresCompatibility": false,
-        "NSLocationWhenInUseUsageDescription": "تحتاج توصيلة إلى موقعك لتحديد عنوان التوصيل وحساب وقت الوصول بدقة."
+        "NSLocationWhenInUseUsageDescription": "تحتاج توصيلة إلى موقعك لتحديد عنوان التوصيل وحساب وقت الوصول بدقة.",
+        "NSSpeechRecognitionUsageDescription": "تستخدم توصيلة التعرف على الكلام لتحويل ملاحظتك الصوتية إلى نص.",
+        "NSMicrophoneUsageDescription": "تحتاج توصيلة إلى الميكروفون لتحويل ملاحظتك الصوتية إلى نص."
       },
       "usesAppleSignIn": true
     },
@@ -66,7 +68,14 @@
           "locationWhenInUsePermission": "تحتاج توصيلة إلى موقعك لتحديد عنوان التوصيل وحساب وقت الوصول بدقة."
         }
       ],
-      "@maplibre/maplibre-react-native"
+      "@maplibre/maplibre-react-native",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "تحتاج توصيلة إلى الميكروفون لتحويل ملاحظتك الصوتية إلى نص.",
+          "speechRecognitionPermission": "تحتاج توصيلة إلى التعرف على الكلام لتحويل صوتك إلى نص داخل الملاحظة."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
