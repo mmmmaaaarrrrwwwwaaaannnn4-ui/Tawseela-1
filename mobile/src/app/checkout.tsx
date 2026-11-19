@@ -2,6 +2,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useShallow } from 'zustand/react/shallow';
 import { Map as MapLibre, Camera as MapCamera, GeoJSONSource, Layer, ViewAnnotation } from '@maplibre/maplibre-react-native';
 import { WebView } from 'react-native-webview';
@@ -36,7 +37,7 @@ const GREEN = '#2E7D32';
 const RED = '#D92D20';
 
 const SERVICE_FEE = 5;
-const TIP_OPTIONS = [10, 15, 20];
+const TIP_OPTIONS = [10, 20, 30];
 
 /** خط واحد لكل حقول الإدخال (نفس خط باقي نصوص الصفحة) */
 const INPUT_FONT = { fontFamily: family(500), fontSize: 14, color: TEXT } as const;
@@ -122,9 +123,8 @@ function Checkout() {
   const deliveryPoint = isDelivery && s.addr?.latitude != null && s.addr?.longitude != null
     ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
     : null;
-  const routeStops = deliveryPoint ? restaurants
-    .filter((item) => item.lat != null && item.lng != null)
-    .sort((a, b) => distanceBetweenKm(b.lat!, b.lng!, deliveryPoint.latitude, deliveryPoint.longitude) - distanceBetweenKm(a.lat!, a.lng!, deliveryPoint.latitude, deliveryPoint.longitude)) : [];
+  const allRestaurantsPinned = restaurants.length > 0 && restaurants.every((item) => item.lat != null && item.lng != null);
+  const routeStops = deliveryPoint && allRestaurantsPinned ? restaurants : [];
   const routeKey = routeStops.map((item) => `${item.id}:${item.lat}:${item.lng}`).join('|') + `|${deliveryPoint?.latitude ?? ''}:${deliveryPoint?.longitude ?? ''}`;
   useEffect(() => {
     let active = true;
@@ -175,6 +175,27 @@ function Checkout() {
   const [customTip, setCustomTip] = useState(false);
   const [deliveryInstruction, setDeliveryInstruction] = useState<'call' | 'no_bell' | 'reception' | 'ring' | null>('call');
   const [saveDeliveryInstruction, setSaveDeliveryInstruction] = useState(false);
+  const [instructionReady, setInstructionReady] = useState(false);
+  useEffect(() => {
+    let active = true;
+    AsyncStorage.getItem('tawseela.checkout.delivery-instruction').then((raw) => {
+      if (!active || !raw) return;
+      try {
+        const saved = JSON.parse(raw) as { instruction?: typeof deliveryInstruction; enabled?: boolean };
+        if (saved.instruction) setDeliveryInstruction(saved.instruction);
+        setSaveDeliveryInstruction(saved.enabled === true);
+      } catch { /* Ignore an invalid local preference. */ }
+    }).finally(() => { if (active) setInstructionReady(true); });
+    return () => { active = false; };
+  }, []);
+  useEffect(() => {
+    if (!instructionReady) return;
+    if (saveDeliveryInstruction && deliveryInstruction) {
+      void AsyncStorage.setItem('tawseela.checkout.delivery-instruction', JSON.stringify({ instruction: deliveryInstruction, enabled: true }));
+    } else {
+      void AsyncStorage.removeItem('tawseela.checkout.delivery-instruction');
+    }
+  }, [deliveryInstruction, saveDeliveryInstruction, instructionReady]);
   const [promoText, setPromoText] = useState('');
   const [scheduleSheet, setScheduleSheet] = useState(false);
   const [scheduleOffsetMinutes, setScheduleOffsetMinutes] = useState(0);
@@ -477,8 +498,6 @@ function Checkout() {
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
-        <View style={styles.band} />
-
         {/* ───────── وقت التوصيل ───────── */}
         <View style={styles.section}>
           <View style={styles.titleRow}>
@@ -550,8 +569,6 @@ function Checkout() {
             </View>
           </View>
         )}
-        <View style={styles.band} />
-
         {/* تعليمات التوصيل */}
         {isDelivery ? (
           <View style={styles.section}>
