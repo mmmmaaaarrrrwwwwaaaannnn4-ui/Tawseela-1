@@ -3,8 +3,9 @@ import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, w
 import { router, useLocalSearchParams } from 'expo-router';
 import * as Location from 'expo-location';
 import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
+import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Camera as MapCamera, Map as MapLibre } from '@maplibre/maplibre-react-native';
+import { Camera as MapCamera, Map as MapLibre, MarkerView } from '@maplibre/maplibre-react-native';
 
 import { Icon } from '@/components/icons/icon';
 import { CircleButton } from '@/components/ui/buttons';
@@ -26,6 +27,8 @@ const kmBetween = (a: number, b: number, c: number, d: number) => {
 export default function AddressMapScreen() {
   useStatusBar();
   const { c } = useTheme();
+  const nearbyBrands = useApp((s) => s.brands.filter((b) => b.on && b.lat != null && b.lng != null));
+  const customerLocation = useApp((s) => s.customerLocation);
   const params = useLocalSearchParams<{ current?: string }>();
   const pinLift = useSharedValue(0);
   const pinBounce = useSharedValue(0);
@@ -213,12 +216,29 @@ export default function AddressMapScreen() {
           style={StyleSheet.absoluteFill}
         >
           <MapCamera ref={camera} initialViewState={{ center: [point.longitude, point.latitude], zoom: 14, pitch: 0, bearing: 0 }} />
+          {nearbyBrands.map((brand) => {
+            const distance = customerLocation ? kmBetween(customerLocation.latitude, customerLocation.longitude, brand.lat!, brand.lng!) : null;
+            return (
+              <MarkerView key={brand.id} coordinate={[brand.lng!, brand.lat!]} anchor={{ x: 0.5, y: 1 }} allowOverlap>
+                <PressableScale
+                  onPress={() => { useApp.getState().setMenuBrand(brand.id); useApp.getState().setMenuCat('All', brand.id); router.push('/menu' as never); }}
+                  style={styles.restaurantMarker}
+                  accessibilityLabel={`فتح ${brand.name}`}
+                >
+                  <View style={[styles.restaurantPhoto, { borderColor: c.accent }]}>
+                    <Image source={{ uri: brand.img }} style={StyleSheet.absoluteFill} contentFit="cover" />
+                  </View>
+                  {distance != null ? <View style={styles.distancePill}><Txt s={9} w={700} color="#FFFFFF">{distance < 1 ? `${Math.round(distance * 1000)} م` : `${distance.toFixed(1)} كم`}</Txt></View> : null}
+                </PressableScale>
+              </MarkerView>
+            );
+          })}
         </MapLibre>
         <Animated.View pointerEvents="none" style={[styles.pinWrap, pinMotion]}>
-          {warning ? <View style={styles.warning}><Txt s={14} w={600} color="#FFFFFF" align="center">{warning}</Txt></View> : null}
-          <View style={styles.pin}><View style={styles.pinDot} /></View>
+          <View style={[styles.pin, { backgroundColor: c.accent }]}><View style={styles.pinDot} /></View>
           <View style={styles.pinShadow} />
         </Animated.View>
+        {warning ? <View pointerEvents="none" style={styles.warning}><Icon name="info" size={18} color="#FFFFFF" /><Txt s={13} w={600} color="#FFFFFF" align="center" style={{ flex: 1 }}>{warning}</Txt></View> : null}
         <PressableScale onPress={() => { void locateMe(); }} style={[styles.locate, { backgroundColor: '#FFFFFF' }]}>
           <Icon name="my_location" size={22} color="#202020" />
         </PressableScale>
@@ -239,12 +259,12 @@ export default function AddressMapScreen() {
       <Modal visible={searchOpen} animationType="slide" onRequestClose={() => setSearchOpen(false)}>
         <View style={[styles.searchPage, { paddingTop: insets.top + 10, backgroundColor: c.bg }]}>
           <View style={styles.searchHeader}>
+            <CircleButton icon="close" size={40} iconSize={19} variant="soft" label="إغلاق البحث" onPress={() => setSearchOpen(false)} />
             <View style={[styles.searchBar, { backgroundColor: c.surface2, borderColor: c.line }]}>
-              <Icon name="search" size={22} color={c.text3} />
               <TextInput ref={(instance) => { if (instance) searchRef.current = instance; }} value={query} onChangeText={setQuery} placeholder="ابحث عن شارع أو مكان في بلبيس" placeholderTextColor={c.text3} style={[styles.searchInput, { color: c.text1, textAlign: "right" }]} returnKeyType="search" />
-              {query ? <Pressable onPress={() => setQuery('')}><Icon name="close" size={20} color={c.text2} /></Pressable> : null}
+              <Icon name="search" size={19} color={c.text3} />
+              {query ? <Pressable onPress={() => setQuery('')}><Icon name="close" size={17} color={c.text2} /></Pressable> : null}
             </View>
-            <CircleButton icon="close" size={42} iconSize={20} variant="soft" label="إغلاق البحث" onPress={() => setSearchOpen(false)} />
           </View>
           {searching ? <ActivityIndicator style={{ marginTop: 24 }} color={c.accent} /> : null}
           <ScrollView style={styles.searchResults} keyboardShouldPersistTaps="handled">
@@ -293,7 +313,7 @@ export default function AddressMapScreen() {
           <FormField label="رقم الهاتف الجوال" value={form.phone} onChange={(phone) => update({ phone })} placeholder="+20 رقم الهاتف" keyboardType="phone-pad" />
           <FormField label="علامة مميزة (اختياري)" value={form.note} onChange={(note) => update({ note })} placeholder="علامة مميزة" />
           <FormField label="تسمية العنوان (اختياري)" value={form.custom} onChange={(custom) => update({ custom })} placeholder="مثلاً: منزل العائلة" />
-          <PressableScale disabled={saving} onPress={saveAddress} style={[styles.confirm, { backgroundColor: '#255942' }]}><Txt s={17} w={700} color="#FFFFFF">{saving ? 'جارٍ الحفظ…' : 'حفظ العنوان'}</Txt></PressableScale>
+          <PressableScale disabled={saving} onPress={saveAddress} style={[styles.confirm, { backgroundColor: c.accent }]}><Txt s={17} w={700} color="#FFFFFF">{saving ? 'جارٍ الحفظ…' : 'حفظ العنوان'}</Txt></PressableScale>
         </ScrollView>
       </Modal>
     </View>
@@ -307,23 +327,26 @@ function FormField({ label, value, onChange, placeholder, keyboardType }: { labe
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  top: { minHeight: 92, paddingHorizontal: 20, paddingBottom: 14, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  top: { minHeight: 68, paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
   round: { width: 48, height: 48, borderRadius: 24, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   mapArea: { flex: 1, overflow: 'hidden', backgroundColor: '#E8EFE8' },
   pinWrap: { position: 'absolute', left: '50%', top: '50%', marginLeft: -17, marginTop: -42, alignItems: 'center' },
-  pin: { width: 42, height: 42, borderRadius: 24, borderBottomLeftRadius: 5, backgroundColor: '#255942', transform: [{ rotate: '-45deg' }], alignItems: 'center', justifyContent: 'center', elevation: 8 },
+  pin: { width: 42, height: 42, borderRadius: 24, borderBottomLeftRadius: 5, transform: [{ rotate: '-45deg' }], alignItems: 'center', justifyContent: 'center', elevation: 8 },
   pinDot: { width: 13, height: 13, borderRadius: 7, backgroundColor: '#FFFFFF', transform: [{ rotate: '45deg' }] },
   pinShadow: { width: 13, height: 6, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.25)', marginTop: 2 },
-  warning: { position: 'absolute', bottom: 65, width: '85%', alignSelf: 'center', backgroundColor: '#242424', paddingHorizontal: 18, paddingVertical: 15, borderRadius: 18, elevation: 10 },
+  warning: { position: 'absolute', zIndex: 8, bottom: 82, left: 16, right: 16, minHeight: 48, backgroundColor: '#202020', paddingHorizontal: 14, paddingVertical: 11, borderRadius: 14, elevation: 10, flexDirection: 'row-reverse', alignItems: 'center', gap: 9 },
+  restaurantMarker: { alignItems: 'center', justifyContent: 'center', minWidth: 54, minHeight: 58 },
+  restaurantPhoto: { width: 48, height: 48, borderRadius: 24, borderWidth: 3, backgroundColor: '#FFFFFF', overflow: 'hidden', elevation: 5 },
+  distancePill: { marginTop: -7, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, backgroundColor: '#202020', borderWidth: 1, borderColor: '#FFFFFF' },
   locate: { position: 'absolute', bottom: 20, left: 18, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', elevation: 4 },
   bottom: { paddingHorizontal: 20, paddingTop: 16, gap: 16 },
   addressLine: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
   confirm: { height: 62, borderRadius: 34, alignItems: 'center', justifyContent: 'center' },
   searchPage: { flex: 1, paddingHorizontal: 20 },
-  searchHeader: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  searchHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingTop: 2 },
   searchResults: { flex: 1, width: '100%' },
-  searchBar: { height: 54, flex: 1, borderWidth: 1, borderRadius: 28, flexDirection: 'row-reverse', alignItems: 'center', paddingHorizontal: 16, gap: 10 },
-  searchInput: { flex: 1, fontSize: 16, paddingVertical: 8 },
+  searchBar: { height: 40, flex: 1, borderWidth: 1, borderRadius: 22, flexDirection: 'row-reverse', alignItems: 'center', paddingHorizontal: 12, gap: 8 },
+  searchInput: { flex: 1, minHeight: 38, fontSize: 14, paddingVertical: 0 },
   result: { minHeight: 82, borderBottomWidth: 1, flexDirection: 'row-reverse', alignItems: 'center', gap: 14, paddingVertical: 12, width: '100%' },
   formPage: { flex: 1 },
   formHeader: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
