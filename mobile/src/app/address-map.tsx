@@ -55,6 +55,8 @@ export default function AddressMapScreen() {
         const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
         if (!active) return;
         setCurrent({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+        setPoint({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+        camera.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 16, duration: 700 });
       } catch { /* Map selection remains available without GPS. */ }
     })();
     return () => { active = false; };
