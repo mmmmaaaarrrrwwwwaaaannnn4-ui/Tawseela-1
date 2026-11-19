@@ -59,9 +59,9 @@ export default function CartScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Reveal i={0} style={styles.cartTopBar}>
-            <View style={{ flex: 1, gap: 3 }}>
-              <Txt s={30} w={700} ls={-0.03}>سلة مشترياتك</Txt>
-              <Txt s={13.5} w={500} color={c.text3}>{cnt(totals.count, 'item')} · توصيلة</Txt>
+            <View style={{ flex: 1, gap: 3, alignItems: 'flex-end' }}>
+              <Txt s={30} w={700} ls={-0.03} align="right">سلة مشترياتك</Txt>
+              <Txt s={13.5} w={500} color={c.text3} align="right">{cnt(totals.count, 'item')} · توصيلة</Txt>
             </View>
             <PressableScale onPress={() => router.push('/saved')} scaleTo={0.92}
               accessibilityRole="button" accessibilityLabel="المفضلة"
@@ -75,9 +75,9 @@ export default function CartScreen() {
               <EmptyHero
                 top={50}
                 icon="add_shopping_cart"
-                title="Your cart is empty"
-                text="The oven’s already hot. Pick something good."
-                cta="Browse the menu"
+                title="سلتك فارغة"
+                text="اختار منتجاتك المفضلة وابدأ طلبك"
+                cta="تصفح المنتجات"
                 onPress={browseMenu}
               />
             </View>
@@ -87,19 +87,19 @@ export default function CartScreen() {
             const d = dishOf(line.id);
             return (
               <Reveal key={`${line.id}-${line.s}-${line.ex.join('.')}-${line.deal ? 'd' : ''}`} i={1 + i} from={{ x: 24 }}>
-                <View style={[styles.line, { backgroundColor: c.surface1, borderColor: c.line }]}>
+                <View style={[styles.line, { backgroundColor: c.surface1, borderColor: c.line, direction: 'rtl' }]}>
                   <PressableScale onPress={() => openDish(line.id)} scaleTo={0.95} accessibilityLabel={d.name}>
                     <DishImage uri={d.img} size={74} />
                   </PressableScale>
-                  <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-                    <Txt s={15} w={700} numberOfLines={1}>
+                  <View style={{ flex: 1, minWidth: 0, gap: 3, alignItems: 'flex-end' }}>
+                    <Txt s={15} w={700} numberOfLines={1} align="right">
                       {d.name}
                     </Txt>
                     <Txt s={12} color={c.text3} numberOfLines={1}>
-                      {lineMeta(line, d) || 'Regular'}
+                      {lineMeta(line, d) || 'عادي'}
                       {line.deal ? (line.dealPct === 100 ? ' · Reward' : ` · Deal −${line.dealPct}%`) : ''}
                     </Txt>
-                    <Txt s={16} w={600} color={c.accentText} style={{ marginTop: 2 }}>
+                    <Txt s={16} w={600} color={c.text1} style={{ marginTop: 2 }} align="right">
                       {money(lineUnit(line, d) * line.q)}
                     </Txt>
                   </View>
@@ -115,7 +115,7 @@ export default function CartScreen() {
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                   <Icon name="two_wheeler" size={19} fill color={c.accent} />
                   <Txt s={13.5} w={600}>
-                    {totals.sub >= s.freeAt ? 'Free delivery unlocked' : `Add ${money(s.freeAt - totals.sub)} more for free delivery`}
+                    {totals.sub >= s.freeAt ? 'تم تفعيل التوصيل المجاني' : `أضف ${money(s.freeAt - totals.sub)} للحصول على توصيل مجاني`}
                   </Txt>
                 </View>
                 <ProgressBar pct={Math.min(100, (totals.sub / s.freeAt) * 100)} height={7} gradient />
@@ -128,7 +128,7 @@ export default function CartScreen() {
                     <TextInput
                       value={promoIn}
                       onChangeText={setPromoIn}
-                      placeholder="Promo code"
+                      placeholder="كود الخصم"
                       placeholderTextColor={c.text3}
                       autoCapitalize="characters"
                       autoCorrect={false}
@@ -142,7 +142,7 @@ export default function CartScreen() {
                       style={[styles.promoInput, { color: c.text1, fontFamily: family(600) }]}
                     />
                     <InkButton
-                      label="Apply"
+                      label="تطبيق"
                       onPress={() =>
                         void useApp
                           .getState()
@@ -176,22 +176,22 @@ export default function CartScreen() {
               )}
 
               <Card style={{ padding: 16, gap: 10 }}>
-                <SummaryRow label="Subtotal" value={money(totals.sub)} />
-                <SummaryRow label="Delivery" value={totals.fee ? money(totals.fee) : 'Free'} />
-                {s.promo ? <SummaryRow label="Discount" value={'−' + money(totals.disc)} valueColor={c.ok} /> : null}
+                <SummaryRow label="المجموع الفرعي" value={money(totals.sub)} />
+                <SummaryRow label="التوصيل" value={totals.fee ? money(totals.fee) : 'مجاني'} />
+                {s.promo ? <SummaryRow label="الخصم" value={'−' + money(totals.disc)} valueColor={c.ok} /> : null}
                 <Divider />
                 <TotalRow value={money(totals.cartTotal)} />
               </Card>
 
               <AccentButton height={58} glow dim={!s.storeOpen} onPress={goCheckout} contentStyle={styles.ckContent} accessibilityLabel="Checkout">
-                <Txt s={16.5} w={700} color="#FFFFFF">
-                  {!s.storeOpen ? 'Kitchen closed' : signedIn ? 'Go to checkout' : 'Sign in to checkout'}
+                <Txt s={16.5} w={700} color={c.accentInk}>
+                  {!s.storeOpen ? 'المطعم مغلق' : signedIn ? 'إتمام الطلب' : 'سجّل الدخول لإتمام الطلب'}
                 </Txt>
-                <View style={styles.ckPill}>
-                  <Txt s={15} w={700} color="#FFFFFF">
+                <View style={[styles.ckPill, { backgroundColor: c.text1 }]}>
+                  <Txt s={15} w={700} color={c.surface1}>
                     {money(totals.cartTotal)}
                   </Txt>
-                  <Icon name="arrow_forward" size={18} color="#FFFFFF" />
+                  <Icon name="arrow_forward" size={18} color={c.surface1} />
                 </View>
               </AccentButton>
             </Reveal>
@@ -203,12 +203,16 @@ export default function CartScreen() {
 }
 
 const styles = StyleSheet.create({
-  cartTopBar: { paddingTop: 6, minHeight: 76, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  cartTopBar: { paddingTop: 6, minHeight: 76, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  
   favoriteButton: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
-  line: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 22, borderWidth: 1 },
-  promo: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 6, paddingLeft: 16, borderRadius: 22, borderWidth: 1 },
+  line: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 22, borderWidth: 1, minHeight: 104 },
+  
+  promo: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, padding: 6, paddingLeft: 16, borderRadius: 22, borderWidth: 1 },
+  
   promoInput: { flex: 1, minWidth: 0, fontSize: 14.5, letterSpacing: 0.58, paddingVertical: 0, height: 42 },
   applied: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingLeft: 16, paddingRight: 8, borderRadius: 20 },
-  ckContent: { justifyContent: 'space-between', paddingLeft: 24, paddingRight: 10 },
+  ckContent: { justifyContent: 'space-between', paddingLeft: 24, paddingRight: 10, flexDirection: 'row-reverse' },
+  
   ckPill: { height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.14)', flexDirection: 'row', alignItems: 'center', gap: 6 },
 });
