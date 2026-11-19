@@ -17,7 +17,7 @@ import type {
   StoreSettings,
   Voucher,
 } from '@fig/shared';
-import { useSyncExternalStore } from 'react';
+import { useEffect, useState } from 'react';
 import { create } from 'zustand';
 import { createJSONStorage, persist } from 'zustand/middleware';
 
@@ -1315,10 +1315,18 @@ export const useApp = create<AppStore>()(
   ),
 );
 
-const subscribeHydration = (cb: () => void) => useApp.persist.onFinishHydration(cb);
-const getHydrated = () => useApp.persist.hasHydrated();
 /** The saved catalog, cart, wallet and settings have loaded from the device. */
-export const useAppHydrated = () => useSyncExternalStore(subscribeHydration, getHydrated, getHydrated);
+export const useAppHydrated = () => {
+  const [hydrated, setHydrated] = useState(() => useApp.persist.hasHydrated());
+  useEffect(() => {
+    if (useApp.persist.hasHydrated()) {
+      setHydrated(true);
+      return;
+    }
+    return useApp.persist.onFinishHydration(() => setHydrated(true));
+  }, []);
+  return hydrated;
+};
 
 /* ------------------------------------------------------------------ selectors */
 
