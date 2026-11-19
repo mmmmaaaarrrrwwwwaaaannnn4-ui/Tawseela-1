@@ -65,7 +65,8 @@
         {
           "locationWhenInUsePermission": "تحتاج توصيلة إلى موقعك لتحديد عنوان التوصيل وحساب وقت الوصول بدقة."
         }
-      ]
+      ],
+      "@maplibre/maplibre-react-native"
     ],
     "experiments": {
       "typedRoutes": true,
