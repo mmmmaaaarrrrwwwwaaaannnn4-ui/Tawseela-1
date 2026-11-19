@@ -634,7 +634,7 @@ export const useApp = create<AppStore>()(
         addAddress: (n) => {
           const miss: string[] = [];
           if (!n.l1.trim()) miss.push('a street');
-          if (n.zip.trim() && !/^\d{5}$/.test(n.zip.trim())) miss.push('a valid 5‑digit postal code');
+          // The form uses this optional value for floor/unit detail, not a postal code.
           if (miss.length) {
             toast('Almost there', 'Add ' + miss.join(' and '), 'error');
             return miss.join(' and ');
