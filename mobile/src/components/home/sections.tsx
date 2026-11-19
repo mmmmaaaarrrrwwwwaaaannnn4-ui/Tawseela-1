@@ -524,7 +524,7 @@ export function JournalTeasers() {
 
 export function ModeToggle() {
   const { c } = useTheme();
-  const { mode, prep, addr } = useApp(useShallow((s) => ({ mode: s.mode, prep: s.prep, addr: (s.addrs[s.addr] ?? s.addrs[0]).l1 })));
+  const { mode, prep, addr } = useApp(useShallow((s) => ({ mode: s.mode, prep: s.prep, addr: (s.addrs?.[s.addr] ?? s.addrs?.[0])?.l1 ?? 'اختر عنوان التوصيل' })));
   const setMode = useApp((s) => s.setMode);
   const x = useSharedValue(mode === 'pickup' ? 1 : 0);
   useEffect(() => {
