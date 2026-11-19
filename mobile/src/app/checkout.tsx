@@ -174,6 +174,7 @@ function Checkout() {
   const [promoText, setPromoText] = useState('');
   const [scheduleSheet, setScheduleSheet] = useState(false);
   const [scheduleOffsetMinutes, setScheduleOffsetMinutes] = useState(0);
+  const scheduleWheelRef = useRef<ScrollView | null>(null);
   const rushDelivery = s.speed === 1;
   const [noteExpanded, setNoteExpanded] = useState(false);
   const [noteImages, setNoteImages] = useState<string[]>([]);
@@ -396,9 +397,9 @@ function Checkout() {
             <View style={[styles.addrRow, { direction: 'rtl' }]}>
               <PressableScale onPress={() => router.push('/addresses')} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
                 <Icon name="location_on" size={22} color={TEXT} />
-                <View style={{ flex: 1, alignItems: 'flex-start', gap: 1 }}>
-                  <Txt s={15} w={700} style={{ color: TEXT, textAlign: 'left' }}>{s.addr.tag}</Txt>
-                  <Txt s={13} w={500} style={{ color: GREEN, textAlign: 'left', writingDirection: 'ltr' }} numberOfLines={1}>{s.addr.l1}</Txt>
+                <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
+                  <Txt s={15} w={700} style={{ color: TEXT, textAlign: 'right' }}>{s.addr.tag}</Txt>
+                  <Txt s={13} w={500} style={{ color: GREEN, textAlign: 'right', writingDirection: 'ltr' }} numberOfLines={1}>{s.addr.l1}</Txt>
                 </View>
               </PressableScale>
               <PressableScale onPress={() => router.push('/addresses')}>
@@ -648,7 +649,8 @@ function Checkout() {
             <Txt s={12} color={MUTED}>اسحب عجلة الوقت لتقديم الموعد أو تأخيره بالدقيقة</Txt>
           </View>
           <View style={styles.timeWheelFrame}>
-            <ScrollView style={{ height: 126 }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 42 }} showsVerticalScrollIndicator={false} snapToInterval={42} decelerationRate="fast"
+            <ScrollView ref={scheduleWheelRef} style={{ height: 126 }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 42 }} showsVerticalScrollIndicator={false} snapToInterval={42} decelerationRate="fast"
+              onContentSizeChange={() => { if (scheduleSheet) scheduleWheelRef.current?.scrollTo({ y: (scheduleOffsetMinutes + 28) * 42, animated: false }); }}
               onMomentumScrollEnd={(event) => {
                 const index = Math.round(event.nativeEvent.contentOffset.y / 42);
                 const minutes = Math.max(-30, Math.min(600, index - 30));
