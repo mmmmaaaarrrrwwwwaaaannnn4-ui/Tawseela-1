@@ -318,7 +318,7 @@ export function useFlyToCart() {
 }
 
 const styles = StyleSheet.create({
-  sheetOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, elevation: 100 },
+  sheetOverlay: { ...StyleSheet.absoluteFill, zIndex: 100, elevation: 100 },
   kav: { flex: 1, justifyContent: 'flex-end' },
   sheetShadow: { shadowColor: '#1A1A1A', shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: -24 }, elevation: 24 },
   fullScreenShadow: { width: '100%', flex: 1 },
