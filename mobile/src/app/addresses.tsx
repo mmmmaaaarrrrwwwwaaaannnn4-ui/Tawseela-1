@@ -136,7 +136,7 @@ function AddressRow({ title, address, icon, selected, onPress }: { title: string
         </View>
         <Txt s={13} color={c.text2} numberOfLines={2}>{address}</Txt>
       </View>
-      {selected ? <Icon name="check_circle" size={22} color={c.accent} fill /> : <Icon name="chevron_left" size={20} color={c.text3} />}
+      {selected ? <Icon name="check_circle" size={22} color={c.accent} fill /> : <Icon name="arrow_back_ios_new" size={20} color={c.text3} />}
     </PressableScale>
   );
 }
