@@ -446,7 +446,7 @@ function Checkout() {
       : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
     if (!result.canceled && result.assets[0]?.uri) {
       setNoteImages((items) => [...items, result.assets[0].uri].slice(0, 4));
-      setNoteExpanded(true);
+      setNoteSheetOpen(true);
     }
   };
 
@@ -674,7 +674,6 @@ function Checkout() {
           <PressableScale onPress={() => { updateNoteDraft(s.note); setNoteSheetOpen(true); }} style={styles.noteSummary}>
             <Icon name="edit_note" size={22} color={BRAND} />
             <Txt s={14} w={500} style={{ color: s.note.trim() ? TEXT : MUTED, flex: 1, textAlign: 'right' }} numberOfLines={2}>{s.note.trim() || 'هل تود أن تخبرنا أي شيء آخر؟'}</Txt>
-            <Icon name="chevron_left" size={18} color={MUTED} />
           </PressableScale>
           {noteImages.length ? <View style={styles.noteImages}>{noteImages.map((uri) => <View key={uri} style={styles.noteImageWrap}><Image source={{ uri }} style={styles.noteImage} contentFit="cover" /><PressableScale onPress={() => setNoteImages((items) => items.filter((item) => item !== uri))} style={styles.removeNoteImage}><X size={11} color="#111111" /></PressableScale></View>)}</View> : null}
         </View>
