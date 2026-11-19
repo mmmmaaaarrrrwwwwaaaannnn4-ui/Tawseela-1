@@ -31,9 +31,9 @@ export const light: Palette = {
   warn: '#B7791F',
   err: '#D92D20',
   info: '#3478A8',
-  accent: '#255942',
+  accent: '#00634B',
   accentInk: '#FFFFFF',
-  accentText: '#255942',
+  accentText: '#00634B',
   accentSoft: 'rgba(37,89,66,0.10)',
   glassSolid: '#FFFFFF',
   navSolid: '#FFFFFF',
@@ -61,9 +61,9 @@ export const dark: Palette = {
   warn: '#E7B65D',
   err: '#FF8176',
   info: '#78BCE5',
-  accent: '#255942',
+  accent: '#00634B',
   accentInk: '#FFFFFF',
-  accentText: '#255942',
+  accentText: '#00634B',
   accentSoft: 'rgba(37,89,66,0.14)',
   glassSolid: '#1C1C1C',
   navSolid: '#111111',
@@ -73,13 +73,13 @@ export const dark: Palette = {
 export const fixed = {
   ink: '#202020',
   paper: '#FFFFFF',
-  orange: '#255942',
+  orange: '#00634B',
   peach: '#DCE9E1',
-  star: '#255942',
+  star: '#00634B',
   white: '#FFFFFF',
   black: '#000000',
   splashBg: '#FFFFFF',
-  leaf: '#255942',
+  leaf: '#00634B',
   coffee: '#202020',
   inputFill: '#FFFFFF',
   roast: (a: number) => `rgba(22,14,8,${a})`,
@@ -87,7 +87,7 @@ export const fixed = {
   whiteA: (a: number) => `rgba(255,255,255,${a})`,
 } as const;
 
-export const accentGradient = ['#326D50', '#1D4935'] as const;
+export const accentGradient = ['#00634B', '#00634B'] as const;
 
 export function alpha(color: string, a: number): string {
   if (color.startsWith('rgba(')) {
