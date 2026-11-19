@@ -1,5 +1,4 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { GlassView } from 'expo-glass-effect';
 import type { ReactNode, Ref } from 'react';
 import { StyleSheet, View, type HostInstance, type StyleProp, type ViewStyle } from 'react-native';
 
@@ -116,9 +115,8 @@ export function OutlineButton({ label, icon, onPress, height = 50, color, fontSi
     <PressableScale
       onPress={onPress}
       accessibilityRole="button"
-      style={[styles.outline, { height, borderRadius: height / 2, borderColor: borderColor ?? c.lineStrong, overflow: 'hidden', backgroundColor: c.glass }, style]}
+      style={[styles.outline, { height, borderRadius: height / 2, borderColor: borderColor ?? c.lineStrong, borderWidth: 1, overflow: 'hidden', backgroundColor: 'transparent' }, style]}
     >
-      <GlassView pointerEvents="none" glassEffectStyle="regular" colorScheme={c.bg === '#090909' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} />
       {icon ? <Icon name={icon} size={18} color={color ?? c.text1} /> : null}
       <Txt s={fontSize} w={weight} color={color ?? c.text1}>
         {label}
@@ -185,10 +183,10 @@ export function CircleButton({ icon, onPress, size = 44, iconSize = 22, variant 
     variant === 'photo'
       ? { backgroundColor: fixed.roast(0.38), borderWidth: 1, borderColor: 'rgba(255,255,255,0.22)' }
       : variant === 'soft'
-        ? { backgroundColor: c.surface2, borderWidth: 1, borderColor: c.line }
+        ? { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.line }
         : variant === 'accent'
           ? {}
-          : { backgroundColor: c.surface1, borderWidth: 1, borderColor: c.line };
+          : { backgroundColor: 'transparent', borderWidth: 1, borderColor: c.line };
   const ic = color ?? (variant === 'photo' ? fixed.paper : variant === 'accent' ? '#FFFFFF' : c.text1);
   return (
     <PressableScale
@@ -200,7 +198,7 @@ export function CircleButton({ icon, onPress, size = 44, iconSize = 22, variant 
       hitSlop={6}
       style={[{ width: size, height: size, borderRadius: size / 2, alignItems: 'center', justifyContent: 'center' }, v, style]}
     >
-      {variant === 'accent' ? <AccentFill radius={size / 2} /> : variant === 'surface' || variant === 'soft' ? <GlassView pointerEvents="none" glassEffectStyle="regular" colorScheme={c.bg === '#090909' ? 'dark' : 'light'} style={StyleSheet.absoluteFill} /> : null}
+      {variant === 'accent' ? <AccentFill radius={size / 2} /> : null}
       <Icon name={icon} size={iconSize} color={ic} fill={fill} />
       {children}
     </PressableScale>
