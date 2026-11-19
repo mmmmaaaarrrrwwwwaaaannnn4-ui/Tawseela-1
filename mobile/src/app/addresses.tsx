@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { ScrollView, StyleSheet, View } from 'react-native';
+import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
 
 import { Icon } from '@/components/icons/icon';
 import { CircleButton } from '@/components/ui/buttons';
@@ -17,57 +18,45 @@ export default function AddressesScreen() {
   useStatusBar();
   const addrs = useApp((s) => s.addrs);
   const selected = useApp((s) => s.addr);
-  const [current, setCurrent] = useState<{ title: string; address: string; latitude: number; longitude: number } | null>(null);
-  const [locating, setLocating] = useState(false);
+  const removeAddress = useApp((s) => s.removeAddress);
+  const [current, setCurrent] = useState<{ address: string; latitude: number; longitude: number } | null>(null);
+  const [locationPermission, setLocationPermission] = useState<'checking' | 'granted' | 'denied'>('checking');
 
   useEffect(() => {
     let active = true;
+    let subscription: Location.LocationSubscription | null = null;
+    const updateAddress = async (latitude: number, longitude: number) => {
+      try {
+        const rows = await Location.reverseGeocodeAsync({ latitude, longitude });
+        const place = rows[0];
+        const address = [place?.streetNumber, place?.street, place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'موقعك الحالي';
+        if (active) setCurrent({ address, latitude, longitude });
+      } catch {
+        if (active) setCurrent({ address: 'موقعك الحالي — جارٍ تحديد اسم الشارع', latitude, longitude });
+      }
+    };
     (async () => {
       try {
         const permission = await Location.requestForegroundPermissionsAsync();
-        if (!permission.granted) return;
-        const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
-        const rows = await Location.reverseGeocodeAsync({ latitude: p.coords.latitude, longitude: p.coords.longitude });
-        const place = rows[0];
         if (!active) return;
-        setCurrent({
-          title: 'الموقع الحالي',
-          address: [place?.streetNumber, place?.street, place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'موقعك الحالي',
-          latitude: p.coords.latitude,
-          longitude: p.coords.longitude,
-        });
-        if (addrs.length === 0) {
-          useApp.getState().addAddress({ tag: 'Home', custom: '', l1: [place?.streetNumber, place?.street, place?.name].filter(Boolean).join(' ') || 'موقع المنزل', apt: '', city: [place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'بلبيس، الشرقية', zip: '', note: '', door: true, phone: '', def: true, latitude: p.coords.latitude, longitude: p.coords.longitude });
-        }
-      } catch { /* Location is optional until the customer grants permission. */ }
+        if (!permission.granted) { setLocationPermission('denied'); return; }
+        setLocationPermission('granted');
+        const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        if (!active) return;
+        void updateAddress(p.coords.latitude, p.coords.longitude);
+        subscription = await Location.watchPositionAsync(
+          { accuracy: Location.Accuracy.Balanced, timeInterval: 12000, distanceInterval: 20 },
+          (next) => { void updateAddress(next.coords.latitude, next.coords.longitude); },
+        );
+      } catch {
+        if (active) setLocationPermission('denied');
+      }
     })();
-    return () => { active = false; };
-  }, [addrs.length]);
-
-  const useCurrent = async () => {
-    setLocating(true);
-    try {
-      const permission = await Location.requestForegroundPermissionsAsync();
-      if (!permission.granted) {
-        useApp.getState().showToast('إذن الموقع مطلوب', 'اسمح لتوصيلة بالوصول إلى موقعك لتحديد العنوان الحالي.', 'error');
-        return;
-      }
-      const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      const rows = await Location.reverseGeocodeAsync({ latitude: p.coords.latitude, longitude: p.coords.longitude });
-      const place = rows[0];
-      const address = [place?.streetNumber, place?.street, place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'موقعك الحالي';
-      setCurrent({ title: 'الموقع الحالي', address, latitude: p.coords.latitude, longitude: p.coords.longitude });
-      const existing = useApp.getState().addrs.findIndex((a) => a.latitude === p.coords.latitude && a.longitude === p.coords.longitude);
-      if (existing >= 0) useApp.getState().setCheckout({ addr: existing });
-      else {
-        useApp.getState().addAddress({ tag: 'Other', custom: 'الموقع الحالي', l1: address, apt: '', city: place?.city || 'بلبيس، الشرقية', zip: '', note: '', door: true, phone: '', def: true, latitude: p.coords.latitude, longitude: p.coords.longitude });
-      }
-    } catch {
-      useApp.getState().showToast('تعذر تحديد الموقع', 'تأكد من تفعيل خدمة الموقع وحاول مرة أخرى.', 'error');
-    } finally { setLocating(false); }
-  };
+    return () => { active = false; subscription?.remove(); };
+  }, []);
 
   const addNew = () => router.push('/address-map' as never);
+  const openCurrent = () => router.push({ pathname: '/address-map', params: { current: '1' } } as never);
   const home = addrs.find((a) => a.tag.toLowerCase() === 'home' || a.tag === 'المنزل');
   const homeIndex = home ? addrs.indexOf(home) : -1;
   const otherAddresses = addrs.map((a, i) => ({ a, i })).filter(({ a }) => a !== home);
@@ -93,13 +82,7 @@ export default function AddressesScreen() {
     >
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 18, gap: 12 }} showsVerticalScrollIndicator={false}>
         {home ? (
-          <AddressRow
-            title="المنزل"
-            address={home.l1 + (home.l2 ? '، ' + home.l2 : '')}
-            icon="home"
-            selected={selected === homeIndex}
-            onPress={() => { useApp.getState().setCheckout({ addr: homeIndex }); router.back(); }}
-          />
+          <AddressRow title="المنزل" address={home.l1 + (home.l2 ? '، ' + home.l2 : '')} icon="home" selected={selected === homeIndex} onPress={() => { useApp.getState().setCheckout({ addr: homeIndex }); router.back(); }} onDelete={() => removeAddress(homeIndex)} />
         ) : (
           <View style={[styles.emptyHome, { borderColor: c.line }]}>
             <Icon name="home" size={23} color={c.text3} />
@@ -111,33 +94,51 @@ export default function AddressesScreen() {
         )}
         <AddressRow
           title="الموقع الحالي"
-          address={locating ? 'جارٍ تحديد موقعك…' : current?.address || 'اسمح بالوصول إلى موقعك لتحديده بدقة'}
+          address={locationPermission === 'denied' ? 'اسمح بالوصول للموقع لعرض مكانك تلقائيًا' : current?.address || 'جارٍ تحديد موقعك تلقائيًا…'}
           icon="location_on"
           selected={false}
-          onPress={() => { void useCurrent(); }}
+          onPress={openCurrent}
+          current
         />
         {otherAddresses.map(({ a, i }) => (
-          <AddressRow key={i} title={a.tag} address={a.l1 + (a.l2 ? '، ' + a.l2 : '')} icon="location_on" selected={selected === i} onPress={() => { useApp.getState().setCheckout({ addr: i }); router.back(); }} />
+          <AddressRow key={a.latitude != null && a.longitude != null ? a.latitude + ':' + a.longitude + ':' + a.l1 : a.l1 + ':' + i} title={a.tag} address={a.l1 + (a.l2 ? '، ' + a.l2 : '')} icon="location_on" selected={selected === i} onPress={() => { useApp.getState().setCheckout({ addr: i }); router.back(); }} onDelete={() => removeAddress(i)} />
         ))}
       </ScrollView>
     </Sheet>
   );
 }
 
-function AddressRow({ title, address, icon, selected, onPress }: { title: string; address: string; icon: 'home' | 'location_on'; selected: boolean; onPress: () => void }) {
+function AddressRow({ title, address, icon, selected, onPress, onDelete, current = false }: { title: string; address: string; icon: 'home' | 'location_on'; selected: boolean; onPress: () => void; onDelete?: () => void; current?: boolean }) {
   const { c } = useTheme();
-  return (
+  const row = (
     <PressableScale onPress={onPress} style={[styles.row, { borderColor: selected ? c.accent : c.line, backgroundColor: selected ? c.accentSoft : c.surface1 }]}>
-      <Icon name={icon} size={25} color={selected ? c.accent : c.text1} fill={selected} />
+      <Icon name={icon} size={25} color={selected || current ? c.accent : c.text1} fill={selected || current} />
       <View style={{ flex: 1, gap: 4 }}>
         <View style={styles.rowTitle}>
           <Txt s={16} w={700}>{title}</Txt>
-          {selected ? <Txt s={11} w={700} color={c.accent}>محدد</Txt> : null}
+          {selected ? <Txt s={11} w={700} color={c.accent}>محدد</Txt> : current ? <Txt s={11} w={600} color={c.accent}>مباشر</Txt> : null}
         </View>
         <Txt s={13} color={c.text2} numberOfLines={2}>{address}</Txt>
       </View>
       {selected ? <Icon name="check_circle" size={22} color={c.accent} fill /> : <Icon name="arrow_back_ios_new" size={20} color={c.text3} />}
     </PressableScale>
+  );
+  if (!onDelete || current) return row;
+  return (
+    <ReanimatedSwipeable
+      friction={1.8}
+      rightThreshold={72}
+      renderLeftActions={() => (
+        <View style={styles.deleteAction}>
+          <Icon name="delete" size={23} color="#FFFFFF" />
+          <Txt s={12} w={700} color="#FFFFFF">حذف</Txt>
+        </View>
+      )}
+      onSwipeableOpen={(direction) => { if (direction === 'left') onDelete(); }}
+      overshootLeft={false}
+    >
+      {row}
+    </ReanimatedSwipeable>
   );
 }
 
@@ -147,4 +148,5 @@ const styles = StyleSheet.create({
   rowTitle: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' },
   emptyHome: { minHeight: 78, borderRadius: 17, borderWidth: 1, padding: 15, flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
   add: { minHeight: 52, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  deleteAction: { width: 86, marginVertical: 2, borderRadius: 17, backgroundColor: '#D92D20', alignItems: 'center', justifyContent: 'center', gap: 5 },
 });
