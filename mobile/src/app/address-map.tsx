@@ -5,7 +5,7 @@ import * as Location from 'expo-location';
 import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View } from 'react-native';
 import { Image } from 'expo-image';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Camera as MapCamera, Map as MapLibre, MarkerView } from '@maplibre/maplibre-react-native';
+import { Camera as MapCamera, Map as MapLibre, Marker } from '@maplibre/maplibre-react-native';
 
 import { Icon } from '@/components/icons/icon';
 import { CircleButton } from '@/components/ui/buttons';
@@ -219,7 +219,7 @@ export default function AddressMapScreen() {
           {nearbyBrands.map((brand) => {
             const distance = customerLocation ? kmBetween(customerLocation.latitude, customerLocation.longitude, brand.lat!, brand.lng!) : null;
             return (
-              <MarkerView key={brand.id} coordinate={[brand.lng!, brand.lat!]} anchor={{ x: 0.5, y: 1 }} allowOverlap>
+              <Marker key={brand.id} lngLat={[brand.lng!, brand.lat!]} anchor="bottom">
                 <PressableScale
                   onPress={() => { useApp.getState().setMenuBrand(brand.id); useApp.getState().setMenuCat('All', brand.id); router.push('/menu' as never); }}
                   style={styles.restaurantMarker}
@@ -230,7 +230,7 @@ export default function AddressMapScreen() {
                   </View>
                   {distance != null ? <View style={styles.distancePill}><Txt s={9} w={700} color="#FFFFFF">{distance < 1 ? `${Math.round(distance * 1000)} م` : `${distance.toFixed(1)} كم`}</Txt></View> : null}
                 </PressableScale>
-              </MarkerView>
+              </Marker>
             );
           })}
         </MapLibre>
