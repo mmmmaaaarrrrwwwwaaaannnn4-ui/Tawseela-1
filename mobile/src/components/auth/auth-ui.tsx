@@ -127,7 +127,7 @@ export function PwToggle() {
 
 /* ------------------------------------------------------------------ buttons */
 
-/** Orange gradient CTA with the login/register glow (`0 14px 28px rgba(255,107,11,.34)`). */
+/** Olive gradient CTA with the brand glow. */
 export function AuthCta({
   label,
   busyLabel,
@@ -217,8 +217,8 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
-    backgroundColor: '#FFD400',
-    shadowColor: '#FFC400',
+    backgroundColor: '#4C5B42',
+    shadowColor: '#0D2818',
     shadowOpacity: 0.34,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 14 },
