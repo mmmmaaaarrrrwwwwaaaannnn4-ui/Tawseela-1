@@ -35,7 +35,7 @@ export function buildOrderRequest(): CreateOrder {
     mode: s.mode,
     speed: pickup ? 0 : s.speed,
     // the call center rings this number to confirm the order
-    address: pickup || !a ? null : { tag: a.tag, l1: a.l1, l2: a.l2, note: a.note ?? '', door: a.door, ...(phone ? { phone } : {}), ...((a.latitude ?? s.customerLocation?.latitude) != null ? { latitude: a.latitude ?? s.customerLocation!.latitude } : {}), ...((a.longitude ?? s.customerLocation?.longitude) != null ? { longitude: a.longitude ?? s.customerLocation!.longitude } : {}) },
+    address: pickup || !a ? null : { tag: a.tag, l1: a.l1, l2: a.l2, note: a.note ?? '', door: a.door, ...(phone ? { phone } : {}), ...(a.latitude != null ? { latitude: a.latitude } : {}), ...(a.longitude != null ? { longitude: a.longitude } : {}) },
     note: s.note.trim(),
     promo: s.promo?.code ?? null,
     method,
