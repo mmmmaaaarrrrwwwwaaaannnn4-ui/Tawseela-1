@@ -30,7 +30,9 @@ export default function AddressMapScreen() {
   const { c } = useTheme();
   const nearbyBrands = useApp(useShallow((s) => s.brands.filter((b) => b.on && b.lat != null && b.lng != null)));
   const customerLocation = useApp((s) => s.customerLocation);
-  const params = useLocalSearchParams<{ current?: string }>();
+  const params = useLocalSearchParams<{ current?: string; latitude?: string; longitude?: string; edit?: string }>();
+  const hasInitialPoint = Number.isFinite(Number(params.latitude)) && Number.isFinite(Number(params.longitude)) && params.latitude != null && params.longitude != null;
+  const initialPoint = hasInitialPoint ? { latitude: Number(params.latitude), longitude: Number(params.longitude) } : START;
   const pinLift = useSharedValue(0);
   const pinBounce = useSharedValue(0);
   const pinMotion = useAnimatedStyle(() => ({ transform: [{ translateY: pinLift.value + pinBounce.value }] }));
@@ -38,7 +40,7 @@ export default function AddressMapScreen() {
   const camera = useRef<React.ComponentRef<typeof MapCamera>>(null);
   const searchRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const reverseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const [point, setPoint] = useState(START);
+  const [point, setPoint] = useState(initialPoint);
   const [current, setCurrent] = useState<{ latitude: number; longitude: number } | null>(null);
   const [addressText, setAddressText] = useState('بلبيس، الشرقية، مصر');
   const [zoom, setZoom] = useState(14);
@@ -64,8 +66,12 @@ export default function AddressMapScreen() {
         if (!active) return;
         setCurrent({ latitude: p.coords.latitude, longitude: p.coords.longitude });
         useApp.setState({ customerLocation: { latitude: p.coords.latitude, longitude: p.coords.longitude } });
-        setPoint({ latitude: p.coords.latitude, longitude: p.coords.longitude });
-        camera.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 16, duration: 700 });
+        if (!hasInitialPoint && params.current !== '1') {
+          setPoint({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+          camera.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 16, duration: 700 });
+        } else if (hasInitialPoint) {
+          camera.current?.flyTo({ center: [initialPoint.longitude, initialPoint.latitude], zoom: 16, duration: 700 });
+        }
         if (params.current === '1') {
           try {
             const rows = await Location.reverseGeocodeAsync({ latitude: p.coords.latitude, longitude: p.coords.longitude });
@@ -89,7 +95,7 @@ export default function AddressMapScreen() {
       } catch { /* Map selection remains available without GPS. */ }
     })();
     return () => { active = false; };
-  }, [params.current]);
+  }, [params.current, hasInitialPoint, initialPoint.latitude, initialPoint.longitude]);
 
   const refreshPoint = async (latitude: number, longitude: number, nextZoom = zoom) => {
     setPoint({ latitude, longitude });
@@ -150,12 +156,12 @@ export default function AddressMapScreen() {
         : null;
   // Coverage is not a map-selection constraint. Only address precision and successful geocoding gate confirmation.
   const canConfirm = zoom >= 16 && addressVerified;
-  const sortedBrands = [...nearbyBrands].sort((a, b) => {
-    if (!customerLocation) return 0;
-    const da = kmBetween(customerLocation.latitude, customerLocation.longitude, a.lat!, a.lng!);
-    const db = kmBetween(customerLocation.latitude, customerLocation.longitude, b.lat!, b.lng!);
-    return da - db;
-  });
+  // Distances shown on restaurant markers are measured from the selected delivery pin,
+  // not from the phone's GPS location.
+  const sortedBrands = [...nearbyBrands].sort((a, b) =>
+    kmBetween(point.latitude, point.longitude, a.lat!, a.lng!) -
+    kmBetween(point.latitude, point.longitude, b.lat!, b.lng!)
+  );
   const update = (p: Partial<NewAddress>) => setForm((f) => ({ ...f, ...p }));
   const chooseHit = (hit: SearchHit) => {
     Keyboard.dismiss();
@@ -228,7 +234,7 @@ export default function AddressMapScreen() {
         >
           <MapCamera ref={camera} initialViewState={{ center: [point.longitude, point.latitude], zoom: 14, pitch: 0, bearing: 0 }} />
           {sortedBrands.map((brand) => {
-            const distance = customerLocation ? kmBetween(customerLocation.latitude, customerLocation.longitude, brand.lat!, brand.lng!) : null;
+            const distance = kmBetween(point.latitude, point.longitude, brand.lat!, brand.lng!);
             return (
               <Marker key={brand.id} lngLat={[brand.lng!, brand.lat!]} anchor="bottom">
                 <PressableScale
@@ -296,12 +302,12 @@ export default function AddressMapScreen() {
             <CircleButton icon="chevron_right" size={42} iconSize={22} variant="soft" label="رجوع" onPress={() => setDetailsOpen(false)} />
             <Txt s={22} w={700}>عنوان جديد</Txt>
           </View>
-          <View style={styles.miniMap}>
-            <MapLibre mapStyle="https://tiles.openfreemap.org/styles/bright" attribution logo style={StyleSheet.absoluteFill}>
+          <PressableScale onPress={() => router.push({ pathname: '/address-map', params: { latitude: String(point.latitude), longitude: String(point.longitude), edit: '1' } } as never)} style={styles.miniMap} accessibilityLabel="تعديل موقع العنوان على الخريطة">
+            <MapLibre mapStyle="https://tiles.openfreemap.org/styles/bright" attribution logo style={StyleSheet.absoluteFill} scrollEnabled={false} zoomEnabled={false} rotateEnabled={false} pitchEnabled={false}>
               <MapCamera initialViewState={{ center: [point.longitude, point.latitude], zoom: 16, pitch: 0, bearing: 0 }} />
             </MapLibre>
             <View pointerEvents="none" style={styles.miniPin}><Icon name="location_on" size={35} fill color="#E53935" /></View>
-          </View>
+          </PressableScale>
           <View style={[styles.region, { borderColor: c.line }]}>
             <View style={{ flex: 1, gap: 3 }}>
               <Txt s={15} w={700}>المنطقة</Txt>
