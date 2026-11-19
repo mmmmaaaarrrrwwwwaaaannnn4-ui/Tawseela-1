@@ -117,10 +117,10 @@ const styles = StyleSheet.create({
   ring: { borderRadius: 62, borderWidth: 2 },
   badge: {
     borderRadius: 62,
-    backgroundColor: '#FF7A1A',
+    backgroundColor: '#4C5B42',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FF7A1A',
+    shadowColor: '#0D2818',
     shadowOpacity: 0.4,
     shadowRadius: 25,
     shadowOffset: { width: 0, height: 20 },
