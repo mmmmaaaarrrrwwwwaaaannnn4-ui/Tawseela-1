@@ -569,6 +569,42 @@ function Checkout() {
             </View>
           </View>
         )}
+        {/* ───────── الإكرامية ───────── */}
+        {isDelivery ? (
+          <>
+            <View style={styles.section}>
+              <Txt s={17} w={700} style={styles.title}>قدم الشكر بإكرامية</Txt>
+              <Txt s={13} w={500} style={[styles.title, { color: MUTED }]}>سيحصل مندوب التوصيل على المبلغ بأكمله.</Txt>
+              <View style={styles.chips}>
+                <PressableScale onPress={() => { setCustomTip(true); setTip(0); }} style={[styles.chip, { minWidth: 56 }, customTip && styles.chipOn]}>
+                  <Txt s={14} w={700} style={{ color: TEXT }}>آخر</Txt>
+                </PressableScale>
+                {[...TIP_OPTIONS].reverse().map((v) => (
+                  <PressableScale
+                    key={v}
+                    onPress={() => { setCustomTip(false); setTip(tip === v ? 0 : v); }}
+                    style={[styles.chip, { flex: 1 }, !customTip && tip === v && styles.chipOn]}
+                  >
+                    <Txt s={14} w={700} style={{ color: TEXT }}>{egp(v)}</Txt>
+                  </PressableScale>
+                ))}
+              </View>
+              {customTip ? (
+                <TextInput
+                  value={tip ? String(tip) : ''}
+                  onChangeText={(v) => setTip(Number(v.replace(/[^0-9]/g, '').slice(0, 3)) || 0)}
+                  placeholder="اكتب مبلغ الإكرامية"
+                  placeholderTextColor={MUTED}
+                  keyboardType="number-pad"
+                  style={[styles.input, INPUT_FONT, { minHeight: 46 }]}
+                />
+              ) : null}
+            </View>
+            <View style={styles.band} />
+          </>
+        ) : null}
+
+
         {/* تعليمات التوصيل */}
         {isDelivery ? (
           <View style={styles.section}>
@@ -636,41 +672,6 @@ function Checkout() {
           </View>
         </View>
         <View style={styles.band} />
-
-        {/* ───────── الإكرامية ───────── */}
-        {isDelivery ? (
-          <>
-            <View style={styles.section}>
-              <Txt s={17} w={700} style={styles.title}>قدم الشكر بإكرامية</Txt>
-              <Txt s={13} w={500} style={[styles.title, { color: MUTED }]}>سيحصل مندوب التوصيل على المبلغ بأكمله.</Txt>
-              <View style={styles.chips}>
-                <PressableScale onPress={() => { setCustomTip(true); setTip(0); }} style={[styles.chip, { minWidth: 56 }, customTip && styles.chipOn]}>
-                  <Txt s={14} w={700} style={{ color: TEXT }}>آخر</Txt>
-                </PressableScale>
-                {[...TIP_OPTIONS].reverse().map((v) => (
-                  <PressableScale
-                    key={v}
-                    onPress={() => { setCustomTip(false); setTip(tip === v ? 0 : v); }}
-                    style={[styles.chip, { flex: 1 }, !customTip && tip === v && styles.chipOn]}
-                  >
-                    <Txt s={14} w={700} style={{ color: TEXT }}>{egp(v)}</Txt>
-                  </PressableScale>
-                ))}
-              </View>
-              {customTip ? (
-                <TextInput
-                  value={tip ? String(tip) : ''}
-                  onChangeText={(v) => setTip(Number(v.replace(/[^0-9]/g, '').slice(0, 3)) || 0)}
-                  placeholder="اكتب مبلغ الإكرامية"
-                  placeholderTextColor={MUTED}
-                  keyboardType="number-pad"
-                  style={[styles.input, INPUT_FONT, { minHeight: 46 }]}
-                />
-              ) : null}
-            </View>
-            <View style={styles.band} />
-          </>
-        ) : null}
 
         {/* ───────── كود الخصم ───────── */}
         <View style={styles.section}>
