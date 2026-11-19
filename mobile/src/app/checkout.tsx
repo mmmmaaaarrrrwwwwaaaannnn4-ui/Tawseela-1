@@ -4,6 +4,9 @@ import { ActivityIndicator, Modal, ScrollView, StyleSheet, Switch, TextInput, Vi
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 import { WebView } from 'react-native-webview';
+import * as ImagePicker from 'expo-image-picker';
+import { Image } from 'expo-image';
+import { Camera, ImagePlus, Mic, X } from 'lucide-react-native';
 
 import { Icon } from '@/components/icons/icon';
 import { PaymentNetworkLogo, WalletProviderLogo } from '@/components/account/brand-logos';
@@ -150,6 +153,7 @@ function Checkout() {
   const [scheduleSheet, setScheduleSheet] = useState(false);
   const rushDelivery = s.speed === 1;
   const [noteExpanded, setNoteExpanded] = useState(false);
+  const [noteImages, setNoteImages] = useState<string[]>([]);
   const scheduledFrom = new Date(Date.now() + ((restaurant?.prepTime ?? s.prep) + (distanceKm == null ? 0 : distanceKm * 5 * (rushDelivery ? 0.5 : 1))) * 60000);
   const scheduledTo = new Date(scheduledFrom.getTime() + 10 * 60000);
   const scheduleLabel = rushDelivery ? 'توصيل مستعجل' : 'التوصيل العادي';
@@ -299,13 +303,34 @@ function Checkout() {
     ? s.payM === 2 ? 'جارٍ تأكيد الطلب…' : s.payM === 3 ? 'في انتظار موافقة المحفظة…' : 'جارٍ معالجة البطاقة…'
     : 'تنفيذ الطلب';
 
-  const cardLogo = (brand: string, num: string, w: number, h: number) => {
-    const net = networkOf(brand, num);
-    return <PaymentNetworkLogo brand={net.toUpperCase()} width={w} height={h} />;
+  const cardLogo = (brand: string, num: string, id: string, w: number, h: number) => {
+    const raw = (brand || '').toLowerCase();
+    let network = networkOf(brand, num);
+    if (!/visa|master|meeza|amex/i.test(raw) && !/^([345]|507803)/.test((num || '').replace(/\\D/g, ''))) {
+      const hash = [...id].reduce((value, char) => (value * 31 + char.charCodeAt(0)) >>> 0, 7);
+      network = (['visa', 'mastercard', 'meeza'] as const)[hash % 3];
+    }
+    return <PaymentNetworkLogo brand={network.toUpperCase()} width={w} height={h} />;
   };
-  const walletLogo = (name: string, w: number, h: number) => (
-    <WalletProviderLogo provider={name} width={w} height={h} />
+  const walletLogo = (name: string, phone: string, w: number, h: number) => (
+    <WalletProviderLogo provider={name} phone={phone} width={w} height={h} />
   );
+  const pickNoteImage = async (camera: boolean) => {
+    const permission = camera
+      ? await ImagePicker.requestCameraPermissionsAsync()
+      : await ImagePicker.requestMediaLibraryPermissionsAsync();
+    if (!permission.granted) {
+      toast('الإذن مطلوب', camera ? 'اسمح لتوصيلة باستخدام الكاميرا لإضافة صورة للمندوب.' : 'اسمح لتوصيلة بالوصول إلى الصور لإرفاق صورة للمندوب.', 'error');
+      return;
+    }
+    const result = camera
+      ? await ImagePicker.launchCameraAsync({ mediaTypes: ['images'], quality: 0.8 })
+      : await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8 });
+    if (!result.canceled && result.assets[0]?.uri) {
+      setNoteImages((items) => [...items, result.assets[0].uri].slice(0, 4));
+      setNoteExpanded(true);
+    }
+  };
 
   const soon = (title: string) => () => toast('قريبًا', `${title} هتتوفر قريبًا.`, 'info');
 
@@ -506,6 +531,25 @@ function Checkout() {
                 onFocus={() => setNoteExpanded(true)}
                 style={[styles.noteInput, INPUT_FONT, noteExpanded && { minHeight: 120, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12 }]}
               />
+              {noteExpanded ? (
+                <View style={styles.noteTools}>
+                  <PressableScale onPress={() => { setNoteExpanded(true); toast('التسجيل الصوتي', 'استخدم الإملاء الصوتي من لوحة مفاتيح الهاتف لتحويل كلامك إلى نص في الملاحظة.', 'info'); }} style={styles.noteTool}><Mic size={19} color={BRAND} /></PressableScale>
+                  <PressableScale onPress={() => void pickNoteImage(false)} style={styles.noteTool}><ImagePlus size={19} color={BRAND} /></PressableScale>
+                  <PressableScale onPress={() => void pickNoteImage(true)} style={styles.noteTool}><Camera size={19} color={BRAND} /></PressableScale>
+                  <View style={{ flex: 1 }} />
+                  <Icon name="check_circle" size={20} color={GREEN} />
+                </View>
+              ) : null}
+              {noteImages.length ? (
+                <View style={styles.noteImages}>
+                  {noteImages.map((uri) => (
+                    <View key={uri} style={styles.noteImageWrap}>
+                      <Image source={{ uri }} style={styles.noteImage} contentFit="cover" />
+                      <PressableScale onPress={() => setNoteImages((items) => items.filter((item) => item !== uri))} style={styles.removeNoteImage}><X size={12} color="#111111" /></PressableScale>
+                    </View>
+                  ))}
+                </View>
+              ) : null}
             </View>
             <Icon name="edit_note" size={24} color={BRAND} />
           </View>
@@ -587,7 +631,7 @@ function Checkout() {
                 onSelect={() => { setSheetSelection('card:' + card.id); setSheetError(false); }}
                 title={card.name || 'بطاقة محفوظة'}
                 sub={`•••• •••• •••• ${last4(card.num)}`}
-                logo={cardLogo(card.brand, card.num, 52, 30)}
+                logo={cardLogo(card.brand, card.num, card.id, 52, 30)}
               />
             ))}
 
@@ -606,7 +650,7 @@ function Checkout() {
                 onSelect={() => { setSheetSelection('wallet:' + w.id); setSheetError(false); }}
                 title={w.name}
                 sub={w.phone}
-                logo={walletLogo(w.name, 52, 34)}
+                logo={walletLogo(w.name, w.phone, 52, 34)}
               />
             ))}
 
@@ -787,6 +831,12 @@ const styles = StyleSheet.create({
   scheduleChoice: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12, alignItems: 'center', gap: 4 },
   scheduleChoiceOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
   noteInput: { alignSelf: 'stretch', textAlign: 'right', paddingVertical: 0, minHeight: 20, color: TEXT },
+  noteTools: { flexDirection: 'row', alignItems: 'center', gap: 10, alignSelf: 'stretch', paddingTop: 8 },
+  noteTool: { width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
+  noteImages: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, alignSelf: 'stretch', paddingTop: 8 },
+  noteImageWrap: { width: 68, height: 68, borderRadius: 10, overflow: 'visible' },
+  noteImage: { width: 68, height: 68, borderRadius: 10, borderWidth: 1, borderColor: BORDER },
+  removeNoteImage: { position: 'absolute', top: -6, right: -6, width: 22, height: 22, borderRadius: 11, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#D0D0D0', alignItems: 'center', justifyContent: 'center' },
 
   sumRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   tag: { backgroundColor: LIME, borderRadius: 7, paddingHorizontal: 8, paddingVertical: 2 },
