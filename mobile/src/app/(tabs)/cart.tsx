@@ -203,16 +203,16 @@ export default function CartScreen() {
 }
 
 const styles = StyleSheet.create({
-  cartTopBar: { paddingTop: 6, minHeight: 76, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
+  cartTopBar: { paddingTop: 6, minHeight: 76, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   
   favoriteButton: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
   line: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 22, borderWidth: 1, minHeight: 104 },
   
-  promo: { flexDirection: 'row-reverse', alignItems: 'center', gap: 8, padding: 6, paddingLeft: 16, borderRadius: 22, borderWidth: 1 },
+  promo: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 6, paddingLeft: 16, borderRadius: 22, borderWidth: 1 },
   
   promoInput: { flex: 1, minWidth: 0, fontSize: 14.5, letterSpacing: 0.58, paddingVertical: 0, height: 42 },
   applied: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 12, paddingLeft: 16, paddingRight: 8, borderRadius: 20 },
-  ckContent: { justifyContent: 'space-between', paddingLeft: 24, paddingRight: 10, flexDirection: 'row-reverse' },
+  ckContent: { justifyContent: 'space-between', paddingLeft: 24, paddingRight: 10, flexDirection: 'row' },
   
   ckPill: { height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.14)', flexDirection: 'row', alignItems: 'center', gap: 6 },
 });
