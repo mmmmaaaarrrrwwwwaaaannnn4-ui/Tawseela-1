@@ -175,6 +175,14 @@ export default function CartScreen() {
                 </View>
               )}
 
+              <View style={{ gap: 8 }}>
+                <Txt s={17} w={700} align="right">ملاحظات إضافية</Txt>
+                <PressableScale onPress={() => { updateNoteDraft(s.note); setNoteSheetOpen(true); }} style={[styles.noteSummary, { borderColor: c.line, backgroundColor: c.surface1 }]}>
+                  <Icon name="edit_note" size={22} color={c.accent} />
+                  <Txt s={14} w={500} style={{ color: s.note.trim() ? c.text1 : c.text3, flex: 1, textAlign: 'right' }} numberOfLines={2}>{s.note.trim() || 'هل تود أن تخبرنا أي شيء آخر؟'}</Txt>
+                  <Icon name="chevron_left" size={18} color={c.text3} />
+                </PressableScale>
+              </View>
               <Card style={{ padding: 16, gap: 10 }}>
                 <SummaryRow label="المجموع الفرعي" value={money(totals.sub)} />
                 <SummaryRow label="التوصيل" value={totals.fee ? money(totals.fee) : 'مجاني'} />
@@ -197,6 +205,28 @@ export default function CartScreen() {
             </Reveal>
           ) : null}
         </ScrollView>
+      <Modal visible={noteSheetOpen} transparent animationType="slide" statusBarTranslucent onRequestClose={closeNoteSheet}>
+        <View style={styles.noteModalRoot}>
+          <PressableScale onPress={closeNoteSheet} style={StyleSheet.absoluteFill} />
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.noteModalSheet}>
+            <View style={styles.noteHandle} />
+            <View style={styles.noteHeader}>
+              <View style={{ flex: 1 }} />
+              <PressableScale onPress={closeNoteSheet} style={styles.noteClose}><X size={24} color="#1F1F1F" /></PressableScale>
+            </View>
+            <View style={styles.noteEditor}>
+              <TextInput value={noteDraft} onChangeText={updateNoteDraft} placeholder="هل تود أن تخبرنا أي شيء آخر؟" placeholderTextColor="#A7A7A7" multiline autoFocus returnKeyType="done" blurOnSubmit onSubmitEditing={saveNoteDraft} style={[styles.noteInput, { color: '#1F1F1F', fontFamily: family(500) }]} />
+              <View style={styles.noteTools}>
+                <PressableScale onPress={toggleNoteSpeech} style={[styles.noteTool, speechActive && { backgroundColor: '#FDECEC', borderColor: '#D92D20' }]}><Mic size={19} color={speechActive ? '#D92D20' : '#12291F'} /></PressableScale>
+                <View style={{ flex: 1 }} />
+                {speechProcessing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}><ActivityIndicator size="small" color="#12291F" /><Txt s={12} color="#7A7A7A">جارٍ تحويل الصوت إلى نص</Txt></View> : null}
+                <PressableScale onPress={saveNoteDraft} style={styles.noteSave}><Icon name="check" size={22} color="#FFFFFF" /></PressableScale>
+              </View>
+            </View>
+            {speechActive ? <Txt s={12} w={600} style={{ color: '#D92D20', textAlign: 'center' }}>جارٍ الاستماع… اضغط الميكروفون لإيقاف الإملاء</Txt> : null}
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
       </View>
     </RevealScope>
   );
@@ -215,4 +245,16 @@ const styles = StyleSheet.create({
   ckContent: { justifyContent: 'space-between', paddingLeft: 24, paddingRight: 10, flexDirection: 'row' },
   
   ckPill: { height: 40, paddingHorizontal: 14, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.14)', flexDirection: 'row', alignItems: 'center', gap: 6 },
+  noteSummary: { minHeight: 58, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  noteModalRoot: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.38)' },
+  noteModalSheet: { minHeight: '42%', maxHeight: '82%', backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 24, gap: 14 },
+  noteHandle: { alignSelf: 'center', width: 38, height: 5, borderRadius: 3, backgroundColor: '#C9C9C9' },
+  noteHeader: { height: 48, flexDirection: 'row', alignItems: 'center' },
+  noteClose: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: '#E1E3E6', alignItems: 'center', justifyContent: 'center' },
+  noteEditor: { minHeight: 190, borderWidth: 1.5, borderColor: '#1F1F1F', borderRadius: 22, padding: 14, gap: 10 },
+  noteInput: { minHeight: 110, textAlign: 'right', textAlignVertical: 'top', padding: 0, fontSize: 14 },
+  noteTools: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 8 },
+  noteTool: { width: 36, height: 36, borderRadius: 10, borderWidth: 1, borderColor: '#E1E3E6', alignItems: 'center', justifyContent: 'center' },
+  noteSave: { width: 38, height: 38, borderRadius: 19, backgroundColor: '#12291F', alignItems: 'center', justifyContent: 'center' },
+
 });
