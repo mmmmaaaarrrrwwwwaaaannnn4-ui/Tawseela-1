@@ -3,8 +3,8 @@ import { NativeTabs } from 'expo-router/native-tabs';
 export default function TabsLayout() {
   return (
     <NativeTabs
-      tintColor="#0D2818"
-      iconColor="#111111"
+      tintColor="#FF5A00"
+      iconColor="#202020"
       disableTransparentOnScrollEdge
     >
       <NativeTabs.Trigger name="cart" prominent>
