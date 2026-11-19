@@ -651,6 +651,20 @@ export const useApp = create<AppStore>()(
             latitude: n.latitude,
             longitude: n.longitude,
           };
+          const existingIndex = get().addrs.findIndex((saved) => {
+            if (n.latitude == null || n.longitude == null || saved.latitude == null || saved.longitude == null) return false;
+            const rad = (v: number) => v * Math.PI / 180;
+            const dLat = rad(saved.latitude - n.latitude);
+            const dLng = rad(saved.longitude - n.longitude);
+            const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(n.latitude)) * Math.cos(rad(saved.latitude)) * Math.sin(dLng / 2) ** 2;
+            const meters = 6371000 * 2 * Math.atan2(Math.sqrt(h), Math.sqrt(1 - h));
+            return meters <= 60 && saved.l1.trim().toLowerCase() === a.l1.trim().toLowerCase();
+          });
+          if (existingIndex >= 0) {
+            set({ addr: existingIndex });
+            toast('العنوان محفوظ بالفعل', 'تم اختيار العنوان الموجود بدلًا من إنشاء نسخة مكررة.', 'location_on');
+            return null;
+          }
           set((s) => ({ addrs: [...s.addrs, a], addr: n.def ? s.addrs.length : s.addr }));
           toast('Address saved', a.l1, 'location_on');
           return null;
