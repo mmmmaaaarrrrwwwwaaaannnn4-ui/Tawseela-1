@@ -221,7 +221,7 @@ export default function AddressMapScreen() {
             return (
               <Marker key={brand.id} lngLat={[brand.lng!, brand.lat!]} anchor="bottom">
                 <PressableScale
-                  onPress={() => { useApp.getState().setMenuBrand(brand.id); useApp.getState().setMenuCat('All', brand.id); router.push('/menu' as never); }}
+                  onPress={() => router.push({ pathname: '/restaurant/[id]', params: { id: brand.id } } as never)}
                   style={styles.restaurantMarker}
                   accessibilityLabel={`فتح ${brand.name}`}
                 >
