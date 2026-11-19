@@ -100,7 +100,7 @@ export function AddressSheet({
         <Txt s={12} color={fixed.paperA(0.7)}>Move the map and place the pin exactly where the courier should arrive.</Txt>
         <View style={styles.map}>
           <MapLibre
-            mapStyle="https://tiles.openfreemap.org/styles/liberty"
+            mapStyle="https://tiles.openfreemap.org/styles/bright"
             attribution
             logo={false}
             compass
