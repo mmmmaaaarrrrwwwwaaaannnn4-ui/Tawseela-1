@@ -313,7 +313,7 @@ export default function AddressMapScreen() {
             <Txt s={22} w={700}>عنوان جديد</Txt>
           </View>
           <PressableScale onPress={() => router.push({ pathname: '/address-map', params: { latitude: String(point.latitude), longitude: String(point.longitude), edit: '1' } } as never)} style={styles.miniMap} accessibilityLabel="تعديل موقع العنوان على الخريطة">
-            <MapLibre mapStyle="https://tiles.openfreemap.org/styles/bright" attribution logo style={StyleSheet.absoluteFill} scrollEnabled={false} zoomEnabled={false} rotateEnabled={false} pitchEnabled={false}>
+            <MapLibre mapStyle="https://tiles.openfreemap.org/styles/bright" attribution logo pointerEvents="none" style={StyleSheet.absoluteFill}>
               <MapCamera initialViewState={{ center: [point.longitude, point.latitude], zoom: 16, pitch: 0, bearing: 0 }} />
             </MapLibre>
             <View pointerEvents="none" style={styles.miniPin}>
