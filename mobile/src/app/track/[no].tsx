@@ -1,6 +1,8 @@
 import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { ScrollView, StyleSheet, View, type LayoutChangeEvent } from 'react-native';
+import { Image } from 'expo-image';
+import { Map as MapLibre, Camera as MapCamera, GeoJSONSource, Layer, ViewAnnotation } from '@maplibre/maplibre-react-native';
 import Animated, { Easing, useAnimatedStyle, useSharedValue, withDelay, withSpring, withTiming } from 'react-native-reanimated';
 
 import { Icon } from '@/components/icons/icon';
@@ -39,6 +41,27 @@ function Track() {
   const prep = useApp((s) => s.prep);
   const order = useApp((s) => s.orders.find((o) => o.no === no) ?? selectMyOrders(s).find((o) => o.step < 3) ?? selectMyOrders(s)[0]);
   const on = useEntered(60);
+  const locationSnapshot = order?.locations;
+  const restaurantPin = locationSnapshot?.restaurants?.[0];
+  const customerPin = locationSnapshot?.customer;
+  const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
+  useEffect(() => {
+    let active = true;
+    const from = restaurantPin;
+    const to = customerPin;
+    if (!from || from.latitude == null || from.longitude == null || to?.latitude == null || to?.longitude == null) {
+      setRouteCoordinates([]);
+      return () => { active = false; };
+    }
+    const url = `https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson`;
+    fetch(url).then((response) => response.ok ? response.json() : Promise.reject(new Error('Route unavailable')))
+      .then((data: { routes?: { geometry?: { coordinates?: [number, number][] } }[] }) => {
+        const coordinates = data.routes?.[0]?.geometry?.coordinates;
+        if (active && Array.isArray(coordinates) && coordinates.length > 1) setRouteCoordinates(coordinates);
+      }).catch(() => { if (active) setRouteCoordinates([]); });
+    return () => { active = false; };
+  }, [order?.id, restaurantPin?.latitude, restaurantPin?.longitude, customerPin?.latitude, customerPin?.longitude]);
+  const routeFeature = routeCoordinates.length > 1 ? { type: 'Feature' as const, properties: {}, geometry: { type: 'LineString' as const, coordinates: routeCoordinates } } : null;
   // live tracking: this order every few seconds while it's on its way
   useTrackOrder(order?.id, !!order && order.step < 3);
   if (!order) return null;
@@ -77,6 +100,32 @@ function Track() {
         </View>
 
         <View style={{ paddingTop: 18, paddingHorizontal: 20, gap: 12 }}>
+          {restaurantPin?.latitude != null && restaurantPin.longitude != null && customerPin?.latitude != null && customerPin.longitude != null ? (
+            <Reveal i={1}>
+              <Card style={{ padding: 10, gap: 8 }}>
+                <Txt s={14} w={700}>خريطة طلبك</Txt>
+                <View style={{ height: 230, overflow: 'hidden', borderRadius: 16, backgroundColor: '#EAF0E8' }}>
+                  <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}>
+                    <MapCamera initialViewState={{ center: [(restaurantPin.longitude + customerPin.longitude) / 2, (restaurantPin.latitude + customerPin.latitude) / 2], zoom: 11.5, pitch: 0, bearing: 0 }} />
+                    {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" style={{ lineColor: '#315B45', lineWidth: 5, lineOpacity: 0.9, lineCap: 'round', lineJoin: 'round' }} /></GeoJSONSource> : null}
+                    <ViewAnnotation lngLat={[restaurantPin.longitude, restaurantPin.latitude]} anchor="bottom">
+                      <View style={{ width: 56, padding: 4, borderRadius: 12, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', alignItems: 'center' }}>
+                        {restaurantPin.image ? <Image source={{ uri: restaurantPin.image }} style={{ width: 42, height: 42, borderRadius: 9 }} contentFit="cover" /> : <Icon name="storefront" size={24} color="#315B45" />}
+                        <Txt s={9} w={700} color="#173D2A">المطعم</Txt>
+                      </View>
+                    </ViewAnnotation>
+                    <ViewAnnotation lngLat={[customerPin.longitude, customerPin.latitude]} anchor="bottom">
+                      <View style={{ width: 56, padding: 4, borderRadius: 12, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', alignItems: 'center' }}>
+                        {customerPin.image ? <Image source={{ uri: customerPin.image }} style={{ width: 42, height: 42, borderRadius: 9 }} contentFit="cover" /> : <Icon name="person" size={24} color="#315B45" />}
+                        <Txt s={9} w={700} color="#173D2A">أنت</Txt>
+                      </View>
+                    </ViewAnnotation>
+                  </MapLibre>
+                </View>
+                <Txt s={11.5} color={c.text3}>{routeCoordinates.length > 1 ? 'المسار المعروض على شبكة الطرق' : 'جارٍ تحميل المسار أو أن خدمة الطرق غير متاحة مؤقتًا'}</Txt>
+              </Card>
+            </Reveal>
+          ) : null}
           <Card style={{ paddingVertical: 6, paddingHorizontal: 16 }}>
             {CUSTOMER_STEPS.map(([, sub, icon], i) => (
               <StepRow
