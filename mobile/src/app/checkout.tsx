@@ -527,34 +527,25 @@ function Checkout() {
           <View style={styles.noteRow}>
             <View style={{ flex: 1, alignItems: 'flex-end', gap: 2 }}>
               <Txt s={14} w={700} style={{ color: TEXT }}>دوّن ملاحظة</Txt>
-              <TextInput
-                value={s.note}
-                onChangeText={(v) => set({ note: v })}
-                placeholder="هل تود أن تخبرنا أي شيء آخر؟"
-                placeholderTextColor={MUTED}
-                multiline
-                onFocus={() => setNoteExpanded(true)}
-                style={[styles.noteInput, INPUT_FONT, noteExpanded && { minHeight: 120, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12 }]}
-              />
-              {noteExpanded ? (
-                <View style={styles.noteTools}>
-                  <PressableScale onPress={() => { setNoteExpanded(true); toast('التسجيل الصوتي', 'استخدم الإملاء الصوتي من لوحة مفاتيح الهاتف لتحويل كلامك إلى نص في الملاحظة.', 'info'); }} style={styles.noteTool}><Mic size={19} color={BRAND} /></PressableScale>
-                  <PressableScale onPress={() => void pickNoteImage(false)} style={styles.noteTool}><ImagePlus size={19} color={BRAND} /></PressableScale>
-                  <PressableScale onPress={() => void pickNoteImage(true)} style={styles.noteTool}><Camera size={19} color={BRAND} /></PressableScale>
-                  <View style={{ flex: 1 }} />
-                  <Icon name="check_circle" size={20} color={GREEN} />
-                </View>
-              ) : null}
-              {noteImages.length ? (
-                <View style={styles.noteImages}>
-                  {noteImages.map((uri) => (
-                    <View key={uri} style={styles.noteImageWrap}>
-                      <Image source={{ uri }} style={styles.noteImage} contentFit="cover" />
-                      <PressableScale onPress={() => setNoteImages((items) => items.filter((item) => item !== uri))} style={styles.removeNoteImage}><X size={12} color="#111111" /></PressableScale>
+              <View style={[styles.noteEditor, noteExpanded && { minHeight: 120 }]}>
+                <TextInput value={s.note} onChangeText={(v) => set({ note: v })} placeholder="هل تود أن تخبرنا أي شيء آخر؟" placeholderTextColor={MUTED} multiline onFocus={() => setNoteExpanded(true)} style={[styles.noteInput, INPUT_FONT, { minHeight: noteExpanded ? 72 : 32 }]} />
+                {noteExpanded ? (
+                  <>
+                    {noteImages.length ? <View style={styles.noteImages}>{noteImages.map((uri) => (
+                      <View key={uri} style={styles.noteImageWrap}>
+                        <Image source={{ uri }} style={styles.noteImage} contentFit="cover" />
+                        <PressableScale onPress={() => setNoteImages((items) => items.filter((item) => item !== uri))} style={styles.removeNoteImage}><X size={11} color="#111111" /></PressableScale>
+                      </View>
+                    ))}</View> : null}
+                    <View style={styles.noteTools}>
+                      <PressableScale onPress={() => { setNoteExpanded(true); toast('التسجيل الصوتي', 'التسجيل الصوتي وإرساله للمندوب يحتاجان دعم رفع صوتي من الخادم؛ لم أفعّل زرًا شكليًا لا يحفظ التسجيل.', 'info'); }} style={styles.noteTool}><Mic size={16} color={BRAND} /></PressableScale>
+                      <PressableScale onPress={() => void pickNoteImage(false)} style={styles.noteTool}><ImagePlus size={16} color={BRAND} /></PressableScale>
+                      <PressableScale onPress={() => void pickNoteImage(true)} style={styles.noteTool}><Camera size={16} color={BRAND} /></PressableScale>
+                      <View style={{ flex: 1 }} /><Icon name="check_circle" size={18} color={GREEN} />
                     </View>
-                  ))}
-                </View>
-              ) : null}
+                  </>
+                ) : null}
+              </View>
             </View>
             <Icon name="edit_note" size={24} color={BRAND} />
           </View>
@@ -851,6 +842,7 @@ const styles = StyleSheet.create({
   promoInput: { flex: 1, textAlign: 'right', paddingVertical: 0 },
 
   noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
+  noteEditor: { alignSelf: 'stretch', borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 10, backgroundColor: '#FFFFFF', gap: 6 },
   timeWheelFrame: { height: 126, overflow: 'hidden', borderRadius: 14, borderWidth: 1, borderColor: BORDER, backgroundColor: '#FFFFFF' },
   timeWheelSelection: { position: 'absolute', top: 42, left: 8, right: 8, height: 42, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#DCE4DE' },
   scheduleChoice: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12, alignItems: 'center', gap: 4 },
