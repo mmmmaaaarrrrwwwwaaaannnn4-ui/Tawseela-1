@@ -71,7 +71,7 @@ export function AddressSheet({
           </View>
         </View>
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
-          <Txt s={10.5} w={700} ls={0.08} upper color="#315B45">
+          <Txt s={10.5} w={700} ls={0.08} upper color="#255942">
             {previewTag}
           </Txt>
           <Txt s={15} w={700} color={fixed.paper} numberOfLines={1}>
@@ -129,7 +129,7 @@ export function AddressSheet({
             </View>
           </View>
           <View pointerEvents="none" style={styles.mapHint}>
-            <Txt s={11} w={600} color="#31594D">حرّك الخريطة لتحديد مكان التسليم</Txt>
+            <Txt s={11} w={600} color="#255942">حرّك الخريطة لتحديد مكان التسليم</Txt>
           </View>
         </View>
         <Eyebrow>Address</Eyebrow>
@@ -189,10 +189,10 @@ export function AddressSheet({
 const styles = StyleSheet.create({
   map: { height: 250, borderRadius: 16, overflow: 'hidden', backgroundColor: '#EAF0E8' },
   mapPinWrap: { position: 'absolute', left: '50%', top: '50%', marginLeft: -17, marginTop: -37, alignItems: 'center' },
-  mapPin: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#315B45', borderWidth: 3, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', elevation: 5 },
+  mapPin: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#255942', borderWidth: 3, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', elevation: 5 },
   mapPinShadow: { position: 'absolute', bottom: -5, width: 12, height: 5, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.18)' },
   mapHint: { position: 'absolute', bottom: 10, alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.94)' },
   preview: { padding: 14, borderRadius: 20, backgroundColor: fixed.ink, flexDirection: 'row', alignItems: 'center', gap: 12 },
-  pinRing: { width: 56, height: 56, margin: -6, borderRadius: 28, backgroundColor: 'rgba(49,91,69,0.16)', alignItems: 'center', justifyContent: 'center' },
-  pin: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#315B45', alignItems: 'center', justifyContent: 'center' },
+  pinRing: { width: 56, height: 56, margin: -6, borderRadius: 28, backgroundColor: 'rgba(37,89,66,0.16)', alignItems: 'center', justifyContent: 'center' },
+  pin: { width: 44, height: 44, borderRadius: 22, backgroundColor: '#255942', alignItems: 'center', justifyContent: 'center' },
 });
