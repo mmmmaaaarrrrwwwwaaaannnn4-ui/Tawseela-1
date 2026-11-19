@@ -498,21 +498,6 @@ function Checkout() {
         keyboardDismissMode="on-drag"
         showsVerticalScrollIndicator={false}
       >
-        {/* ───────── وقت التوصيل ───────── */}
-        <View style={styles.section}>
-          <View style={styles.titleRow}>
-            <PressableScale onPress={() => setScheduleSheet(true)}>
-              <Txt s={13} w={600} style={{ color: TEXT }}>اختر موعد آخر</Txt>
-            </PressableScale>
-            <Txt s={17} w={700} style={styles.titleInline}>{isDelivery ? 'وقت التوصيل' : 'وقت الاستلام'}</Txt>
-          </View>
-          <View style={styles.etaRow}>
-            <Txt s={14} w={600} style={{ color: GREEN }}>{`سيصل ${clock(scheduledFrom)} - ${clock(scheduledTo)}`}</Txt>
-            <Icon name="schedule" size={20} color={TEXT} />
-          </View>
-        </View>
-        <View style={styles.band} />
-
         {/* العنوان والخريطة: لا نعرض مسارًا إلا من إحداثيات العنوان المحفوظ والمطعم الفعلية */}
         {isDelivery ? (
           <View style={styles.section}>
@@ -569,6 +554,21 @@ function Checkout() {
             </View>
           </View>
         )}
+        {/* ───────── وقت التوصيل ───────── */}
+        <View style={styles.section}>
+          <View style={styles.titleRow}>
+            <PressableScale onPress={() => setScheduleSheet(true)}>
+              <Txt s={13} w={600} style={{ color: TEXT }}>اختر موعد آخر</Txt>
+            </PressableScale>
+            <Txt s={17} w={700} style={styles.titleInline}>{isDelivery ? 'وقت التوصيل' : 'وقت الاستلام'}</Txt>
+          </View>
+          <View style={styles.etaRow}>
+            <Txt s={14} w={600} style={{ color: GREEN }}>{`سيصل ${clock(scheduledFrom)} - ${clock(scheduledTo)}`}</Txt>
+            <Icon name="schedule" size={20} color={TEXT} />
+          </View>
+        </View>
+        <View style={styles.band} />
+
         {/* ───────── الإكرامية ───────── */}
         {isDelivery ? (
           <>
