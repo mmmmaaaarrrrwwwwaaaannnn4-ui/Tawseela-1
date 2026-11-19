@@ -175,7 +175,7 @@ function Checkout() {
   const [promoText, setPromoText] = useState('');
   const [scheduleSheet, setScheduleSheet] = useState(false);
   const [scheduleOffsetMinutes, setScheduleOffsetMinutes] = useState(0);
-  const scheduleWheelRef = useRef<ScrollView | null>(null);
+  const scheduleWheelRef = useRef<React.ComponentRef<typeof ScrollView> | null>(null);
   const rushDelivery = s.speed === 1;
   const [noteImages, setNoteImages] = useState<string[]>([]);
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
