@@ -16,10 +16,7 @@ export const SEED_CARDS: Card[] = [
   { id: 'k2', brand: 'MASTERCARD', num: '•••• 8810', exp: '02/27', bg: ['#262626', '#6B6B6B'], nick: 'Work card', name: 'ALEX MORGAN' },
 ];
 
-export const SEED_ADDRESSES: Address[] = [
-  { tag: 'Home', icon: 'home', l1: '221 Mercer St, Apt 4B', l2: 'New York, NY 10012', note: 'Buzzer 4B, leave with doorman', door: true },
-  { tag: 'Work', icon: 'work', l1: '85 Broad St, Floor 12', l2: 'New York, NY 10004', note: 'Reception desk, ask for Alex', door: false },
-];
+export const SEED_ADDRESSES: Address[] = []; // Real customer addresses are added after location permission.
 
 export const PAY_OPTIONS: PayOption[] = [
   { t: 'Apple Pay', s: 'Default · Face ID', icon: 'phone_iphone' },
