@@ -129,14 +129,14 @@ function AddressRow({ title, address, icon, selected, onPress, onDelete, current
     <Animated.View layout={LinearTransition.springify()}>
     <ReanimatedSwipeable
       friction={1.8}
-      rightThreshold={72}
+      leftThreshold={64}
       renderLeftActions={() => (
         <View style={styles.deleteAction}>
           <Icon name="delete" size={23} color="#FFFFFF" />
           <Txt s={12} w={700} color="#FFFFFF">حذف</Txt>
         </View>
       )}
-      onSwipeableOpen={(direction) => { if (direction === 'left') onDelete(); }}
+      onSwipeableOpen={(direction) => { if (direction === 'right') onDelete(); }}
       overshootLeft={false}
     >
       {row}
