@@ -107,7 +107,7 @@ function Track() {
                 <View style={{ height: 230, overflow: 'hidden', borderRadius: 16, backgroundColor: '#EAF0E8' }}>
                   <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}>
                     <MapCamera initialViewState={{ center: [(restaurantPin.longitude + customerPin.longitude) / 2, (restaurantPin.latitude + customerPin.latitude) / 2], zoom: 11.5, pitch: 0, bearing: 0 }} />
-                    {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" style={{ lineColor: '#315B45', lineWidth: 5, lineOpacity: 0.9, lineCap: 'round', lineJoin: 'round' }} /></GeoJSONSource> : null}
+                    {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" paint={{ "line-color": "#315B45", "line-width": 5, "line-opacity": 0.9 }} layout={{ "line-cap": "round", "line-join": "round" }} /></GeoJSONSource> : null}
                     <ViewAnnotation lngLat={[restaurantPin.longitude, restaurantPin.latitude]} anchor="bottom">
                       <View style={{ width: 56, padding: 4, borderRadius: 12, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', alignItems: 'center' }}>
                         {restaurantPin.image ? <Image source={{ uri: restaurantPin.image }} style={{ width: 42, height: 42, borderRadius: 9 }} contentFit="cover" /> : <Icon name="storefront" size={24} color="#315B45" />}
