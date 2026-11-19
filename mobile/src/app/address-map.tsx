@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
-import { ActivityIndicator, Keyboard, Modal, Platform, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
+import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Camera as MapCamera, Map as MapLibre } from '@maplibre/maplibre-react-native';
 
@@ -26,9 +26,10 @@ export default function AddressMapScreen() {
   useStatusBar();
   const { c } = useTheme();
   const insets = useSafeAreaInsets();
-  const { width, height } = useWindowDimensions();
+  const { width } = useWindowDimensions();
   const camera = useRef<React.ComponentRef<typeof MapCamera>>(null);
   const searchRef = useRef<TextInput>(null);
+  const reverseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [point, setPoint] = useState(START);
   const [current, setCurrent] = useState<{ latitude: number; longitude: number } | null>(null);
   const [addressText, setAddressText] = useState('بلبيس، الشرقية، مصر');
@@ -92,7 +93,19 @@ export default function AddressMapScreen() {
 
   useEffect(() => {
     setFar(!!current && kmBetween(current.latitude, current.longitude, point.latitude, point.longitude) > 10);
-  }, [current, point]);
+    if (reverseTimer.current) clearTimeout(reverseTimer.current);
+    reverseTimer.current = setTimeout(async () => {
+      try {
+        const rows = await Location.reverseGeocodeAsync(point);
+        const p = rows[0];
+        if (!p) return;
+        const city = [p.city, p.district, p.subregion, p.region].filter(Boolean).join(' ');
+        setOutside(!/بلبيس/.test(city));
+        setAddressText([p.streetNumber, p.street, p.district, p.city, p.region].filter(Boolean).join('، ') || 'الموقع المحدد');
+      } catch { /* The pin remains valid while reverse geocoding is unavailable. */ }
+    }, 500);
+    return () => { if (reverseTimer.current) clearTimeout(reverseTimer.current); };
+  }, [current, point.latitude, point.longitude]);
 
   const warning = zoom < 11
     ? 'يرجى تكبير الخريطة أكثر لتحديد موقع التوصيل بدقة أكبر'
