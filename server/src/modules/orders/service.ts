@@ -188,7 +188,20 @@ async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInpu
   if (Math.abs(toCents(totals.total) - toCents(input.expectedTotal)) > 1) {
     throw conflict('price_changed', 'Prices changed since you opened your cart. Check the new total and try again.', { total: round2(totals.total) });
   }
-  return { items, totals, promo, usedVouchers, store };
+  const brandSnapshots = kitchenIds.map((id) => {
+    const raw = brandSnap.docs.find((doc) => doc.id === id);
+    if (!raw) return { id, name: id, img: '', lat: null, lng: null, address: '' };
+    const data = raw.data() ?? {};
+    return {
+      id,
+      name: String(data.name ?? id),
+      img: String(data.img ?? ''),
+      lat: typeof data.lat === 'number' ? data.lat : null,
+      lng: typeof data.lng === 'number' ? data.lng : null,
+      address: String(data.address ?? ''),
+    };
+  });
+  return { items, totals, promo, usedVouchers, store, kitchenIds, brandSnapshots };
 }
 
 const DEFAULT_LABEL: Record<PayMethod, string> = { cash: 'Cash', card: 'Card', apple_pay: 'Apple Pay', google_pay: 'Google Pay', wallet: 'Mobile Wallet' };
@@ -249,6 +262,24 @@ export async function createOrder(
       mode: input.mode,
       speed: input.mode === 'pickup' ? 0 : input.speed,
       address: input.mode === 'pickup' ? null : input.address,
+      locations: {
+        restaurants: priced.kitchenIds.map((brandId) => {
+          const brand = priced.brandSnapshots.find((entry) => entry.id === brandId);
+          return {
+            id: brandId,
+            name: brand?.name ?? brandId,
+            image: brand?.img ?? '',
+            latitude: brand?.lat ?? null,
+            longitude: brand?.lng ?? null,
+            address: brand?.address ?? '',
+          };
+        }),
+        customer: {
+          latitude: input.mode === 'delivery' ? input.address?.latitude ?? null : null,
+          longitude: input.mode === 'delivery' ? input.address?.longitude ?? null : null,
+          image: me.photo ?? null,
+        },
+      },
       note: input.note.trim(),
       promo: priced.promo,
       pay: free ? (totals.credit ? 'Fig credit' : 'Fig Rewards') : input.payLabel?.trim() || DEFAULT_LABEL[input.method],
