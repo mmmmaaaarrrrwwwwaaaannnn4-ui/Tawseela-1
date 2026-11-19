@@ -52,6 +52,7 @@ export default function AddressMapScreen() {
   const [searching, setSearching] = useState(false);
   const [detailsOpen, setDetailsOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState<{ l1?: string; apt?: string; phone?: string }>({});
   const [form, setForm] = useState<NewAddress>({
     tag: 'Home', custom: '', l1: '', apt: '', city: 'بلبيس، الشرقية', zip: '', note: '', door: true, phone: '', def: true,
   });
@@ -182,12 +183,19 @@ export default function AddressMapScreen() {
     } catch { update({ latitude: point.latitude, longitude: point.longitude, l1: addressText }); }
     setDetailsOpen(true);
   };
-  const saveAddress = () => {
-    if (!form.l1.trim() || !form.phone.trim() || !form.apt.trim()) {
-      useApp.getState().showToast('راجع بيانات العنوان', 'اكتب الشارع ورقم الشقة ورقم الهاتف قبل الحفظ.', 'error');
-      return;
-    }
+  const saveAddress = async () => {
+    if (saving) return;
+    Keyboard.dismiss();
+    const errors = {
+      ...(!form.l1.trim() ? { l1: 'اكتب اسم الشارع أو المبنى' } : {}),
+      ...(!form.apt.trim() ? { apt: 'اكتب رقم الشقة أو الوحدة' } : {}),
+      ...(!/^\+?[0-9\s()-]{8,16}$/.test(form.phone.trim()) ? { phone: 'اكتب رقم هاتف صحيحًا' } : {}),
+    };
+    setFieldErrors(errors);
+    if (Object.keys(errors).length) return;
     setSaving(true);
+    // Let the loading state render before the synchronous local-store commit.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
     const miss = useApp.getState().addAddress({ ...form, latitude: point.latitude, longitude: point.longitude, def: true });
     setSaving(false);
     if (!miss) { setDetailsOpen(false); router.replace('/addresses' as never); }
@@ -297,7 +305,7 @@ export default function AddressMapScreen() {
       </Modal>
 
       <Modal visible={detailsOpen} animationType="slide" onRequestClose={() => setDetailsOpen(false)}>
-        <ScrollView style={[styles.formPage, { backgroundColor: c.bg }]} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: insets.bottom + 26, gap: 14 }} keyboardShouldPersistTaps="handled">
+        <ScrollView style={[styles.formPage, { backgroundColor: c.bg }]} contentContainerStyle={{ paddingTop: insets.top + 12, paddingHorizontal: 20, paddingBottom: insets.bottom + 26, gap: 14 }} keyboardShouldPersistTaps="handled" keyboardDismissMode="on-drag" automaticallyAdjustKeyboardInsets>
           <View style={styles.formHeader}>
             <CircleButton icon="chevron_right" size={42} iconSize={22} variant="soft" label="رجوع" onPress={() => setDetailsOpen(false)} />
             <Txt s={22} w={700}>عنوان جديد</Txt>
@@ -318,25 +326,34 @@ export default function AddressMapScreen() {
           <View style={styles.tags}>
             {(['Home', 'Work', 'Other'] as const).map((tag) => <PressableScale key={tag} onPress={() => update({ tag })} style={[styles.tag, { backgroundColor: form.tag === tag ? '#202020' : c.bg, borderColor: c.line }]}><Txt s={14} w={600} color={form.tag === tag ? '#FFFFFF' : c.text1}>{tag === 'Home' ? 'منزل' : tag === 'Work' ? 'عمل' : 'أخرى'}</Txt></PressableScale>)}
           </View>
-          <FormField label="اسم المبنى" value={form.l1} onChange={(l1) => update({ l1 })} placeholder="اسم المبنى أو الشارع" />
+          <FormField label="اسم المبنى" value={form.l1} error={fieldErrors.l1} onChange={(l1) => { update({ l1 }); setFieldErrors((e) => ({ ...e, l1: undefined })); }} placeholder="اسم المبنى أو الشارع" />
           <View style={styles.twoFields}>
-            <View style={{ flex: 1 }}><FormField label="رقم الشقة" value={form.apt} onChange={(apt) => update({ apt })} placeholder="رقم الشقة" /></View>
+            <View style={{ flex: 1 }}><FormField label="رقم الشقة" value={form.apt} error={fieldErrors.apt} onChange={(apt) => { update({ apt }); setFieldErrors((e) => ({ ...e, apt: undefined })); }} placeholder="رقم الشقة" /></View>
             <View style={{ flex: 1 }}><FormField label="الدور (اختياري)" value={form.zip} onChange={(zip) => update({ zip })} placeholder="الدور" /></View>
           </View>
           <FormField label="الشارع" value={form.city} onChange={(city) => update({ city })} placeholder="اسم الشارع" />
-          <FormField label="رقم الهاتف الجوال" value={form.phone} onChange={(phone) => update({ phone })} placeholder="+20 رقم الهاتف" keyboardType="phone-pad" />
+          <FormField label="رقم الهاتف الجوال" value={form.phone} error={fieldErrors.phone} onChange={(phone) => { update({ phone }); setFieldErrors((e) => ({ ...e, phone: undefined })); }} placeholder="+20 رقم الهاتف" keyboardType="phone-pad" />
           <FormField label="علامة مميزة (اختياري)" value={form.note} onChange={(note) => update({ note })} placeholder="علامة مميزة" />
           <FormField label="تسمية العنوان (اختياري)" value={form.custom} onChange={(custom) => update({ custom })} placeholder="مثلاً: منزل العائلة" />
-          <PressableScale disabled={saving} onPress={saveAddress} style={[styles.confirm, { backgroundColor: c.accent }]}><Txt s={17} w={700} color="#FFFFFF">{saving ? 'جارٍ الحفظ…' : 'حفظ العنوان'}</Txt></PressableScale>
+          <PressableScale disabled={saving} onPress={() => { void saveAddress(); }} style={[styles.confirm, { backgroundColor: c.accent, opacity: saving ? 0.82 : 1 }]}>{saving ? <ActivityIndicator color="#FFFFFF" /> : <Txt s={17} w={700} color="#FFFFFF">حفظ العنوان</Txt>}</PressableScale>
         </ScrollView>
       </Modal>
     </View>
   );
 }
 
-function FormField({ label, value, onChange, placeholder, keyboardType }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; keyboardType?: 'default' | 'phone-pad' }) {
+function FormField({ label, value, onChange, placeholder, keyboardType, error }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; keyboardType?: 'default' | 'phone-pad'; error?: string }) {
   const { c } = useTheme();
-  return <View style={{ gap: 7 }}><Txt s={14} w={600} align="right">{label}</Txt><TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={c.text3} keyboardType={keyboardType} style={[styles.input, { color: c.text1, borderColor: c.line, backgroundColor: c.surface1, textAlign: "right" }]} /></View>;
+  return (
+    <View style={{ gap: 7 }}>
+      <Txt s={14} w={600} align="right">{label}</Txt>
+      <View style={[styles.inputWrap, { borderColor: error ? '#D92D20' : c.line, backgroundColor: c.surface1 }]}>
+        <TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={c.text3} keyboardType={keyboardType} returnKeyType="done" blurOnSubmit onSubmitEditing={Keyboard.dismiss} style={[styles.input, { color: c.text1, textAlign: 'right' }]} />
+        {error ? <Icon name="error" size={19} color="#D92D20" /> : null}
+      </View>
+      {error ? <Txt s={12} color="#D92D20" align="right">{error}</Txt> : null}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -369,5 +386,6 @@ const styles = StyleSheet.create({
   tags: { flexDirection: 'row-reverse', justifyContent: 'flex-start', gap: 8 },
   tag: { borderWidth: 1, borderRadius: 22, paddingHorizontal: 17, paddingVertical: 10 },
   twoFields: { flexDirection: 'row-reverse', gap: 12 },
-  input: { minHeight: 60, borderWidth: 1.5, borderRadius: 17, paddingHorizontal: 16, fontSize: 15 },
+  inputWrap: { minHeight: 60, borderWidth: 1.5, borderRadius: 17, paddingHorizontal: 14, flexDirection: 'row-reverse', alignItems: 'center', gap: 8 },
+  input: { flex: 1, minHeight: 56, paddingHorizontal: 2, fontSize: 15 },
 });
