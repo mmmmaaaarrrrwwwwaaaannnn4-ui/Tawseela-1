@@ -1,5 +1,5 @@
 import { StyleSheet, View } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { Camera as MapCamera, Map as MapLibre } from '@maplibre/maplibre-react-native';
 
 import { Icon } from '@/components/icons/icon';
 import { AccentButton } from '@/components/ui/buttons';
@@ -99,13 +99,38 @@ export function AddressSheet({
         <Eyebrow>Pin your delivery location</Eyebrow>
         <Txt s={12} color={fixed.paperA(0.7)}>Move the map and place the pin exactly where the courier should arrive.</Txt>
         <View style={styles.map}>
-          <WebView
-            originWhitelist={['*']}
-            javaScriptEnabled
-            source={{ html: '<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"><link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"><style>html,body,#map{height:100%;width:100%;margin:0;padding:0}</style></head><body><div id="map"></div><script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script><script>const lat=' + (n.latitude ?? 30.0444) + ',lng=' + (n.longitude ?? 31.2357) + ';const map=L.map("map").setView([lat,lng],' + (n.latitude ? 16 : 12) + ');L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap"}).addTo(map);const pin=L.marker([lat,lng],{draggable:true}).addTo(map);function send(p){window.ReactNativeWebView.postMessage(JSON.stringify({latitude:p.lat,longitude:p.lng}))}pin.on("dragend",()=>send(pin.getLatLng()));map.on("click",e=>{pin.setLatLng(e.latlng);send(e.latlng)});</script></body></html>' }}
-            onMessage={(event) => { try { const point = JSON.parse(event.nativeEvent.data); if (Number.isFinite(point.latitude) && Number.isFinite(point.longitude)) onMapSelect(point.latitude, point.longitude); } catch {} }}
-            style={{ flex: 1, backgroundColor: '#F3F3F3' }}
-          />
+          <MapLibre
+            mapStyle="https://tiles.openfreemap.org/styles/liberty"
+            attribution
+            logo={false}
+            compass
+            compassPosition={{ top: 12, right: 12 }}
+            onRegionDidChange={(event) => {
+              const center = event.nativeEvent.center;
+              if (Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1])) {
+                onMapSelect(center[1], center[0]);
+              }
+            }}
+            style={StyleSheet.absoluteFill}
+          >
+            <MapCamera
+              initialViewState={{
+                center: [n.longitude ?? 31.557884, n.latitude ?? 30.42292],
+                zoom: n.latitude && n.longitude ? 16 : 14,
+                pitch: 0,
+                bearing: 0,
+              }}
+            />
+          </MapLibre>
+          <View pointerEvents="none" style={styles.mapPinWrap}>
+            <View style={styles.mapPinShadow} />
+            <View style={styles.mapPin}>
+              <Icon name="location_on" size={23} fill color="#FFFFFF" />
+            </View>
+          </View>
+          <View pointerEvents="none" style={styles.mapHint}>
+            <Txt s={11} w={600} color="#31594D">حرّك الخريطة لتحديد مكان التسليم</Txt>
+          </View>
         </View>
         <Eyebrow>Address</Eyebrow>
         <Field
@@ -162,7 +187,11 @@ export function AddressSheet({
 }
 
 const styles = StyleSheet.create({
-  map: { height: 230, borderRadius: 16, overflow: 'hidden', backgroundColor: '#F3F3F3' },
+  map: { height: 250, borderRadius: 16, overflow: 'hidden', backgroundColor: '#EAF0E8' },
+  mapPinWrap: { position: 'absolute', left: '50%', top: '50%', marginLeft: -17, marginTop: -37, alignItems: 'center' },
+  mapPin: { width: 36, height: 36, borderRadius: 18, backgroundColor: '#315B45', borderWidth: 3, borderColor: '#FFFFFF', alignItems: 'center', justifyContent: 'center', elevation: 5 },
+  mapPinShadow: { position: 'absolute', bottom: -5, width: 12, height: 5, borderRadius: 6, backgroundColor: 'rgba(0,0,0,0.18)' },
+  mapHint: { position: 'absolute', bottom: 10, alignSelf: 'center', paddingHorizontal: 12, paddingVertical: 7, borderRadius: 20, backgroundColor: 'rgba(255,255,255,0.94)' },
   preview: { padding: 14, borderRadius: 20, backgroundColor: fixed.ink, flexDirection: 'row', alignItems: 'center', gap: 12 },
   pinRing: { width: 56, height: 56, margin: -6, borderRadius: 28, backgroundColor: 'rgba(255,122,26,0.2)', alignItems: 'center', justifyContent: 'center' },
   pin: { width: 44, height: 44, borderRadius: 22, backgroundColor: fixed.orange, alignItems: 'center', justifyContent: 'center' },
