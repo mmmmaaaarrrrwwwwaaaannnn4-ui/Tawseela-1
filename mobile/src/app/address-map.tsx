@@ -199,7 +199,7 @@ export default function AddressMapScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: c.bg }]}>
-      <View style={[styles.top, { paddingTop: insets.top + 2 }]}>
+      <View style={[styles.top, { paddingTop: Math.max(0, insets.top - 14) }]}>
         <PressableScale onPress={() => { setSearchOpen(true); setTimeout(() => searchRef.current?.focus(), 250); }} style={[styles.round, { borderColor: c.line }]}>
           <Icon name="search" size={19} color={c.text1} />
         </PressableScale>
@@ -335,7 +335,7 @@ function FormField({ label, value, onChange, placeholder, keyboardType }: { labe
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  top: { minHeight: 54, paddingHorizontal: 16, paddingBottom: 4, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  top: { minHeight: 46, paddingHorizontal: 16, paddingBottom: 2, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
   round: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.25, alignItems: 'center', justifyContent: 'center' },
   mapArea: { flex: 1, overflow: 'hidden', backgroundColor: '#E8EFE8' },
   pinWrap: { position: 'absolute', left: '50%', top: '50%', marginLeft: -17, marginTop: -42, alignItems: 'center' },
