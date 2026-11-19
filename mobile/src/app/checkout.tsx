@@ -601,7 +601,7 @@ function Checkout() {
             <ScrollView style={{ height: 126 }} contentContainerStyle={{ alignItems: 'center', paddingVertical: 42 }} showsVerticalScrollIndicator={false} snapToInterval={42} decelerationRate="fast"
               onMomentumScrollEnd={(event) => {
                 const index = Math.round(event.nativeEvent.contentOffset.y / 42);
-                const minutes = Math.max(-30, Math.min(600, index * 15));
+                const minutes = Math.max(-30, Math.min(600, (index - 2) * 15));
                 setScheduleOffsetMinutes(minutes);
                 set({ speed: minutes < 0 ? 1 : 0 });
               }}>
