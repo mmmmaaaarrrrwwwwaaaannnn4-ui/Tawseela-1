@@ -553,8 +553,8 @@ function Checkout() {
               </View>
               {!deliveryPoint ? (
                 <View style={styles.addressWarning}><Txt s={12} color={TEXT}>العنوان لا يحتوي على إحداثيات دقيقة. افتح تغيير العنوان وحدد نقطة التوصيل على الخريطة.</Txt></View>
-              ) : currentAddressGapKm != null && currentAddressGapKm > 1 ? (
-                <View style={styles.addressWarning}><Txt s={12} color={TEXT}>يبدو أنك بعيد عن موقعك الحالي. هل هذا عنوانك الصحيح؟</Txt></View>
+              ) : currentAddressGapKm != null && currentAddressGapKm > 5 ? (
+                <View style={styles.addressWarning}><Txt s={12} color={TEXT}>تنبيه: عنوان التوصيل يبعد أكثر من 5 كم عن موقعك الحالي. هل تريد إرسال الطلب إلى هذا العنوان في بلبيس؟</Txt></View>
               ) : null}
             </View>
           </View>
