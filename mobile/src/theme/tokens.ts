@@ -31,9 +31,9 @@ export const light: Palette = {
   warn: '#B7791F',
   err: '#D92D20',
   info: '#3478A8',
-  accent: '#FF5A00',
+  accent: '#255942',
   accentInk: '#FFFFFF',
-  accentText: '#F05200',
+  accentText: '#255942',
   accentSoft: '#FFF0E8',
   glassSolid: '#FFFFFF',
   navSolid: '#FFFFFF',
@@ -51,8 +51,8 @@ export const dark: Palette = {
   navGlass: 'rgba(28,28,28,0.96)',
   navHi: '#292929',
   navLo: '#101010',
-  navPill: 'rgba(255,90,0,0.20)',
-  navPillHi: 'rgba(255,90,0,0.28)',
+  navPill: 'rgba(37,89,66,0.20)',
+  navPillHi: 'rgba(37,89,66,0.28)',
   text1: '#FFFFFF',
   text2: '#D0D0D0',
   text3: '#999999',
@@ -61,10 +61,10 @@ export const dark: Palette = {
   warn: '#E7B65D',
   err: '#FF8176',
   info: '#78BCE5',
-  accent: '#FF5A00',
+  accent: '#255942',
   accentInk: '#FFFFFF',
-  accentText: '#FF7A35',
-  accentSoft: 'rgba(255,90,0,0.18)',
+  accentText: '#255942',
+  accentSoft: 'rgba(37,89,66,0.14)',
   glassSolid: '#1C1C1C',
   navSolid: '#111111',
 };
@@ -73,13 +73,13 @@ export const dark: Palette = {
 export const fixed = {
   ink: '#202020',
   paper: '#FFFFFF',
-  orange: '#FF5A00',
+  orange: '#255942',
   peach: '#FFC3A6',
-  star: '#FF5A00',
+  star: '#255942',
   white: '#FFFFFF',
   black: '#000000',
   splashBg: '#FFFFFF',
-  leaf: '#FF5A00',
+  leaf: '#255942',
   coffee: '#202020',
   inputFill: '#FFFFFF',
   roast: (a: number) => `rgba(22,14,8,${a})`,
@@ -87,7 +87,7 @@ export const fixed = {
   whiteA: (a: number) => `rgba(255,255,255,${a})`,
 } as const;
 
-export const accentGradient = ['#FF6A1A', '#F04B00'] as const;
+export const accentGradient = ['#326D50', '#1D4935'] as const;
 
 export function alpha(color: string, a: number): string {
   if (color.startsWith('rgba(')) {
