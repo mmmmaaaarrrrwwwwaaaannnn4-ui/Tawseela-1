@@ -134,6 +134,7 @@ function Checkout() {
     return () => { active = false; };
   }, [restaurant?.lat, restaurant?.lng, s.addr?.latitude, s.addr?.longitude, s.customerLocation?.latitude, s.customerLocation?.longitude]);
 
+  const isDelivery = s.mode !== 'pickup';
   const deliveryPoint = s.addr?.latitude != null && s.addr?.longitude != null
     ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
     : s.customerLocation;
@@ -173,7 +174,6 @@ function Checkout() {
   const scheduleColor = rushDelivery ? RED : GREEN;
 
   /* ───────── الحسابات ───────── */
-  const isDelivery = s.mode !== 'pickup';
   const baseDelivery = isDelivery ? t.fee : 0;
   const delivery = isDelivery && isFirstOrder ? 0 : baseDelivery;
   const discount = s.promo ? t.disc : 0;
