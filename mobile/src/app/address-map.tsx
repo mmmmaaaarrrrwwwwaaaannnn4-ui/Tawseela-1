@@ -28,7 +28,7 @@ export default function AddressMapScreen() {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const camera = useRef<React.ComponentRef<typeof MapCamera>>(null);
-  const searchRef = useRef<TextInput>(null);
+  const searchRef = useRef<React.ComponentRef<typeof TextInput>>(null);
   const reverseTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [point, setPoint] = useState(START);
   const [current, setCurrent] = useState<{ latitude: number; longitude: number } | null>(null);
@@ -183,12 +183,12 @@ export default function AddressMapScreen() {
           <MapCamera ref={camera} initialViewState={{ center: [point.longitude, point.latitude], zoom: 14, pitch: 0, bearing: 0 }} />
         </MapLibre>
         <View pointerEvents="none" style={styles.pinWrap}>
-          {warning ? <View style={styles.warning}><Txt s={14} w={600} color="#FFFFFF" textAlign="center">{warning}</Txt></View> : null}
+          {warning ? <View style={styles.warning}><Txt s={14} w={600} color="#FFFFFF" align="center">{warning}</Txt></View> : null}
           <View style={styles.pin}><View style={styles.pinDot} /></View>
           <View style={styles.pinShadow} />
         </View>
         <PressableScale onPress={() => { void locateMe(); }} style={[styles.locate, { backgroundColor: '#FFFFFF' }]}>
-          <Icon name="near_me" size={22} color="#202020" />
+          <Icon name="my_location" size={22} color="#202020" />
         </PressableScale>
       </View>
       <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 16) + 8, backgroundColor: c.bg }]}>
@@ -196,7 +196,7 @@ export default function AddressMapScreen() {
           <Icon name="location_on" size={24} color={c.text1} />
           <View style={{ flex: 1, gap: 3 }}>
             <Txt s={17} w={700}>{addressText.split('،').slice(-1)[0] || 'الموقع المحدد'}</Txt>
-            <Txt s={14} color={c.text2} textAlign="right">{addressText}</Txt>
+            <Txt s={14} color={c.text2} align="right">{addressText}</Txt>
           </View>
         </View>
         <PressableScale disabled={!canConfirm} onPress={() => { void confirmPoint(); }} style={[styles.confirm, { backgroundColor: canConfirm ? '#FF5A00' : '#F0F0F0' }]}>
@@ -209,7 +209,7 @@ export default function AddressMapScreen() {
           <View style={styles.searchHeader}>
             <View style={[styles.searchBar, { backgroundColor: c.surface2, borderColor: c.line }]}>
               <Icon name="search" size={22} color={c.text3} />
-              <TextInput ref={searchRef} value={query} onChangeText={setQuery} placeholder="ابحث عن شارع أو مكان في بلبيس" placeholderTextColor={c.text3} style={[styles.searchInput, { color: c.text1 }]} textAlign="right" returnKeyType="search" />
+              <TextInput ref={searchRef} value={query} onChangeText={setQuery} placeholder="ابحث عن شارع أو مكان في بلبيس" placeholderTextColor={c.text3} style={[styles.searchInput, { color: c.text1 }]} align="right" returnKeyType="search" />
               {query ? <Pressable onPress={() => setQuery('')}><Icon name="close" size={20} color={c.text2} /></Pressable> : null}
             </View>
             <CircleButton icon="close" size={42} iconSize={20} variant="soft" label="إغلاق البحث" onPress={() => setSearchOpen(false)} />
@@ -220,12 +220,12 @@ export default function AddressMapScreen() {
               <Pressable key={hit.id} onPress={() => chooseHit(hit)} style={[styles.result, { borderBottomColor: c.line }]}>
                 <Icon name="search" size={22} color={c.text1} />
                 <View style={{ flex: 1, gap: 4 }}>
-                  <Txt s={16} w={600} textAlign="right">{hit.name}</Txt>
-                  <Txt s={13} color={c.text3} textAlign="right" numberOfLines={2}>{hit.detail}</Txt>
+                  <Txt s={16} w={600} align="right">{hit.name}</Txt>
+                  <Txt s={13} color={c.text3} align="right" numberOfLines={2}>{hit.detail}</Txt>
                 </View>
               </Pressable>
             ))}
-            {!searching && query.trim() && hits.length === 0 ? <Txt s={14} color={c.text3} textAlign="center" style={{ marginTop: 30 }}>لا توجد نتائج. جرّب كتابة اسم شارع أو مكان آخر.</Txt> : null}
+            {!searching && query.trim() && hits.length === 0 ? <Txt s={14} color={c.text3} align="center" style={{ marginTop: 30 }}>لا توجد نتائج. جرّب كتابة اسم شارع أو مكان آخر.</Txt> : null}
           </ScrollView>
         </View>
       </Modal>
@@ -270,7 +270,7 @@ export default function AddressMapScreen() {
 
 function FormField({ label, value, onChange, placeholder, keyboardType }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; keyboardType?: 'default' | 'phone-pad' }) {
   const { c } = useTheme();
-  return <View style={{ gap: 7 }}><Txt s={14} w={600} textAlign="right">{label}</Txt><TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={c.text3} keyboardType={keyboardType} textAlign="right" style={[styles.input, { color: c.text1, borderColor: c.line, backgroundColor: c.surface1 }]} /></View>;
+  return <View style={{ gap: 7 }}><Txt s={14} w={600} align="right">{label}</Txt><TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={c.text3} keyboardType={keyboardType} align="right" style={[styles.input, { color: c.text1, borderColor: c.line, backgroundColor: c.surface1 }]} /></View>;
 }
 
 const styles = StyleSheet.create({
