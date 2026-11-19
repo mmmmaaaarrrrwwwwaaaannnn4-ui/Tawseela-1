@@ -761,10 +761,15 @@ function Checkout() {
             <Txt s={16} w={800} color={TEXT}>المجموع الكلي</Txt>
           </View>
         )}
-        <PressableScale onPress={() => void pay()} style={[styles.cta, paying && { opacity: 0.85 }]}>
-          {paying ? <ActivityIndicator color="#FFFFFF" style={{ marginEnd: 8 }} /> : null}
-          <Txt s={16} w={700} color="#FFFFFF">{payBtnLabel}</Txt>
-        </PressableScale>
+        <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 2 }}>
+          <PressableScale onPress={() => void pay()} style={[styles.cta, { flex: 1 }, paying && { opacity: 0.85 }]}>
+            {paying ? <ActivityIndicator color="#FFFFFF" style={{ marginEnd: 8 }} /> : null}
+            <Txt s={16} w={700} color="#FFFFFF">{payBtnLabel}</Txt>
+          </PressableScale>
+          <PressableScale onPress={() => router.replace('/home')} style={[styles.cta, { flex: 1, backgroundColor: '#FFFFFF', borderWidth: 1.5, borderColor: TEXT }]}>
+            <Txt s={16} w={700} color={TEXT}>أضف المزيد</Txt>
+          </PressableScale>
+        </View>
       </View>
 
       <Modal visible={feeInfoOpen} transparent animationType="slide" onRequestClose={() => setFeeInfoOpen(false)}>
