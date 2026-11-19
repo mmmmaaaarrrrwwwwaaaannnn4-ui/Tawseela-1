@@ -540,7 +540,7 @@ function Checkout() {
                 </View>
               ) : (
                 <View style={[styles.orderMap, styles.mapUnavailable]}>
-                  <Icon name="location_off" size={28} color={MUTED} />
+                  <Icon name="location_on" size={28} color={MUTED} />
                   <Txt s={13} w={600} color={TEXT}>لا يمكن رسم الطريق بعد</Txt>
                   <Txt s={11.5} color={MUTED}>اختر عنوانًا محفوظًا بموقع محدد، وتأكد من إضافة موقع المطعم من لوحة الإدارة.</Txt>
                 </View>
@@ -642,14 +642,14 @@ function Checkout() {
             <View style={styles.paymentDivider} />
             <PressableScale onPress={() => { setPayPicked('online'); openPaymentSheet(); }} style={styles.paymentRow}>
               <Dot on={payPicked === 'online'} />
-              <View style={styles.payOptLabel}><Txt s={15} w={700} color={TEXT}>أضف بطاقة جديدة / محفظة</Txt><Icon name="add_circle_outline" size={23} color={TEXT} /></View>
+              <View style={styles.payOptLabel}><Txt s={15} w={700} color={TEXT}>أضف بطاقة جديدة / محفظة</Txt><Icon name="add_card" size={23} color={TEXT} /></View>
             </PressableScale>
             <View style={styles.paymentDivider} />
             <PressableScale onPress={chooseCash} style={styles.paymentRow}>
               <Dot on={payPicked === 'cash'} />
               <View style={styles.payOptLabel}><Txt s={15} w={700} color={TEXT}>نقدًا</Txt><Icon name="payments" size={23} color={TEXT} /></View>
             </PressableScale>
-            <View style={styles.pciStrip}><Icon name="info" size={17} color="#1266B3" /><Txt s={12} w={600} color="#1266B3">مؤمّن وفق معايير حماية بيانات الدفع (PCI)</Txt><Icon name="verified_user" size={18} color="#1266B3" /></View>
+            <View style={styles.pciStrip}><Icon name="info" size={17} color="#1266B3" /><Txt s={12} w={600} color="#1266B3">مؤمّن وفق معايير حماية بيانات الدفع (PCI)</Txt><Icon name="shield_lock" size={18} color="#1266B3" /></View>
           </View>
         </View>
         <View style={styles.band} />
