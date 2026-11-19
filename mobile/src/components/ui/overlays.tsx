@@ -3,7 +3,6 @@ import { useEffect, useRef, useState, type ReactNode, type RefObject } from 'rea
 import {
   Keyboard,
   KeyboardAvoidingView,
-  Modal,
   Platform,
   Pressable,
   ScrollView,
@@ -126,13 +125,11 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
   );
 
   return (
-    <Modal transparent visible animationType="none" presentationStyle="overFullScreen" statusBarTranslucent navigationBarTranslucent onRequestClose={onClose}>
-      <View style={StyleSheet.absoluteFill}>
-        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: c.scrim }, scrimStyle]}>
-          <Pressable style={StyleSheet.absoluteFill} onPress={onClose} accessibilityLabel="Close" />
-        </Animated.View>
+    <View pointerEvents="box-none" style={styles.sheetOverlay}>
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: c.scrim }, scrimStyle]} />
         <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
           <Animated.View
+            pointerEvents="auto"
             style={[
               styles.sheetShadow,
               fullScreen ? styles.fullScreenShadow : null,
@@ -183,8 +180,7 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
           </Animated.View>
         </KeyboardAvoidingView>
         <ToastHost />
-      </View>
-    </Modal>
+    </View>
   );
 }
 
@@ -322,6 +318,7 @@ export function useFlyToCart() {
 }
 
 const styles = StyleSheet.create({
+  sheetOverlay: { ...StyleSheet.absoluteFillObject, zIndex: 100, elevation: 100 },
   kav: { flex: 1, justifyContent: 'flex-end' },
   sheetShadow: { shadowColor: '#1A1A1A', shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: -24 }, elevation: 24 },
   fullScreenShadow: { width: '100%', flex: 1 },
