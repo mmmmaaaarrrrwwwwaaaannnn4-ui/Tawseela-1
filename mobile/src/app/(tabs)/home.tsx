@@ -20,7 +20,6 @@ import {
 } from '@/components/home/sections';
 import { Icon } from '@/components/icons/icon';
 import { AccentFill } from '@/components/ui/buttons';
-import { Glow, HOME_GLOW } from '@/components/ui/glow';
 import { useChrome } from '@/components/ui/layout';
 import { PressableScale } from '@/components/ui/pressable-scale';
 import { Reveal, RevealScope } from '@/components/ui/reveal';
@@ -88,12 +87,11 @@ export default function HomeScreen() {
   return (
     <RevealScope>
       <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <Glow spots={HOME_GLOW} />
         <ScrollView contentContainerStyle={{ paddingTop: chrome.contentTop, paddingBottom: chrome.bottomPad }} showsVerticalScrollIndicator={false}>
           <Reveal i={0} style={styles.top}>
             <View style={{ gap: 5 }}>
               <Txt s={13} w={500} color={c.text3}>
-                {user ? `Good evening, ${user.name.split(' ')[0]}` : 'Good evening'}
+                {user ? `أهلاً، ${user.name.split(' ')[0]}` : 'أهلاً بيك في توصيلة'}
               </Txt>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Icon name="eco" size={26} fill color={c.accent} />
@@ -110,7 +108,7 @@ export default function HomeScreen() {
               <PressableScale
                 onPress={() => router.push('/inbox')}
                 scaleTo={0.94}
-                accessibilityLabel="Notifications"
+                accessibilityLabel="الإشعارات"
                 style={[styles.round, { backgroundColor: c.surface1, borderColor: c.line }]}
               >
                 <Icon name="notifications" size={23} />
@@ -126,7 +124,7 @@ export default function HomeScreen() {
               <PressableScale
                 onPress={() => router.navigate('/profile')}
                 scaleTo={0.94}
-                accessibilityLabel="Profile"
+                accessibilityLabel="حسابي"
                 style={[styles.round, { backgroundColor: c.surface1, borderColor: c.line }]}
               >
                 {user ? (
@@ -151,7 +149,7 @@ export default function HomeScreen() {
             >
               <Icon name="search" size={22} color={c.text3} />
               <Txt s={14.5} w={500} color={c.text3} style={{ flex: 1 }} numberOfLines={1}>
-                Search pizza, burgers, ramen…
+                ابحث عن مطعم أو أكلة بتحبها…
               </Txt>
               <View style={styles.tune}>
                 <AccentFill radius={20} />
