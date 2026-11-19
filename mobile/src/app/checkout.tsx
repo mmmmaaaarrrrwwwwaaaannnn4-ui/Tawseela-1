@@ -560,15 +560,17 @@ function Checkout() {
         )}
         {/* ───────── وقت التوصيل ───────── */}
         <View style={styles.section}>
-          <View style={styles.titleRow}>
-            <PressableScale onPress={() => setScheduleSheet(true)}>
-              <Txt s={13} w={600} style={{ color: TEXT }}>اختر موعد آخر</Txt>
-            </PressableScale>
-            <Txt s={17} w={700} style={styles.titleInline}>{isDelivery ? 'وقت التوصيل' : 'وقت الاستلام'}</Txt>
-          </View>
-          <View style={styles.etaRow}>
-            <Txt s={14} w={600} style={{ color: GREEN }}>{`سيصل ${clock(scheduledFrom)} - ${clock(scheduledTo)}`}</Txt>
-            <Icon name="schedule" size={20} color={TEXT} />
+          <View style={styles.checkoutCard}>
+            <View style={styles.titleRow}>
+              <PressableScale onPress={() => setScheduleSheet(true)}>
+                <Txt s={13} w={700} style={{ color: BRAND, textDecorationLine: 'underline' }}>جدولة</Txt>
+              </PressableScale>
+              <Txt s={17} w={700} style={styles.titleInline}>التوصيل</Txt>
+            </View>
+            <View style={styles.etaRow}>
+              <Txt s={14} w={600} style={{ color: MUTED }}>{`سيصل خلال حوالي ${Math.max(5, Math.round((scheduledTo.getTime() - Date.now()) / 60000))} دقيقة`}</Txt>
+              <Icon name="two_wheeler" size={22} color={TEXT} />
+            </View>
           </View>
         </View>
         <View style={styles.band} />
@@ -577,8 +579,14 @@ function Checkout() {
         {isDelivery ? (
           <>
             <View style={styles.section}>
-              <Txt s={17} w={700} style={styles.title}>قدم الشكر بإكرامية</Txt>
-              <Txt s={13} w={500} style={[styles.title, { color: MUTED }]}>سيحصل مندوب التوصيل على المبلغ بأكمله.</Txt>
+              <View style={styles.tipHeader}>
+                <View style={styles.tipAvatar}><Icon name="two_wheeler" size={24} color={BRAND} /></View>
+                <View style={{ flex: 1, gap: 3, alignItems: 'flex-end' }}>
+                  <Txt s={17} w={800} color={TEXT}>كافئ السائق بإكرامية</Txt>
+                  <Txt s={12.5} w={500} color={MUTED}>يحتفظ السائق بمبلغ الإكرامية بالكامل</Txt>
+                </View>
+                <Icon name="info" size={16} color={MUTED} />
+              </View>
               <View style={styles.chips}>
                 <PressableScale onPress={() => { setCustomTip(true); setTip(0); }} style={[styles.chip, { minWidth: 56 }, customTip && styles.chipOn]}>
                   <Txt s={14} w={700} style={{ color: TEXT }}>آخر</Txt>
@@ -589,7 +597,7 @@ function Checkout() {
                     onPress={() => { setCustomTip(false); setTip(tip === v ? 0 : v); }}
                     style={[styles.chip, { flex: 1 }, !customTip && tip === v && styles.chipOn]}
                   >
-                    <Txt s={14} w={700} style={{ color: TEXT }}>{egp(v)}</Txt>
+                    <Txt s={14} w={700} style={{ color: TEXT }}>{v === 10 ? '🍦 ' : v === 20 ? '🍟 ' : '🍔 '}{egp(v)}</Txt>
                   </PressableScale>
                 ))}
               </View>
@@ -1041,6 +1049,8 @@ const styles = StyleSheet.create({
   balRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
 
   chips: { flexDirection: 'row', gap: 8, marginTop: 2 },
+  tipHeader: { flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 58 },
+  tipAvatar: { width: 48, height: 48, borderRadius: 24, backgroundColor: '#F2F4EF', alignItems: 'center', justifyContent: 'center' },
   chip: { height: 40, paddingHorizontal: 10, borderRadius: 12, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFFFFF' },
   chipOn: { borderColor: BRAND, backgroundColor: BRAND_SOFT },
 
