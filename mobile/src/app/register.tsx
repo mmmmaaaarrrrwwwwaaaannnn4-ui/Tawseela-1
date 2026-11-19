@@ -84,7 +84,7 @@ export default function RegisterScreen() {
 
           <View style={styles.perks}>
             <PastelTile label="First order" value="Free" unit="delivery" colors={['#FFF6CF', '#FFE9A3']} style={styles.perk} />
-            <PastelTile label="Welcome" value="10%" unit="off" colors={['#FFE7D2', '#FFD2AE']} style={styles.perk} />
+            <PastelTile label="Welcome" value="10%" unit="off" colors={['#E8EDE4', '#DCE9E1']} style={styles.perk} />
             <PastelTile label="Every order" value="2×" unit="points" colors={['#FFE3EC', '#FFCCDD']} style={styles.perk} />
           </View>
 
