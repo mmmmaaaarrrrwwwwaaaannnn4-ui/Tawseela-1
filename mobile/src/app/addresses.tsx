@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { ScrollView, StyleSheet, View } from 'react-native';
 import ReanimatedSwipeable from 'react-native-gesture-handler/ReanimatedSwipeable';
+import Animated, { LinearTransition } from 'react-native-reanimated';
 
 import { Icon } from '@/components/icons/icon';
 import { CircleButton } from '@/components/ui/buttons';
@@ -125,6 +126,7 @@ function AddressRow({ title, address, icon, selected, onPress, onDelete, current
   );
   if (!onDelete || current) return row;
   return (
+    <Animated.View layout={LinearTransition.springify()}>
     <ReanimatedSwipeable
       friction={1.8}
       rightThreshold={72}
@@ -139,6 +141,7 @@ function AddressRow({ title, address, icon, selected, onPress, onDelete, current
     >
       {row}
     </ReanimatedSwipeable>
+    </Animated.View>
   );
 }
 
