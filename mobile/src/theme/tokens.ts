@@ -21,8 +21,8 @@ export const light: Palette = {
   navGlass: 'rgba(255,255,255,0.96)',
   navHi: '#FFFFFF',
   navLo: '#F2F2F2',
-  navPill: 'rgba(37,89,66,0.10)',
-  navPillHi: 'rgba(37,89,66,0.18)',
+  navPill: 'rgba(76,91,66,0.10)',
+  navPillHi: 'rgba(76,91,66,0.18)',
   text1: '#202020',
   text2: '#555555',
   text3: '#8A8A8A',
@@ -31,10 +31,10 @@ export const light: Palette = {
   warn: '#B7791F',
   err: '#D92D20',
   info: '#3478A8',
-  accent: '#00634B',
+  accent: '#4C5B42',
   accentInk: '#FFFFFF',
-  accentText: '#00634B',
-  accentSoft: 'rgba(37,89,66,0.10)',
+  accentText: '#4C5B42',
+  accentSoft: 'rgba(76,91,66,0.10)',
   glassSolid: '#FFFFFF',
   navSolid: '#FFFFFF',
 };
@@ -51,8 +51,8 @@ export const dark: Palette = {
   navGlass: 'rgba(28,28,28,0.96)',
   navHi: '#292929',
   navLo: '#101010',
-  navPill: 'rgba(37,89,66,0.20)',
-  navPillHi: 'rgba(37,89,66,0.28)',
+  navPill: 'rgba(76,91,66,0.20)',
+  navPillHi: 'rgba(76,91,66,0.28)',
   text1: '#FFFFFF',
   text2: '#D0D0D0',
   text3: '#999999',
@@ -61,10 +61,10 @@ export const dark: Palette = {
   warn: '#E7B65D',
   err: '#FF8176',
   info: '#78BCE5',
-  accent: '#00634B',
+  accent: '#4C5B42',
   accentInk: '#FFFFFF',
-  accentText: '#00634B',
-  accentSoft: 'rgba(37,89,66,0.14)',
+  accentText: '#4C5B42',
+  accentSoft: 'rgba(76,91,66,0.14)',
   glassSolid: '#1C1C1C',
   navSolid: '#111111',
 };
@@ -73,13 +73,13 @@ export const dark: Palette = {
 export const fixed = {
   ink: '#202020',
   paper: '#FFFFFF',
-  orange: '#00634B',
+  orange: '#4C5B42',
   peach: '#DCE9E1',
   star: '#00634B',
   white: '#FFFFFF',
   black: '#000000',
   splashBg: '#FFFFFF',
-  leaf: '#00634B',
+  leaf: '#4C5B42',
   coffee: '#202020',
   inputFill: '#FFFFFF',
   roast: (a: number) => `rgba(22,14,8,${a})`,
@@ -87,7 +87,7 @@ export const fixed = {
   whiteA: (a: number) => `rgba(255,255,255,${a})`,
 } as const;
 
-export const accentGradient = ['#00634B', '#00634B'] as const;
+export const accentGradient = ['#4C5B42', '#0D2818'] as const;
 
 export function alpha(color: string, a: number): string {
   if (color.startsWith('rgba(')) {
