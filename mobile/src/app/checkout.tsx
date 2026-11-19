@@ -25,15 +25,15 @@ import { useSession } from '@/store/session';
 import { family } from '@/theme/typography';
 
 /* ───────── الألوان: مستخرجة من لوجو توصيلة ───────── */
-const BRAND = '#12291F';        // الأخضر الغامق (خلفية اللوجو)
-const BRAND_SOFT = '#EAF0EB';
-const LIME = '#D4EA45';         // الأخضر الليموني (كلمة توصيلة)
+const BRAND = '#202020';
+const BRAND_SOFT = '#F7F7F7';
+const LIME = '#FF5A00';
 const BG = '#FFFFFF';
 const BAND = '#F2F3F5';
 const BORDER = '#E1E3E6';
 const TEXT = '#1F1F1F';
 const MUTED = '#7A7A7A';
-const GREEN = '#2E7D32';
+const GREEN = '#FF5A00';
 const RED = '#D92D20';
 
 const SERVICE_FEE = 5;
