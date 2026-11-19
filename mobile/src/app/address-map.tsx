@@ -193,7 +193,7 @@ export default function AddressMapScreen() {
           <Icon name="search" size={23} color={c.text1} />
         </PressableScale>
         <Txt s={20} w={700}>عنوان التوصيل</Txt>
-        <CircleButton icon="close" size={42} iconSize={21} variant="soft" label="إغلاق" onPress={() => router.back()} />
+        <CircleButton icon="close" size={42} iconSize={21} variant="soft" label="إغلاق" onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/addresses' as never); }} />
       </View>
       <View style={styles.mapArea}>
         <MapLibre
