@@ -307,7 +307,7 @@ function Checkout() {
   const cardLogo = (brand: string, num: string, id: string, w: number, h: number) => {
     const raw = (brand || '').toLowerCase();
     let network = networkOf(brand, num);
-    if (!/visa|master|meeza|amex/i.test(raw) && !/^([345]|507803)/.test((num || '').replace(/\\D/g, ''))) {
+    if (!/visa|master|meeza|amex/i.test(raw) && !/^(4|3[47]|(5[1-5]|2[2-7])|507803)/.test((num || '').replace(/\\D/g, ''))) {
       const hash = [...id].reduce((value, char) => (value * 31 + char.charCodeAt(0)) >>> 0, 7);
       network = (['visa', 'mastercard', 'meeza'] as const)[hash % 3];
     }
