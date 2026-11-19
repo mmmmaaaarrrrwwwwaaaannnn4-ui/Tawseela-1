@@ -487,7 +487,10 @@ function Checkout() {
       {/* ───────── الهيدر ───────── */}
       <View style={[styles.header, { paddingTop: insets.top + 6 }]}>
         <View style={styles.backSpacer} />
-        <Txt s={16} w={600} style={{ color: TEXT }}>تنفيذ الطلب</Txt>
+        <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
+          <Txt s={16} w={700} style={{ color: TEXT }}>تنفيذ الطلب</Txt>
+          <Txt s={11.5} w={500} style={{ color: MUTED }}>{restaurant?.name ?? 'توصيلة'}</Txt>
+        </View>
         <PressableScale onPress={() => router.back()} style={styles.back} accessibilityRole="button" accessibilityLabel="رجوع">
           <Icon name="chevron_right" size={22} color={BRAND} />
         </PressableScale>
