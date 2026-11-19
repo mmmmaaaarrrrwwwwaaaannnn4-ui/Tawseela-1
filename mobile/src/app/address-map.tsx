@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import Animated, { useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from 'react-native-reanimated';
 import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { ActivityIndicator, Keyboard, Modal, Pressable, ScrollView, StyleSheet, TextInput, View, useWindowDimensions } from 'react-native';
@@ -25,6 +27,10 @@ const kmBetween = (a: number, b: number, c: number, d: number) => {
 export default function AddressMapScreen() {
   useStatusBar();
   const { c } = useTheme();
+  const params = useLocalSearchParams<{ current?: string }>();
+  const pinLift = useSharedValue(0);
+  const pinBounce = useSharedValue(0);
+  const pinMotion = useAnimatedStyle(() => ({ transform: [{ translateY: pinLift.value + pinBounce.value }] }));
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
   const camera = useRef<React.ComponentRef<typeof MapCamera>>(null);
@@ -40,7 +46,7 @@ export default function AddressMapScreen() {
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [searching, setSearching] = useState(false);
-  const [detailsOpen, setDetailsOpen] = useState(false);
+  const [detailsOpen, setDetailsOpen] = useState(params.current === '1');
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<NewAddress>({
     tag: 'Home', custom: '', l1: '', apt: '', city: 'بلبيس، الشرقية', zip: '', note: '', door: true, phone: '', def: true,
@@ -57,10 +63,20 @@ export default function AddressMapScreen() {
         setCurrent({ latitude: p.coords.latitude, longitude: p.coords.longitude });
         setPoint({ latitude: p.coords.latitude, longitude: p.coords.longitude });
         camera.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 16, duration: 700 });
+        if (params.current === '1') {
+          try {
+            const rows = await Location.reverseGeocodeAsync({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+            const place = rows[0];
+            const street = [place?.streetNumber, place?.street, place?.name].filter(Boolean).join(' ') || 'الموقع الحالي';
+            setAddressText([street, place?.district, place?.city, place?.region].filter(Boolean).join('، '));
+            setForm((f) => ({ ...f, l1: street, city: [place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'بلبيس، الشرقية', latitude: p.coords.latitude, longitude: p.coords.longitude }));
+          } catch { setForm((f) => ({ ...f, latitude: p.coords.latitude, longitude: p.coords.longitude })); }
+          setDetailsOpen(true);
+        }
       } catch { /* Map selection remains available without GPS. */ }
     })();
     return () => { active = false; };
-  }, []);
+  }, [params.current]);
 
   const refreshPoint = async (latitude: number, longitude: number, nextZoom = zoom) => {
     setPoint({ latitude, longitude });
@@ -73,7 +89,7 @@ export default function AddressMapScreen() {
       setAddressText([p?.streetNumber, p?.street, city].filter(Boolean).join('، ') || 'الموقع المحدد');
       const bilbeis = /بلبيس/.test([p?.city, p?.district, p?.subregion, p?.region].filter(Boolean).join(' '));
       setOutside(!bilbeis);
-    } catch { setAddressText('الموقع المحدد'); setOutside(false); }
+    } catch { setAddressText('تعذر قراءة العنوان — حرّك الدبوس إلى شارع واضح'); setOutside(true); }
   };
 
   useEffect(() => {
@@ -94,7 +110,7 @@ export default function AddressMapScreen() {
   }, [query]);
 
   useEffect(() => {
-    setFar(!!current && kmBetween(current.latitude, current.longitude, point.latitude, point.longitude) > 10);
+    setFar(!!current && kmBetween(current.latitude, current.longitude, point.latitude, point.longitude) > 5);
     if (reverseTimer.current) clearTimeout(reverseTimer.current);
     reverseTimer.current = setTimeout(async () => {
       try {
@@ -109,14 +125,14 @@ export default function AddressMapScreen() {
     return () => { if (reverseTimer.current) clearTimeout(reverseTimer.current); };
   }, [current, point.latitude, point.longitude]);
 
-  const warning = zoom < 11
-    ? 'يرجى تكبير الخريطة أكثر لتحديد موقع التوصيل بدقة أكبر'
+  const warning = zoom < 13
+    ? 'قرّب الخريطة أكثر حتى يظهر الشارع ويمكن تحديد نقطة التسليم بدقة'
     : outside
-      ? 'خارج منطقة التوصيل، قم بتعديل الموقع'
+      ? 'تعذر التحقق من العنوان أو أن الموقع خارج نطاق التوصيل في بلبيس'
       : far
-        ? 'الموقع المحدد بعيد عن موقعك الحالي. تأكد من العنوان'
+        ? 'الموقع يبعد أكثر من 5 كم عن موقعك الحالي. اختر نقطة أقرب أو تأكد من العنوان'
         : null;
-  const canConfirm = zoom >= 11 && !outside && !far;
+  const canConfirm = zoom >= 13 && !outside && !far;
   const update = (p: Partial<NewAddress>) => setForm((f) => ({ ...f, ...p }));
   const chooseHit = (hit: SearchHit) => {
     Keyboard.dismiss();
@@ -171,10 +187,13 @@ export default function AddressMapScreen() {
           mapStyle="https://tiles.openfreemap.org/styles/bright"
           attribution logo compass
           compassPosition={{ top: 16, left: 14 }}
+          onRegionIsChanging={() => { pinLift.set(withSpring(-15, { damping: 15, stiffness: 190 })); }}
           onRegionDidChange={(e) => {
             const center = e.nativeEvent.center;
             if (Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1])) {
               setPoint({ latitude: center[1], longitude: center[0] });
+              pinLift.set(withSpring(0, { damping: 10, stiffness: 220 }));
+              pinBounce.set(withSequence(withTiming(-5, { duration: 90 }), withTiming(0, { duration: 130 }), withTiming(-3, { duration: 80 }), withSpring(0)));
               if (typeof e.nativeEvent.zoom === 'number') setZoom(e.nativeEvent.zoom);
             }
           }}
@@ -182,11 +201,11 @@ export default function AddressMapScreen() {
         >
           <MapCamera ref={camera} initialViewState={{ center: [point.longitude, point.latitude], zoom: 14, pitch: 0, bearing: 0 }} />
         </MapLibre>
-        <View pointerEvents="none" style={styles.pinWrap}>
+        <Animated.View pointerEvents="none" style={[styles.pinWrap, pinMotion]}>
           {warning ? <View style={styles.warning}><Txt s={14} w={600} color="#FFFFFF" align="center">{warning}</Txt></View> : null}
           <View style={styles.pin}><View style={styles.pinDot} /></View>
           <View style={styles.pinShadow} />
-        </View>
+        </Animated.View>
         <PressableScale onPress={() => { void locateMe(); }} style={[styles.locate, { backgroundColor: '#FFFFFF' }]}>
           <Icon name="my_location" size={22} color="#202020" />
         </PressableScale>
@@ -199,7 +218,7 @@ export default function AddressMapScreen() {
             <Txt s={14} color={c.text2} align="right">{addressText}</Txt>
           </View>
         </View>
-        <PressableScale disabled={!canConfirm} onPress={() => { void confirmPoint(); }} style={[styles.confirm, { backgroundColor: canConfirm ? '#FF5A00' : '#F0F0F0' }]}>
+        <PressableScale disabled={!canConfirm} onPress={() => { void confirmPoint(); }} style={[styles.confirm, { backgroundColor: canConfirm ? c.accent : '#F0F0F0' }]}>
           <Txt s={17} w={700} color={canConfirm ? '#FFFFFF' : '#A6A6A6'}>تأكيد العنوان</Txt>
         </PressableScale>
       </View>
@@ -247,7 +266,7 @@ export default function AddressMapScreen() {
               <Txt s={15} w={700}>المنطقة</Txt>
               <Txt s={14} color={c.text2}>{form.city}</Txt>
             </View>
-            <Txt s={14} color="#FF5A00">تعديل</Txt>
+            <Txt s={14} color={c.accent}>تعديل</Txt>
           </View>
           <View style={styles.tags}>
             {(['Home', 'Work', 'Other'] as const).map((tag) => <PressableScale key={tag} onPress={() => update({ tag })} style={[styles.tag, { backgroundColor: form.tag === tag ? '#202020' : c.bg, borderColor: c.line }]}><Txt s={14} w={600} color={form.tag === tag ? '#FFFFFF' : c.text1}>{tag === 'Home' ? 'منزل' : tag === 'Work' ? 'عمل' : 'أخرى'}</Txt></PressableScale>)}
@@ -261,7 +280,7 @@ export default function AddressMapScreen() {
           <FormField label="رقم الهاتف الجوال" value={form.phone} onChange={(phone) => update({ phone })} placeholder="+20 رقم الهاتف" keyboardType="phone-pad" />
           <FormField label="علامة مميزة (اختياري)" value={form.note} onChange={(note) => update({ note })} placeholder="علامة مميزة" />
           <FormField label="تسمية العنوان (اختياري)" value={form.custom} onChange={(custom) => update({ custom })} placeholder="مثلاً: منزل العائلة" />
-          <PressableScale disabled={saving} onPress={saveAddress} style={[styles.confirm, { backgroundColor: '#FF5A00' }]}><Txt s={17} w={700} color="#FFFFFF">{saving ? 'جارٍ الحفظ…' : 'حفظ العنوان'}</Txt></PressableScale>
+          <PressableScale disabled={saving} onPress={saveAddress} style={[styles.confirm, { backgroundColor: '#255942' }]}><Txt s={17} w={700} color="#FFFFFF">{saving ? 'جارٍ الحفظ…' : 'حفظ العنوان'}</Txt></PressableScale>
         </ScrollView>
       </Modal>
     </View>
@@ -279,7 +298,7 @@ const styles = StyleSheet.create({
   round: { width: 48, height: 48, borderRadius: 24, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
   mapArea: { flex: 1, overflow: 'hidden', backgroundColor: '#E8EFE8' },
   pinWrap: { position: 'absolute', left: '50%', top: '50%', marginLeft: -17, marginTop: -42, alignItems: 'center' },
-  pin: { width: 42, height: 42, borderRadius: 24, borderBottomLeftRadius: 5, backgroundColor: '#FF5A00', transform: [{ rotate: '-45deg' }], alignItems: 'center', justifyContent: 'center', elevation: 8 },
+  pin: { width: 42, height: 42, borderRadius: 24, borderBottomLeftRadius: 5, backgroundColor: '#255942', transform: [{ rotate: '-45deg' }], alignItems: 'center', justifyContent: 'center', elevation: 8 },
   pinDot: { width: 13, height: 13, borderRadius: 7, backgroundColor: '#FFFFFF', transform: [{ rotate: '45deg' }] },
   pinShadow: { width: 13, height: 6, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.25)', marginTop: 2 },
   warning: { position: 'absolute', bottom: 65, width: '85%', alignSelf: 'center', backgroundColor: '#242424', paddingHorizontal: 18, paddingVertical: 15, borderRadius: 18, elevation: 10 },
