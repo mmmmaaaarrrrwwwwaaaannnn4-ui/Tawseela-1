@@ -197,7 +197,7 @@ function RewardCard({ r }: { r: Reward }) {
 
 const styles = StyleSheet.create({
   hero: { padding: 20, borderRadius: 28, backgroundColor: fixed.ink, overflow: 'hidden', gap: 14 },
-  orb: { position: 'absolute', right: -50, top: -50, width: 190, height: 190, borderRadius: 95, backgroundColor: 'rgba(255,122,26,0.16)' },
+  orb: { position: 'absolute', right: -50, top: -50, width: 190, height: 190, borderRadius: 95, backgroundColor: 'rgba(76,91,66,0.16)' },
   between: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   tier: { height: 28, paddingHorizontal: 10, borderRadius: 14, backgroundColor: 'rgba(255,255,255,0.12)', flexDirection: 'row', alignItems: 'center', gap: 5 },
   titleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline' },
