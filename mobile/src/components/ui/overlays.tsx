@@ -151,7 +151,7 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
                 {body}
               </Glass>
             ) : (
-              <View style={[styles.sheet, fullScreen && styles.fullScreenSheet, { backgroundColor: c.bg, paddingTop: fullScreen ? insets.top + 8 : 10, borderTopLeftRadius: fullScreen ? 0 : 32, borderTopRightRadius: fullScreen ? 0 : 32 }]}>
+              <View style={[styles.sheet, fullScreen && styles.fullScreenSheet, { backgroundColor: c.bg, paddingTop: fullScreen ? insets.top + 8 : 10, borderTopLeftRadius: fullScreen ? 0 : 15, borderTopRightRadius: fullScreen ? 0 : 15, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }]}>
                 <View style={styles.head}>
                   <Grabber />
                   {header ?? (
@@ -326,7 +326,7 @@ const styles = StyleSheet.create({
   sheetShadow: { shadowColor: '#1A1A1A', shadowOpacity: 0.25, shadowRadius: 30, shadowOffset: { width: 0, height: -24 }, elevation: 24 },
   fullScreenShadow: { width: '100%', flex: 1 },
   fullScreenScroll: { flex: 1 },
-  sheet: { flexShrink: 1, borderTopLeftRadius: 32, borderTopRightRadius: 32, overflow: 'hidden', paddingTop: 10 },
+  sheet: { flexShrink: 1, borderTopLeftRadius: 15, borderTopRightRadius: 15, borderBottomLeftRadius: 0, borderBottomRightRadius: 0, overflow: 'hidden', paddingTop: 10 },
   fullScreenSheet: { flex: 1, borderTopLeftRadius: 0, borderTopRightRadius: 0 },
   head: { paddingHorizontal: 20, paddingBottom: 12 },
   titleRow: { flexDirection: 'row', alignItems: 'center', gap: 12 },
