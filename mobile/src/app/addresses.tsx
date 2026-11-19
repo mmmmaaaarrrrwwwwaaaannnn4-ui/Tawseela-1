@@ -63,13 +63,13 @@ export default function AddressesScreen() {
   return (
     <Sheet
       visible
-      onClose={() => router.back()}
+      onClose={() => (router.canDismiss() ? router.dismiss() : router.back())}
       title="اختار عنوان التوصيل"
       scroll={false}
       header={
         <View style={styles.header}>
           <Txt s={22} w={700}>اختار عنوان التوصيل</Txt>
-          <CircleButton icon="close" size={42} iconSize={21} variant="soft" label="إغلاق" onPress={() => router.back()} />
+          <CircleButton icon="close" size={42} iconSize={21} variant="soft" label="إغلاق" onPress={() => (router.canDismiss() ? router.dismiss() : router.back())} />
         </View>
       }
       footer={
@@ -81,7 +81,7 @@ export default function AddressesScreen() {
     >
       <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 18, gap: 12 }} showsVerticalScrollIndicator={false}>
         {home ? (
-          <AddressRow title="المنزل" address={home.l1 + (home.l2 ? '، ' + home.l2 : '')} icon="home" selected={selected === homeIndex} onPress={() => { useApp.getState().setCheckout({ addr: homeIndex }); router.back(); }} />
+          <AddressRow title="المنزل" address={home.l1 + (home.l2 ? '، ' + home.l2 : '')} icon="home" selected={selected === homeIndex} onPress={() => { useApp.getState().setCheckout({ addr: homeIndex }); (router.canDismiss() ? router.dismiss() : router.back()); }} />
         ) : (
           <View style={[styles.emptyHome, { borderColor: c.line }]}>
             <Icon name="home" size={23} color={c.text3} />
@@ -100,7 +100,7 @@ export default function AddressesScreen() {
           current
         />
         {otherAddresses.map(({ a, i }) => (
-          <AddressRow key={a.latitude != null && a.longitude != null ? a.latitude + ':' + a.longitude + ':' + a.l1 : a.l1 + ':' + i} title={a.tag} address={a.l1 + (a.l2 ? '، ' + a.l2 : '')} icon="location_on" selected={selected === i} onPress={() => { useApp.getState().setCheckout({ addr: i }); router.back(); }} onDelete={() => removeAddress(i)} />
+          <AddressRow key={a.latitude != null && a.longitude != null ? a.latitude + ':' + a.longitude + ':' + a.l1 : a.l1 + ':' + i} title={a.tag} address={a.l1 + (a.l2 ? '، ' + a.l2 : '')} icon="location_on" selected={selected === i} onPress={() => { useApp.getState().setCheckout({ addr: i }); (router.canDismiss() ? router.dismiss() : router.back()); }} onDelete={() => removeAddress(i)} />
         ))}
       </ScrollView>
     </Sheet>
