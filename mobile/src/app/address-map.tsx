@@ -44,8 +44,7 @@ export default function AddressMapScreen() {
   const [zoom, setZoom] = useState(14);
   const [outside, setOutside] = useState(false);
   const [addressVerified, setAddressVerified] = useState(false);
-  const [far, setFar] = useState(false);
-  const [searchOpen, setSearchOpen] = useState(false);
+   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [hits, setHits] = useState<SearchHit[]>([]);
   const [searching, setSearching] = useState(false);
@@ -78,8 +77,8 @@ export default function AddressMapScreen() {
             setAddressVerified(true);
             setOutside(!inBilbeis);
             setForm((f) => ({ ...f, l1: street, city: [place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'بلبيس، الشرقية', latitude: p.coords.latitude, longitude: p.coords.longitude }));
-            if (inBilbeis) setDetailsOpen(true);
-            else useApp.getState().showToast('الموقع خارج نطاق التوصيل', 'توصيلة متاحة حاليًا داخل بلبيس والمناطق المغطاة فقط.', 'error');
+            // Saving an address is independent from delivery coverage. Coverage is checked at checkout.
+            setDetailsOpen(true);
           } catch {
             setAddressVerified(false);
             setOutside(true);
@@ -126,8 +125,7 @@ export default function AddressMapScreen() {
   }, [query]);
 
   useEffect(() => {
-    setFar(!!current && kmBetween(current.latitude, current.longitude, point.latitude, point.longitude) > 5);
-    if (reverseTimer.current) clearTimeout(reverseTimer.current);
+     if (reverseTimer.current) clearTimeout(reverseTimer.current);
     setAddressVerified(false);
     reverseTimer.current = setTimeout(async () => {
       try {
@@ -143,16 +141,15 @@ export default function AddressMapScreen() {
     return () => { if (reverseTimer.current) clearTimeout(reverseTimer.current); };
   }, [current, point.latitude, point.longitude]);
 
-  const warning = zoom < 13
-    ? 'قرّب الخريطة أكثر حتى يظهر الشارع ويمكن تحديد نقطة التسليم بدقة'
+  const warning = zoom < 16
+    ? 'قرّب الخريطة حتى يظهر اسم الشارع وتفاصيل المنطقة لتحديد عنوان دقيق'
     : !addressVerified
-      ? 'جارٍ التحقق من العنوان ونطاق التوصيل…'
+      ? 'جارٍ التحقق من تفاصيل العنوان…'
       : outside
-        ? 'تعذر التحقق من العنوان أو أن الموقع خارج نطاق التوصيل في بلبيس'
-        : far
-          ? 'الموقع يبعد أكثر من 5 كم عن موقعك الحالي. اختر نقطة أقرب أو تأكد من العنوان'
-          : null;
-  const canConfirm = zoom >= 13 && addressVerified && !outside && !far;
+        ? 'تنبيه: العنوان خارج نطاق التوصيل الحالي في بلبيس. يمكنك حفظه، وسيظهر التنبيه عند الطلب.'
+        : null;
+  // Coverage is not a map-selection constraint. Only address precision and successful geocoding gate confirmation.
+  const canConfirm = zoom >= 16 && addressVerified;
   const sortedBrands = [...nearbyBrands].sort((a, b) => {
     if (!customerLocation) return 0;
     const da = kmBetween(customerLocation.latitude, customerLocation.longitude, a.lat!, a.lng!);
@@ -202,12 +199,15 @@ export default function AddressMapScreen() {
 
   return (
     <View style={[styles.screen, { backgroundColor: c.bg }]}>
-      <View style={[styles.top, { paddingTop: insets.top + 8 }]}>
+      <View style={[styles.top, { paddingTop: insets.top + 2 }]}>
         <PressableScale onPress={() => { setSearchOpen(true); setTimeout(() => searchRef.current?.focus(), 250); }} style={[styles.round, { borderColor: c.line }]}>
-          <Icon name="search" size={23} color={c.text1} />
+          <Icon name="search" size={19} color={c.text1} />
         </PressableScale>
         <Txt s={20} w={700}>عنوان التوصيل</Txt>
-        <CircleButton icon="close" size={42} iconSize={21} variant="soft" label="إغلاق" onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/addresses' as never); }} />
+        <PressableScale onPress={() => { void locateMe(); }} style={[styles.round, { borderColor: c.line }]} accessibilityLabel="تحديد موقعي الحالي">
+          <Icon name="my_location" size={19} color={c.text1} />
+        </PressableScale>
+        <CircleButton icon="close" size={38} iconSize={18} variant="soft" label="إغلاق" onPress={() => { if (router.canGoBack()) router.back(); else router.replace('/addresses' as never); }} />
       </View>
       <View style={styles.mapArea}>
         <MapLibre
@@ -250,10 +250,7 @@ export default function AddressMapScreen() {
           <View style={styles.pinShadow} />
         </Animated.View>
         {warning ? <View pointerEvents="none" style={styles.warning}><Icon name="info" size={18} color="#FFFFFF" /><Txt s={13} w={600} color="#FFFFFF" align="center" style={{ flex: 1 }}>{warning}</Txt></View> : null}
-        <PressableScale onPress={() => { void locateMe(); }} style={[styles.locate, { backgroundColor: '#FFFFFF' }]}>
-          <Icon name="my_location" size={22} color="#202020" />
-        </PressableScale>
-      </View>
+       </View>
       <View style={[styles.bottom, { paddingBottom: Math.max(insets.bottom, 16) + 8, backgroundColor: c.bg }]}>
         <View style={styles.addressLine}>
           <Icon name="location_on" size={24} color={c.text1} />
@@ -338,8 +335,8 @@ function FormField({ label, value, onChange, placeholder, keyboardType }: { labe
 
 const styles = StyleSheet.create({
   screen: { flex: 1 },
-  top: { minHeight: 68, paddingHorizontal: 16, paddingBottom: 8, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 10 },
-  round: { width: 48, height: 48, borderRadius: 24, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center' },
+  top: { minHeight: 54, paddingHorizontal: 16, paddingBottom: 4, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', gap: 8 },
+  round: { width: 38, height: 38, borderRadius: 19, borderWidth: 1.25, alignItems: 'center', justifyContent: 'center' },
   mapArea: { flex: 1, overflow: 'hidden', backgroundColor: '#E8EFE8' },
   pinWrap: { position: 'absolute', left: '50%', top: '50%', marginLeft: -17, marginTop: -42, alignItems: 'center' },
   pin: { width: 42, height: 42, borderRadius: 24, borderBottomLeftRadius: 5, transform: [{ rotate: '-45deg' }], alignItems: 'center', justifyContent: 'center', elevation: 8 },
@@ -349,8 +346,7 @@ const styles = StyleSheet.create({
   restaurantMarker: { alignItems: 'center', justifyContent: 'center', minWidth: 54, minHeight: 58 },
   restaurantPhoto: { width: 48, height: 48, borderRadius: 24, borderWidth: 3, backgroundColor: '#FFFFFF', overflow: 'hidden', elevation: 5 },
   distancePill: { marginTop: -7, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 8, backgroundColor: '#202020', borderWidth: 1, borderColor: '#FFFFFF' },
-  locate: { position: 'absolute', bottom: 20, left: 18, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', elevation: 4 },
-  bottom: { paddingHorizontal: 20, paddingTop: 16, gap: 16 },
+   bottom: { paddingHorizontal: 20, paddingTop: 16, gap: 16 },
   addressLine: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
   confirm: { height: 62, borderRadius: 34, alignItems: 'center', justifyContent: 'center' },
   searchPage: { flex: 1, paddingHorizontal: 20 },
