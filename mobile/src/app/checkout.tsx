@@ -307,6 +307,7 @@ function Checkout() {
   const delivery = isDelivery && isFirstOrder ? 0 : baseDelivery;
   const discount = s.promo ? t.disc : 0;
   const total = Math.max(0, t.sub - discount + delivery + (t.speedFee ?? 0) + SERVICE_FEE + tip);
+  const savings = discount + (isDelivery && isFirstOrder ? baseDelivery : 0);
 
   /* ───────── الدفع ───────── */
   const [paying, setPaying] = useState(false);
@@ -728,16 +729,17 @@ function Checkout() {
 
       {/* ───────── البار السفلي ───────── */}
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 10 }]}>
-        <View style={{ gap: 2 }}>
+        {savings > 0 ? (
+          <View style={styles.savingsBand}>
+            <View style={styles.savingsMark}><Icon name="workspace_premium" size={22} color={BRAND} /></View>
+            <Txt s={15} w={800} color={TEXT}>لقد وفّرت <Txt s={15} w={800} color={BRAND}>{egp2(savings)}</Txt></Txt>
+          </View>
+        ) : (
           <View style={styles.totalRow}>
-            <Txt s={20} w={800} style={{ color: TEXT }}>{egp(total)}</Txt>
-            <Txt s={17} w={800} style={{ color: TEXT }}>المجموع الكلي</Txt>
+            <Txt s={19} w={800} color={TEXT}>{egp(total)}</Txt>
+            <Txt s={16} w={800} color={TEXT}>المجموع الكلي</Txt>
           </View>
-          <View style={styles.pointsRow}>
-            <Txt s={13} w={500} style={{ color: MUTED }}>{`ستكسب ${Math.round(total * 1.4)} من النقاط`}</Txt>
-            <View style={styles.pointsDot}><Icon name="star" size={10} color={LIME} /></View>
-          </View>
-        </View>
+        )}
         <PressableScale onPress={() => void pay()} style={[styles.cta, paying && { opacity: 0.85 }]}>
           {paying ? <ActivityIndicator color="#FFFFFF" style={{ marginEnd: 8 }} /> : null}
           <Txt s={16} w={700} color="#FFFFFF">{payBtnLabel}</Txt>
@@ -1072,6 +1074,8 @@ const styles = StyleSheet.create({
   gem: { width: 12, height: 12, borderRadius: 3, backgroundColor: '#E8742A', transform: [{ rotate: '45deg' }] },
 
   bottomBar: { position: 'absolute', left: 0, right: 0, bottom: 0, backgroundColor: '#FFFFFF', paddingHorizontal: 16, paddingTop: 12, gap: 10, shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 10, shadowOffset: { width: 0, height: -4 }, elevation: 12 },
+  savingsBand: { minHeight: 52, marginHorizontal: -16, paddingHorizontal: 18, flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', gap: 10, backgroundColor: '#F5F0E7', borderTopLeftRadius: 20, borderTopRightRadius: 20 },
+  savingsMark: { width: 42, height: 42, borderRadius: 21, backgroundColor: '#E7EEDB', alignItems: 'center', justifyContent: 'center' },
   totalRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   pointsRow: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   pointsDot: { width: 18, height: 18, borderRadius: 9, backgroundColor: BRAND, alignItems: 'center', justifyContent: 'center' },
