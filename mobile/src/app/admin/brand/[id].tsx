@@ -1,7 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, View } from 'react-native';
-import { Map as MapLibre, Camera as MapCamera, ViewAnnotation } from '@maplibre/maplibre-react-native';
+import { Map as MapLibre, Camera as MapCamera } from '@maplibre/maplibre-react-native';
 
 import { AdminHeader, AdminInput, FieldLabel, openItemEditor, ToggleCardRow, useAdminPadding } from '@/components/admin/admin-ui';
 import { PhotoButton } from '@/components/admin/photo-button';
@@ -131,8 +131,13 @@ function EditBrand() {
             <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}
               onRegionDidChange={(event) => { const center = event.nativeEvent.center; if (Array.isArray(center) && Number.isFinite(center[0]) && Number.isFinite(center[1])) setDraft((d) => ({ ...d, lng: center[0], lat: center[1] })); }}>
               <MapCamera initialViewState={{ center: [draft.lng ?? 31.557884, draft.lat ?? 30.42292], zoom: draft.lat != null && draft.lng != null ? 16 : 11, pitch: 0, bearing: 0 }} />
-              {draft.lat != null && draft.lng != null ? <ViewAnnotation lngLat={[draft.lng, draft.lat]} anchor="bottom"><View style={{ padding: 7, borderRadius: 14, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45' }}><Photo uri={draft.img} radius={9} style={{ width: 42, height: 42 }} /></View></ViewAnnotation> : null}
             </MapLibre>
+            <View pointerEvents="none" style={{ position: 'absolute', left: '50%', top: '50%', marginLeft: -21, marginTop: -48, alignItems: 'center' }}>
+              <View style={{ width: 46, height: 46, borderRadius: 16, padding: 3, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', elevation: 6 }}>
+                <Photo uri={draft.img} radius={11} style={{ width: 36, height: 36 }} />
+              </View>
+              <View style={{ width: 3, height: 9, backgroundColor: '#315B45', marginTop: -1 }} />
+            </View>
           </View>
           <View style={{ flexDirection: 'row', gap: 8 }}><View style={{ flex: 1 }}><FieldLabel>Latitude</FieldLabel><AdminInput value={draft.lat == null ? '' : String(draft.lat)} onChangeText={(v) => setDraft((d) => ({ ...d, lat: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="30.0444" /></View><View style={{ flex: 1 }}><FieldLabel>Longitude</FieldLabel><AdminInput value={draft.lng == null ? '' : String(draft.lng)} onChangeText={(v) => setDraft((d) => ({ ...d, lng: v.trim() ? Number(v) : null }))} keyboardType="numbers-and-punctuation" placeholder="31.2357" /></View></View>
           <Txt s={12} color={c.text3}>{draft.lat != null && draft.lng != null ? `Coordinates: ${draft.lat.toFixed(6)}, ${draft.lng.toFixed(6)}` : 'لم يتم تحديد موقع بعد'}</Txt>
