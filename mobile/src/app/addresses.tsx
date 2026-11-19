@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import * as Location from 'expo-location';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
@@ -23,6 +23,7 @@ export default function AddressesScreen() {
   const [open, setOpen] = useState(false);
   const [draft, setDraft] = useState<NewAddress>(() => blankAddress());
   const [err, setErr] = useState(false);
+  const reverseGeocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const useCurrentLocation = async () => {
     try {
@@ -37,13 +38,16 @@ export default function AddressesScreen() {
     } catch { useApp.getState().showToast('Could not get location', 'Try moving the pin on the map.', 'error'); }
   };
 
-  const selectMapPoint = async (latitude: number, longitude: number) => {
+  const selectMapPoint = (latitude: number, longitude: number) => {
     setDraft((d) => ({ ...d, latitude, longitude }));
-    try {
-      const places = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const place = places[0];
-      if (place) setDraft((d) => ({ ...d, latitude, longitude, l1: [place.streetNumber, place.street].filter(Boolean).join(' ') || place.name || 'Pinned location', city: [place.district, place.city, place.region, place.country].filter(Boolean).join(', '), zip: place.postalCode || '' }));
-    } catch { /* Keep the selected coordinates; the customer can type the address. */ }
+    if (reverseGeocodeTimer.current) clearTimeout(reverseGeocodeTimer.current);
+    reverseGeocodeTimer.current = setTimeout(async () => {
+      try {
+        const places = await Location.reverseGeocodeAsync({ latitude, longitude });
+        const place = places[0];
+        if (place) setDraft((d) => ({ ...d, latitude, longitude, l1: [place.streetNumber, place.street].filter(Boolean).join(' ') || place.name || 'Pinned location', city: [place.district, place.city, place.region, place.country].filter(Boolean).join(', '), zip: place.postalCode || '' }));
+      } catch { /* Keep the selected coordinates; the customer can type the address. */ }
+    }, 650);
   };
 
   const startAddr = (prefill?: Partial<NewAddress>) => {
