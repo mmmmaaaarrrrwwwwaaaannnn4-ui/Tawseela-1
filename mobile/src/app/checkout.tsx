@@ -123,6 +123,9 @@ function Checkout() {
   const deliveryPoint = isDelivery && s.addr?.latitude != null && s.addr?.longitude != null
     ? { latitude: s.addr.latitude, longitude: s.addr.longitude }
     : null;
+  const currentAddressGapKm = deliveryPoint && s.customerLocation
+    ? distanceBetweenKm(deliveryPoint.latitude, deliveryPoint.longitude, s.customerLocation.latitude, s.customerLocation.longitude)
+    : null;
   const allRestaurantsPinned = restaurants.length > 0 && restaurants.every((item) => item.lat != null && item.lng != null);
   const routeStops = deliveryPoint && allRestaurantsPinned ? restaurants : [];
   const routeKey = routeStops.map((item) => `${item.id}:${item.lat}:${item.lng}`).join('|') + `|${deliveryPoint?.latitude ?? ''}:${deliveryPoint?.longitude ?? ''}`;
@@ -547,7 +550,11 @@ function Checkout() {
                 <PressableScale onPress={() => router.push('/addresses')}><Txt s={13} w={700} color={BRAND}>تغيير العنوان</Txt></PressableScale>
                 {routeCoordinates.length > 1 ? <Txt s={11.5} color={MUTED}>{roadDistanceKm != null ? `المسافة عبر الطريق ${roadDistanceKm.toFixed(1)} كم` : 'مسار الطرق متاح'}</Txt> : <Txt s={11.5} color={MUTED}>المسار الفعلي غير متاح حاليًا</Txt>}
               </View>
-              {!deliveryPoint ? <View style={styles.addressWarning}><Txt s={12} color={TEXT}>العنوان لا يحتوي على إحداثيات دقيقة. افتح تغيير العنوان وحدد نقطة التوصيل على الخريطة.</Txt></View> : null}
+              {!deliveryPoint ? (
+                <View style={styles.addressWarning}><Txt s={12} color={TEXT}>العنوان لا يحتوي على إحداثيات دقيقة. افتح تغيير العنوان وحدد نقطة التوصيل على الخريطة.</Txt></View>
+              ) : currentAddressGapKm != null && currentAddressGapKm > 1 ? (
+                <View style={styles.addressWarning}><Txt s={12} color={TEXT}>يبدو أنك بعيد عن موقعك الحالي. هل هذا عنوانك الصحيح؟</Txt></View>
+              ) : null}
             </View>
           </View>
         ) : (
