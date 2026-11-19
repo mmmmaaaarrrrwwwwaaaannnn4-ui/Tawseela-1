@@ -49,14 +49,14 @@ const DOTS: [number, number, number][] = [
   [70, 410, 4],
 ];
 
-/** Three orange "speed lines" used next to the logo and plates. */
+/** Three olive "speed lines" used next to the logo and plates. */
 function SpeedLines({ style }: { style?: object }) {
   return (
     <View style={[{ alignItems: 'flex-end', gap: 7 }, style]} pointerEvents="none">
       {[44, 28, 36].map((w, i) => (
         <LinearGradient
           key={i}
-          colors={['rgba(255,122,26,0)', '#FF8A2A']}
+          colors={['rgba(76,91,66,0)', '#4C5B42']}
           start={{ x: 0, y: 0.5 }}
           end={{ x: 1, y: 0.5 }}
           style={{ width: w, height: 3, borderRadius: 2 }}
@@ -311,7 +311,7 @@ export default function SplashScreen() {
                 {user ? `Signed in as ${user.name.split(' ')[0]} ·` : 'Already have an account?'}
               </Txt>
               <PressableScale onPress={() => start('login')} scaleTo={0.96} style={{ height: 40, paddingHorizontal: 4, justifyContent: 'center' }}>
-                <Txt s={13.5} w={600} color="#C2540A">
+                <Txt s={13.5} w={600} color="#4C5B42">
                   {user ? 'Continue' : 'Sign in'}
                 </Txt>
               </PressableScale>
@@ -370,7 +370,7 @@ function SlideTitle({ l0, l1, pos, moved }: { l0: string; l1: string; pos: numbe
               </Txt>
             }
           >
-            <LinearGradient colors={['#FF8A2A', '#E85F00']}>
+            <LinearGradient colors={accentGradient}>
               <Txt s={30} w={700} lh={1.2} ls={-0.02} align="center" style={{ opacity: 0 }}>
                 {l1}
               </Txt>
@@ -403,7 +403,7 @@ function Seg({ on, onPress }: { on: boolean; onPress: () => void }) {
   useEffect(() => {
     v.set(withTiming(on ? 1 : 0, { duration: 420, easing: EASINGS.expo }));
   }, [on, v]);
-  const st = useAnimatedStyle(() => ({ width: 7 + 15 * v.value, backgroundColor: v.value > 0.5 ? '#FF7A1A' : 'rgba(26,26,26,0.18)' }));
+  const st = useAnimatedStyle(() => ({ width: 7 + 15 * v.value, backgroundColor: v.value > 0.5 ? '#4C5B42' : 'rgba(26,26,26,0.18)' }));
   return (
     <PressableScale onPress={onPress} scaleTo={1} hitSlop={8} accessibilityLabel="Slide">
       <Animated.View style={[{ height: 7, borderRadius: 4 }, st]} />
@@ -415,7 +415,7 @@ const styles = StyleSheet.create({
   root: { flex: 1, backgroundColor: fixed.splashBg, overflow: 'hidden' },
   plateShadow: {
     backgroundColor: '#FFFFFF',
-    shadowColor: '#5A3214',
+    shadowColor: '#0D2818',
     shadowOpacity: 0.2,
     shadowRadius: 22,
     shadowOffset: { width: 0, height: 26 },
@@ -425,12 +425,12 @@ const styles = StyleSheet.create({
   deliveryPill: {
     position: 'absolute',
     top: 196,
-    backgroundColor: '#FF7A1A',
+    backgroundColor: '#4C5B42',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 999,
     transform: [{ rotate: '-8deg' }],
-    shadowColor: '#FF6B0B',
+    shadowColor: '#0D2818',
     shadowOpacity: 0.35,
     shadowRadius: 11,
     shadowOffset: { width: 0, height: 10 },
@@ -440,10 +440,10 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 28,
-    backgroundColor: '#FF7A1A',
+    backgroundColor: '#4C5B42',
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#FF6B0B',
+    shadowColor: '#0D2818',
     shadowOpacity: 0.38,
     shadowRadius: 20,
     shadowOffset: { width: 0, height: 20 },
@@ -462,12 +462,12 @@ const styles = StyleSheet.create({
   cta: {
     height: 56,
     borderRadius: 28,
-    backgroundColor: '#FF7A1A',
+    backgroundColor: '#4C5B42',
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
-    shadowColor: '#FF6B0B',
+    shadowColor: '#0D2818',
     shadowOpacity: 0.34,
     shadowRadius: 14,
     shadowOffset: { width: 0, height: 14 },
