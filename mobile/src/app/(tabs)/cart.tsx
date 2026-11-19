@@ -63,10 +63,11 @@ export default function CartScreen() {
               <Txt s={30} w={700} ls={-0.03} align="right">سلة مشترياتك</Txt>
               <Txt s={13.5} w={500} color={c.text3} align="right">{cnt(totals.count, 'item')} · توصيلة</Txt>
             </View>
-            <PressableScale onPress={() => router.push('/saved')} scaleTo={0.92}
-              accessibilityRole="button" accessibilityLabel="المفضلة"
-              style={[styles.favoriteButton, { backgroundColor: c.surface1, borderColor: c.line }]}>
-              <Icon name="favorite" size={23} color={c.accent} fill />
+            <PressableScale onPress={() => router.push('/home')} scaleTo={0.96}
+              accessibilityRole="button" accessibilityLabel="أضف منتجات"
+              style={[styles.addProductsButton, { backgroundColor: c.surface1, borderColor: c.line }]}>
+              <Icon name="add" size={22} color={c.text1} />
+              <Txt s={15} w={600} color={c.text1}>أضف منتجات</Txt>
             </PressableScale>
           </Reveal>
 
@@ -175,6 +176,24 @@ export default function CartScreen() {
                 </View>
               )}
 
+              <View style={{ gap: 12, paddingTop: 10 }}>
+                <Txt s={23} w={800} align="right" color={c.text1}>اختيارات رائجة</Txt>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 12, paddingBottom: 4 }}>
+                  {s.menu.filter((item) => item.avail && !s.cart.some((line) => line.id === item.id)).slice(0, 8).map((item) => (
+                    <View key={item.id} style={[styles.recommendCard, { backgroundColor: c.surface1, borderColor: c.line }]}>
+                      <View style={{ position: 'relative' }}>
+                        <DishImage uri={item.img} size={150} />
+                        <PressableScale onPress={() => useApp.getState().addToCart({ id: item.id, s: 0, ex: [], q: 1 })} style={styles.recommendAdd}>
+                          <Icon name="add" size={25} color={c.accent} />
+                        </PressableScale>
+                      </View>
+                      <Txt s={14} w={700} align="right" numberOfLines={2} color={c.text1}>{item.name}</Txt>
+                      <Txt s={14} w={600} align="right" color={c.text1}>{money(item.price)}</Txt>
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+
               <Card style={{ padding: 16, gap: 10 }}>
                 <SummaryRow label="المجموع الفرعي" value={money(totals.sub)} />
                 <SummaryRow label="التوصيل" value={totals.fee ? money(totals.fee) : 'مجاني'} />
@@ -206,7 +225,9 @@ export default function CartScreen() {
 const styles = StyleSheet.create({
   cartTopBar: { paddingTop: 6, minHeight: 76, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: 12 },
   
-  favoriteButton: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  addProductsButton: { height: 48, paddingHorizontal: 18, borderRadius: 28, borderWidth: 1, alignItems: 'center', justifyContent: 'center', flexDirection: 'row', gap: 6 },
+  recommendCard: { width: 176, borderWidth: 1, borderRadius: 20, padding: 10, gap: 8 },
+  recommendAdd: { position: 'absolute', right: 4, bottom: 4, width: 42, height: 42, borderRadius: 22, backgroundColor: '#FFFFFF', borderWidth: 1, borderColor: '#E1E3E6', alignItems: 'center', justifyContent: 'center' },
   line: { flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 22, borderWidth: 1, minHeight: 104 },
   
   promo: { flexDirection: 'row', alignItems: 'center', gap: 8, padding: 6, paddingLeft: 16, borderRadius: 22, borderWidth: 1 },
