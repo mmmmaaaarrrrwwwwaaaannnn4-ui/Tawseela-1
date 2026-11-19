@@ -56,8 +56,8 @@
         "expo-image-picker",
         {
           "photosPermission": "Tawseela needs access to your photos to add profile pictures and order images.",
-          "cameraPermission": false,
-          "microphonePermission": false
+          "cameraPermission": "تحتاج توصيلة إلى الكاميرا لإرفاق صورة بتعليمات المندوب.",
+          "microphonePermission": "تحتاج توصيلة إلى الميكروفون لتسجيل تعليمات صوتية للمندوب."
         }
       ],
       [
