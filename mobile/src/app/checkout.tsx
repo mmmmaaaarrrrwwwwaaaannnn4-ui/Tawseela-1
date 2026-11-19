@@ -206,6 +206,7 @@ function Checkout() {
   const rushDelivery = s.speed === 1;
   const [noteImages, setNoteImages] = useState<string[]>([]);
   const [noteSheetOpen, setNoteSheetOpen] = useState(false);
+  const [feeInfoOpen, setFeeInfoOpen] = useState(false);
   const [noteDraft, setNoteDraft] = useState(s.note);
   const noteDraftRef = useRef(s.note);
   const [speechActive, setSpeechActive] = useState(false);
@@ -739,7 +740,9 @@ function Checkout() {
             )
           ) : null}
           
-          <Row label="رسوم الخدمة" info value={egp2(SERVICE_FEE)} />
+          <PressableScale onPress={() => setFeeInfoOpen(true)} style={{ width: '100%' }}>
+            <Row label="رسوم الخدمة" info value={egp2(SERVICE_FEE)} />
+          </PressableScale>
           {tip > 0 ? <Row label="إكرامية المندوب" value={egp2(tip)} /> : null}
           <Row label="المبلغ الإجمالي" value={egp2(total)} bold />
         </View>
@@ -763,6 +766,38 @@ function Checkout() {
           <Txt s={16} w={700} color="#FFFFFF">{payBtnLabel}</Txt>
         </PressableScale>
       </View>
+
+      <Modal visible={feeInfoOpen} transparent animationType="slide" onRequestClose={() => setFeeInfoOpen(false)}>
+        <PressableScale onPress={() => setFeeInfoOpen(false)} style={styles.sheetBackdrop} />
+        <View style={[styles.sheet, { paddingBottom: insets.bottom + 18, gap: 18 }]}>
+          <View style={styles.sheetHandle} />
+          <View style={{ alignItems: 'flex-end', gap: 8 }}>
+            <Txt s={23} w={800} color={TEXT}>تغيير آلية عمل الرسوم</Txt>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, width: '100%' }}>
+              <Icon name="two_wheeler" size={34} color={LIME} />
+              <View style={{ flex: 1, gap: 4, alignItems: 'flex-end' }}>
+                <Txt s={16} w={700} color={TEXT}>رسوم التوصيل</Txt>
+                <Txt s={13} color={MUTED} align="right">تختلف رسوم التوصيل بناءً على موقعك. تعتمد هذه الرسوم على بُعدك عن البائع.</Txt>
+              </View>
+            </View>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, width: '100%', marginTop: 8 }}>
+              <Icon name="shopping_bag" size={34} color={LIME} />
+              <View style={{ flex: 1, gap: 4, alignItems: 'flex-end' }}>
+                <Txt s={16} w={700} color={TEXT}>رسوم الخدمة</Txt>
+                <Txt s={13} color={MUTED} align="right">رسوم الخدمة هي نسبة من إجمالي قيمة المشتريات قبل تطبيق أي خصومات، وبحد أقصى 14.9 ج.م وحد أدنى 4.9 ج.م. تساعدنا هذه الرسوم على الاستمرار في تقديم أفضل تجربة على التطبيق.</Txt>
+              </View>
+            </View>
+          </View>
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <PressableScale onPress={() => setFeeInfoOpen(false)} style={[styles.sheetBtn, { backgroundColor: LIME, borderColor: LIME }]}>
+              <Txt s={15} w={700} color="#FFFFFF">فهمت الأمر</Txt>
+            </PressableScale>
+            <PressableScale onPress={() => setFeeInfoOpen(false)} style={[styles.sheetBtn, { backgroundColor: '#FFFFFF', borderColor: BORDER }]}>
+              <Txt s={15} w={700} color={TEXT}>اطّلع على الرسوم</Txt>
+            </PressableScale>
+          </View>
+        </View>
+      </Modal>
 
       <Modal visible={scheduleSheet} transparent animationType="slide" onRequestClose={() => setScheduleSheet(false)}>
         <View style={styles.sheetBackdrop} />
