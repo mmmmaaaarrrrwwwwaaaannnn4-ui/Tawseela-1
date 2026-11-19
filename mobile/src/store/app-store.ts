@@ -671,8 +671,11 @@ export const useApp = create<AppStore>()(
         },
         removeAddress: (i) => {
           const a = get().addrs[i];
-          if (!a || get().addrs.length <= 1) return;
-          set((s) => ({ addrs: s.addrs.filter((_, k) => k !== i), addr: 0 }));
+          if (!a) return;
+          set((s) => ({
+            addrs: s.addrs.filter((_, k) => k !== i),
+            addr: s.addr === i ? 0 : s.addr > i ? s.addr - 1 : s.addr,
+          }));
           toast('Address removed', a.l1, 'delete');
         },
 
