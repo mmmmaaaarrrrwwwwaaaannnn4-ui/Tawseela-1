@@ -92,6 +92,8 @@ type Priced = {
   promo: string | null;
   usedVouchers: Voucher[];
   store: StoreSettings;
+  kitchenIds: string[];
+  brandSnapshots: { id: string; name: string; img: string; lat: number | null; lng: number | null; address: string }[];
 };
 
 /**
