@@ -1,11 +1,12 @@
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ActivityIndicator, Modal, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
+import { ActivityIndicator, Keyboard, KeyboardAvoidingView, Modal, Platform, ScrollView, StyleSheet, Switch, TextInput, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useShallow } from 'zustand/react/shallow';
 import { Map as MapLibre, Camera as MapCamera, GeoJSONSource, Layer, ViewAnnotation } from '@maplibre/maplibre-react-native';
 import { WebView } from 'react-native-webview';
 import * as ImagePicker from 'expo-image-picker';
+import { ExpoSpeechRecognitionModule } from 'expo-speech-recognition';
 import { Image } from 'expo-image';
 import { Camera, ImagePlus, Mic, X } from 'lucide-react-native';
 
@@ -176,8 +177,103 @@ function Checkout() {
   const [scheduleOffsetMinutes, setScheduleOffsetMinutes] = useState(0);
   const scheduleWheelRef = useRef<ScrollView | null>(null);
   const rushDelivery = s.speed === 1;
-  const [noteExpanded, setNoteExpanded] = useState(false);
   const [noteImages, setNoteImages] = useState<string[]>([]);
+  const [noteSheetOpen, setNoteSheetOpen] = useState(false);
+  const [noteDraft, setNoteDraft] = useState(s.note);
+  const noteDraftRef = useRef(s.note);
+  const [speechActive, setSpeechActive] = useState(false);
+  const [speechProcessing, setSpeechProcessing] = useState(false);
+  const speechBaseRef = useRef('');
+  const speechFinalRef = useRef('');
+  const pendingNoteSaveRef = useRef(false);
+  const updateNoteDraft = (value: string) => { noteDraftRef.current = value; setNoteDraft(value); };
+  const closeNoteSheet = () => {
+    if (speechActive) ExpoSpeechRecognitionModule.abort();
+    setSpeechActive(false);
+    setSpeechProcessing(false);
+    pendingNoteSaveRef.current = false;
+    Keyboard.dismiss();
+    setNoteSheetOpen(false);
+  };
+  const saveNoteDraft = () => {
+    if (speechActive) {
+      pendingNoteSaveRef.current = true;
+      setSpeechProcessing(true);
+      ExpoSpeechRecognitionModule.stop();
+      return;
+    }
+    useApp.getState().setCheckout({ note: noteDraftRef.current });
+    Keyboard.dismiss();
+    setNoteSheetOpen(false);
+  };
+  const toggleNoteSpeech = async () => {
+    if (speechActive) {
+      setSpeechProcessing(true);
+      ExpoSpeechRecognitionModule.stop();
+      return;
+    }
+    try {
+      const permission = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      if (!permission.granted) {
+        toast('إذن الميكروفون مطلوب', 'اسمح لتوصيلة باستخدام الميكروفون والتعرف على الكلام لتحويل صوتك إلى نص.', 'error');
+        return;
+      }
+      speechBaseRef.current = noteDraftRef.current.trim();
+      speechFinalRef.current = '';
+      setSpeechProcessing(false);
+      ExpoSpeechRecognitionModule.start({
+        lang: 'ar-EG',
+        interimResults: true,
+        continuous: false,
+        requiresOnDeviceRecognition: true,
+        recordingOptions: { persist: false },
+      });
+    } catch {
+      setSpeechActive(false);
+      setSpeechProcessing(false);
+      toast('التعرف الصوتي غير متاح', 'تعذر تشغيل التعرف الصوتي المحلي على هذا الجهاز. يمكنك كتابة الملاحظة يدويًا.', 'error');
+    }
+  };
+  useEffect(() => {
+    const startListener = ExpoSpeechRecognitionModule.addListener('start', () => {
+      setSpeechActive(true);
+      setSpeechProcessing(false);
+    });
+    const resultListener = ExpoSpeechRecognitionModule.addListener('result', (event) => {
+      const transcript = event.results?.[0]?.transcript?.trim() ?? '';
+      if (!transcript) return;
+      if (event.isFinal) {
+        speechFinalRef.current = [speechFinalRef.current, transcript].filter(Boolean).join(' ');
+        updateNoteDraft([speechBaseRef.current, speechFinalRef.current].filter(Boolean).join(' '));
+      } else {
+        updateNoteDraft([speechBaseRef.current, speechFinalRef.current, transcript].filter(Boolean).join(' '));
+      }
+    });
+    const endListener = ExpoSpeechRecognitionModule.addListener('end', () => {
+      setSpeechActive(false);
+      setSpeechProcessing(false);
+      if (pendingNoteSaveRef.current) {
+        pendingNoteSaveRef.current = false;
+        useApp.getState().setCheckout({ note: noteDraftRef.current });
+        Keyboard.dismiss();
+        setNoteSheetOpen(false);
+      }
+    });
+    const errorListener = ExpoSpeechRecognitionModule.addListener('error', (event) => {
+      setSpeechActive(false);
+      setSpeechProcessing(false);
+      if (event.error !== 'aborted') {
+        toast('تعذر تحويل الصوت', 'لم نتمكن من التعرف على الكلام. جرّب مرة أخرى أو اكتب الملاحظة.', 'error');
+      }
+    });
+    return () => {
+      startListener.remove();
+      resultListener.remove();
+      endListener.remove();
+      errorListener.remove();
+      ExpoSpeechRecognitionModule.abort();
+    };
+  }, []);
   const scheduledFrom = new Date(Date.now() + ((restaurant?.prepTime ?? s.prep) + (distanceKm == null ? 0 : distanceKm * 5 * (s.speed === 1 ? 0.5 : 1)) + scheduleOffsetMinutes) * 60000);
   const scheduledTo = new Date(scheduledFrom.getTime() + 10 * 60000);
   
@@ -572,34 +668,15 @@ function Checkout() {
         </View>
         <View style={styles.band} />
 
-        {/* ───────── ملاحظات إضافية (نفس تصميم الصورة) ───────── */}
+        {/* ملاحظة الطلب: ملخص فقط، والتحرير داخل Bottom Sheet */}
         <View style={styles.section}>
           <Txt s={17} w={700} style={styles.title}>ملاحظات إضافية</Txt>
-          <View style={styles.noteRow}>
-            <View style={{ flex: 1, alignItems: 'flex-end', gap: 2 }}>
-              <Txt s={14} w={700} style={{ color: TEXT }}>دوّن ملاحظة</Txt>
-              <View style={[styles.noteEditor, noteExpanded && { minHeight: 120 }]}>
-                <TextInput value={s.note} onChangeText={(v) => set({ note: v })} placeholder="هل تود أن تخبرنا أي شيء آخر؟" placeholderTextColor={MUTED} multiline onFocus={() => setNoteExpanded(true)} style={[styles.noteInput, INPUT_FONT, { minHeight: noteExpanded ? 72 : 32 }]} />
-                {noteExpanded ? (
-                  <>
-                    {noteImages.length ? <View style={styles.noteImages}>{noteImages.map((uri) => (
-                      <View key={uri} style={styles.noteImageWrap}>
-                        <Image source={{ uri }} style={styles.noteImage} contentFit="cover" />
-                        <PressableScale onPress={() => setNoteImages((items) => items.filter((item) => item !== uri))} style={styles.removeNoteImage}><X size={11} color="#111111" /></PressableScale>
-                      </View>
-                    ))}</View> : null}
-                    <View style={styles.noteTools}>
-                      <PressableScale onPress={() => { setNoteExpanded(true); toast('التسجيل الصوتي', 'التسجيل الصوتي وإرساله للمندوب يحتاجان دعم رفع صوتي من الخادم؛ لم أفعّل زرًا شكليًا لا يحفظ التسجيل.', 'info'); }} style={styles.noteTool}><Mic size={16} color={BRAND} /></PressableScale>
-                      <PressableScale onPress={() => void pickNoteImage(false)} style={styles.noteTool}><ImagePlus size={16} color={BRAND} /></PressableScale>
-                      <PressableScale onPress={() => void pickNoteImage(true)} style={styles.noteTool}><Camera size={16} color={BRAND} /></PressableScale>
-                      <View style={{ flex: 1 }} /><Icon name="check_circle" size={18} color={GREEN} />
-                    </View>
-                  </>
-                ) : null}
-              </View>
-            </View>
-            <Icon name="edit_note" size={24} color={BRAND} />
-          </View>
+          <PressableScale onPress={() => { updateNoteDraft(s.note); setNoteSheetOpen(true); }} style={styles.noteSummary}>
+            <Icon name="edit_note" size={22} color={BRAND} />
+            <Txt s={14} w={500} style={{ color: s.note.trim() ? TEXT : MUTED, flex: 1, textAlign: 'right' }} numberOfLines={2}>{s.note.trim() || 'هل تود أن تخبرنا أي شيء آخر؟'}</Txt>
+            <Icon name="chevron_left" size={18} color={MUTED} />
+          </PressableScale>
+          {noteImages.length ? <View style={styles.noteImages}>{noteImages.map((uri) => <View key={uri} style={styles.noteImageWrap}><Image source={{ uri }} style={styles.noteImage} contentFit="cover" /><PressableScale onPress={() => setNoteImages((items) => items.filter((item) => item !== uri))} style={styles.removeNoteImage}><X size={11} color="#111111" /></PressableScale></View>)}</View> : null}
         </View>
 
         {/* ───────── ملخّص الدفع (نفس تصميم الصورة) ───────── */}
@@ -738,6 +815,32 @@ function Checkout() {
               <Txt s={15} w={700} color="#FFFFFF">{sheetError ? 'اختار طريقة دفع' : 'متابعة'}</Txt>
             </PressableScale>
           </View>
+        </View>
+      </Modal>
+
+      <Modal visible={noteSheetOpen} transparent animationType="slide" statusBarTranslucent onRequestClose={closeNoteSheet}>
+        <View style={styles.noteModalRoot}>
+          <PressableScale onPress={closeNoteSheet} style={StyleSheet.absoluteFill} />
+          <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.noteModalSheet}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.noteModalHeader}>
+              <View style={{ flex: 1 }} />
+              <PressableScale onPress={closeNoteSheet} style={styles.noteClose} accessibilityRole="button" accessibilityLabel="إغلاق الملاحظة"><X size={24} color={TEXT} /></PressableScale>
+            </View>
+            <View style={styles.noteModalEditor}>
+              <TextInput value={noteDraft} onChangeText={updateNoteDraft} placeholder="هل تود أن تخبرنا أي شيء آخر؟" placeholderTextColor="#A7A7A7" multiline autoFocus returnKeyType="done" blurOnSubmit onSubmitEditing={saveNoteDraft} style={[styles.noteModalInput, INPUT_FONT]} />
+              {noteImages.length ? <View style={styles.noteImages}>{noteImages.map((uri) => <View key={uri} style={styles.noteImageWrap}><Image source={{ uri }} style={styles.noteImage} contentFit="cover" /><PressableScale onPress={() => setNoteImages((items) => items.filter((item) => item !== uri))} style={styles.removeNoteImage}><X size={11} color="#111111" /></PressableScale></View>)}</View> : null}
+              <View style={styles.noteTools}>
+                <PressableScale onPress={toggleNoteSpeech} style={[styles.noteTool, speechActive && { backgroundColor: '#FDECEC', borderColor: RED }]} accessibilityRole="button" accessibilityLabel={speechActive ? 'إيقاف الإملاء الصوتي' : 'بدء الإملاء الصوتي'}><Mic size={19} color={speechActive ? RED : BRAND} /></PressableScale>
+                <PressableScale onPress={() => void pickNoteImage(true)} style={styles.noteTool}><Camera size={19} color={BRAND} /></PressableScale>
+                <PressableScale onPress={() => void pickNoteImage(false)} style={styles.noteTool}><ImagePlus size={19} color={BRAND} /></PressableScale>
+                <View style={{ flex: 1 }} />
+                {speechProcessing ? <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}><ActivityIndicator size="small" color={BRAND} /><Txt s={12} color={MUTED}>جارٍ تحويل الصوت إلى نص</Txt></View> : null}
+                <PressableScale onPress={saveNoteDraft} style={styles.noteSave}><Icon name="check" size={22} color="#FFFFFF" /></PressableScale>
+              </View>
+            </View>
+            {speechActive ? <Txt s={12} w={600} style={{ color: RED, textAlign: 'center' }}>جارٍ الاستماع… اضغط الميكروفون لإيقاف الإملاء</Txt> : null}
+          </KeyboardAvoidingView>
         </View>
       </Modal>
 
@@ -896,8 +999,14 @@ const styles = StyleSheet.create({
   promoBox: { flexDirection: 'row', alignItems: 'center', height: 50, borderWidth: 1, borderColor: BORDER, borderRadius: 12, paddingHorizontal: 14, gap: 10 },
   promoInput: { flex: 1, textAlign: 'right', paddingVertical: 0 },
 
-  noteRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 12 },
-  noteEditor: { alignSelf: 'stretch', borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 10, backgroundColor: '#FFFFFF', gap: 6 },
+  noteSummary: { minHeight: 58, borderWidth: 1, borderColor: BORDER, borderRadius: 14, paddingHorizontal: 14, flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: '#FFFFFF' },
+  noteModalRoot: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.38)' },
+  noteModalSheet: { minHeight: '42%', maxHeight: '82%', backgroundColor: '#FFFFFF', borderTopLeftRadius: 28, borderTopRightRadius: 28, paddingHorizontal: 16, paddingTop: 10, paddingBottom: 24, gap: 14 },
+  noteModalHeader: { height: 48, flexDirection: 'row', alignItems: 'center' },
+  noteClose: { width: 48, height: 48, borderRadius: 24, borderWidth: 1, borderColor: BORDER, alignItems: 'center', justifyContent: 'center' },
+  noteModalEditor: { minHeight: 190, borderWidth: 1.5, borderColor: TEXT, borderRadius: 22, padding: 14, gap: 10 },
+  noteModalInput: { minHeight: 110, textAlign: 'right', textAlignVertical: 'top', padding: 0, color: TEXT },
+  noteSave: { width: 38, height: 38, borderRadius: 19, backgroundColor: BRAND, alignItems: 'center', justifyContent: 'center' },
   timeWheelFrame: { height: 126, overflow: 'hidden', borderRadius: 14, borderWidth: 1, borderColor: BORDER, backgroundColor: '#FFFFFF' },
   timeWheelSelection: { position: 'absolute', top: 42, left: 8, right: 8, height: 42, borderTopWidth: 1, borderBottomWidth: 1, borderColor: '#DCE4DE' },
   scheduleChoice: { flex: 1, borderWidth: 1, borderColor: BORDER, borderRadius: 12, padding: 12, alignItems: 'center', gap: 4 },
