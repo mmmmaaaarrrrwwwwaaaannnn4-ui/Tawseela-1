@@ -206,14 +206,16 @@ export default function AddressMapScreen() {
 
       <Modal visible={searchOpen} animationType="slide" onRequestClose={() => setSearchOpen(false)}>
         <View style={[styles.searchPage, { paddingTop: insets.top + 10, backgroundColor: c.bg }]}>
-          <View style={[styles.searchBar, { backgroundColor: c.surface2, borderColor: c.line }]}>
-            <Icon name="search" size={22} color={c.text3} />
-            <TextInput ref={searchRef} value={query} onChangeText={setQuery} placeholder="ابحث عن شارع أو مكان في بلبيس" placeholderTextColor={c.text3} style={[styles.searchInput, { color: c.text1 }]} textAlign="right" returnKeyType="search" />
-            {query ? <Pressable onPress={() => setQuery('')}><Icon name="close" size={20} color={c.text2} /></Pressable> : null}
+          <View style={styles.searchHeader}>
+            <View style={[styles.searchBar, { backgroundColor: c.surface2, borderColor: c.line }]}>
+              <Icon name="search" size={22} color={c.text3} />
+              <TextInput ref={searchRef} value={query} onChangeText={setQuery} placeholder="ابحث عن شارع أو مكان في بلبيس" placeholderTextColor={c.text3} style={[styles.searchInput, { color: c.text1 }]} textAlign="right" returnKeyType="search" />
+              {query ? <Pressable onPress={() => setQuery('')}><Icon name="close" size={20} color={c.text2} /></Pressable> : null}
+            </View>
+            <CircleButton icon="close" size={42} iconSize={20} variant="soft" label="إغلاق البحث" onPress={() => setSearchOpen(false)} />
           </View>
-          <CircleButton icon="close" size={42} iconSize={20} variant="soft" label="إغلاق البحث" onPress={() => setSearchOpen(false)} />
           {searching ? <ActivityIndicator style={{ marginTop: 24 }} color={c.accent} /> : null}
-          <ScrollView keyboardShouldPersistTaps="handled">
+          <ScrollView style={styles.searchResults} keyboardShouldPersistTaps="handled">
             {hits.map((hit) => (
               <Pressable key={hit.id} onPress={() => chooseHit(hit)} style={[styles.result, { borderBottomColor: c.line }]}>
                 <Icon name="search" size={22} color={c.text1} />
@@ -285,7 +287,9 @@ const styles = StyleSheet.create({
   bottom: { paddingHorizontal: 20, paddingTop: 16, gap: 16 },
   addressLine: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
   confirm: { height: 62, borderRadius: 34, alignItems: 'center', justifyContent: 'center' },
-  searchPage: { flex: 1, paddingHorizontal: 20, flexDirection: 'row', flexWrap: 'wrap', alignContent: 'flex-start', gap: 12 },
+  searchPage: { flex: 1, paddingHorizontal: 20 },
+  searchHeader: { flexDirection: 'row-reverse', alignItems: 'center', gap: 10 },
+  searchResults: { flex: 1, width: '100%' },
   searchBar: { height: 54, flex: 1, borderWidth: 1, borderRadius: 28, flexDirection: 'row-reverse', alignItems: 'center', paddingHorizontal: 16, gap: 10 },
   searchInput: { flex: 1, fontSize: 16, paddingVertical: 8 },
   result: { minHeight: 82, borderBottomWidth: 1, flexDirection: 'row-reverse', alignItems: 'center', gap: 14, paddingVertical: 12, width: '100%' },
