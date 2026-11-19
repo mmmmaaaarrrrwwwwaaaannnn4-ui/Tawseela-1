@@ -65,7 +65,7 @@ export default function AddressMapScreen() {
         setCurrent({ latitude: p.coords.latitude, longitude: p.coords.longitude });
         useApp.setState({ customerLocation: { latitude: p.coords.latitude, longitude: p.coords.longitude } });
         setPoint({ latitude: p.coords.latitude, longitude: p.coords.longitude });
-        camera.current?.fly({ center: [p.coords.longitude, p.coords.latitude], zoom: 16, duration: 700 });
+        camera.current?.flyTo({ center: [p.coords.longitude, p.coords.latitude], zoom: 16, duration: 700 });
         if (params.current === '1') {
           try {
             const rows = await Location.reverseGeocodeAsync({ latitude: p.coords.latitude, longitude: p.coords.longitude });
