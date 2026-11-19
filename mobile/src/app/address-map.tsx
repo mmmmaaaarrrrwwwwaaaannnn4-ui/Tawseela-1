@@ -14,6 +14,7 @@ import { PressableScale } from '@/components/ui/pressable-scale';
 import { Txt } from '@/components/ui/txt';
 import { useStatusBar } from '@/hooks/use-status-bar';
 import { useApp, type NewAddress } from '@/store/app-store';
+import { useSession } from '@/store/session';
 import { useTheme } from '@/theme/theme';
 
 type SearchHit = { id: string; name: string; detail: string; latitude: number; longitude: number };
@@ -28,6 +29,7 @@ const kmBetween = (a: number, b: number, c: number, d: number) => {
 export default function AddressMapScreen() {
   useStatusBar();
   const { c } = useTheme();
+  const user = useSession((s) => s.user);
   const nearbyBrands = useApp(useShallow((s) => s.brands.filter((b) => b.on && b.lat != null && b.lng != null)));
   const customerLocation = useApp((s) => s.customerLocation);
   const params = useLocalSearchParams<{ current?: string; latitude?: string; longitude?: string; edit?: string }>();
@@ -314,7 +316,12 @@ export default function AddressMapScreen() {
             <MapLibre mapStyle="https://tiles.openfreemap.org/styles/bright" attribution logo style={StyleSheet.absoluteFill} scrollEnabled={false} zoomEnabled={false} rotateEnabled={false} pitchEnabled={false}>
               <MapCamera initialViewState={{ center: [point.longitude, point.latitude], zoom: 16, pitch: 0, bearing: 0 }} />
             </MapLibre>
-            <View pointerEvents="none" style={styles.miniPin}><Icon name="location_on" size={35} fill color="#E53935" /></View>
+            <View pointerEvents="none" style={styles.miniPin}>
+              <View style={styles.miniAvatarRing}>
+                {user?.photo ? <Image source={{ uri: user.photo }} style={styles.miniAvatar} contentFit="cover" /> : <Icon name="person" size={19} color="#FFFFFF" />}
+              </View>
+              <View style={styles.miniPinTail} />
+            </View>
           </PressableScale>
           <View style={[styles.region, { borderColor: c.line }]}>
             <View style={{ flex: 1, gap: 3 }}>
@@ -381,7 +388,10 @@ const styles = StyleSheet.create({
   formPage: { flex: 1 },
   formHeader: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 },
   miniMap: { height: 180, overflow: 'hidden', borderRadius: 4 },
-  miniPin: { position: 'absolute', left: '50%', top: '50%', marginLeft: -18, marginTop: -34 },
+  miniPin: { position: 'absolute', left: '50%', top: '50%', marginLeft: -17, marginTop: -31, alignItems: 'center' },
+  miniAvatarRing: { width: 38, height: 38, borderRadius: 19, borderWidth: 3, borderColor: '#E83E70', backgroundColor: '#E83E70', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', zIndex: 2 },
+  miniAvatar: { width: 32, height: 32, borderRadius: 16 },
+  miniPinTail: { width: 12, height: 12, backgroundColor: '#E83E70', transform: [{ rotate: '45deg' }], marginTop: -7, borderBottomRightRadius: 3 },
   region: { minHeight: 82, borderWidth: 1.5, borderRadius: 18, padding: 15, flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
   tags: { flexDirection: 'row-reverse', justifyContent: 'flex-start', gap: 8 },
   tag: { borderWidth: 1, borderRadius: 22, paddingHorizontal: 17, paddingVertical: 10 },
