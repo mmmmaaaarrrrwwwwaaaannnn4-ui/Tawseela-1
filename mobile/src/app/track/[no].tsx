@@ -42,25 +42,36 @@ function Track() {
   const order = useApp((s) => s.orders.find((o) => o.no === no) ?? selectMyOrders(s).find((o) => o.step < 3) ?? selectMyOrders(s)[0]);
   const on = useEntered(60);
   const locationSnapshot = order?.locations;
-  const restaurantPin = locationSnapshot?.restaurants?.[0];
+  const restaurantPins = locationSnapshot?.restaurants ?? [];
   const customerPin = locationSnapshot?.customer;
+  const orderedRestaurantPins = customerPin?.latitude != null && customerPin.longitude != null
+    ? restaurantPins.filter((pin) => pin.latitude != null && pin.longitude != null).slice().sort((a, b) => {
+        const distance = (pin: typeof a) => {
+          const lat = (pin.latitude! - customerPin.latitude!) * Math.PI / 180;
+          const lng = (pin.longitude! - customerPin.longitude!) * Math.PI / 180;
+          return lat * lat + lng * lng * Math.cos(customerPin.latitude! * Math.PI / 180) ** 2;
+        };
+        return distance(b) - distance(a);
+      })
+    : [];
+  const routeKey = orderedRestaurantPins.map((pin) => `${pin.id}:${pin.latitude}:${pin.longitude}`).join('|') + `|${customerPin?.latitude ?? ''}:${customerPin?.longitude ?? ''}`;
   const [routeCoordinates, setRouteCoordinates] = useState<[number, number][]>([]);
   useEffect(() => {
     let active = true;
-    const from = restaurantPin;
-    const to = customerPin;
-    if (!from || from.latitude == null || from.longitude == null || to?.latitude == null || to?.longitude == null) {
+    if (orderedRestaurantPins.length === 0 || customerPin?.latitude == null || customerPin.longitude == null) {
       setRouteCoordinates([]);
       return () => { active = false; };
     }
-    const url = `https://router.project-osrm.org/route/v1/driving/${from.longitude},${from.latitude};${to.longitude},${to.latitude}?overview=full&geometries=geojson`;
+    const stops = [...orderedRestaurantPins.map((pin) => [pin.longitude!, pin.latitude!] as [number, number]), [customerPin.longitude, customerPin.latitude] as [number, number]];
+    const coordinates = stops.map(([lng, lat]) => `${lng},${lat}`).join(';');
+    const url = `https://router.project-osrm.org/route/v1/driving/${coordinates}?overview=full&geometries=geojson&steps=false`;
     fetch(url).then((response) => response.ok ? response.json() : Promise.reject(new Error('Route unavailable')))
       .then((data: { routes?: { geometry?: { coordinates?: [number, number][] } }[] }) => {
-        const coordinates = data.routes?.[0]?.geometry?.coordinates;
-        if (active && Array.isArray(coordinates) && coordinates.length > 1) setRouteCoordinates(coordinates);
+        const route = data.routes?.[0]?.geometry?.coordinates;
+        if (active && Array.isArray(route) && route.length > 1) setRouteCoordinates(route);
       }).catch(() => { if (active) setRouteCoordinates([]); });
     return () => { active = false; };
-  }, [order?.id, restaurantPin?.latitude, restaurantPin?.longitude, customerPin?.latitude, customerPin?.longitude]);
+  }, [order?.id, routeKey]);
   const routeFeature = routeCoordinates.length > 1 ? { type: 'Feature' as const, properties: {}, geometry: { type: 'LineString' as const, coordinates: routeCoordinates } } : null;
   // live tracking: this order every few seconds while it's on its way
   useTrackOrder(order?.id, !!order && order.step < 3);
@@ -100,29 +111,33 @@ function Track() {
         </View>
 
         <View style={{ paddingTop: 18, paddingHorizontal: 20, gap: 12 }}>
-          {restaurantPin?.latitude != null && restaurantPin.longitude != null && customerPin?.latitude != null && customerPin.longitude != null ? (
+          {orderedRestaurantPins.length > 0 && customerPin?.latitude != null && customerPin.longitude != null ? (
             <Reveal i={1}>
               <Card style={{ padding: 10, gap: 8 }}>
                 <Txt s={14} w={700}>خريطة طلبك</Txt>
                 <View style={{ height: 230, overflow: 'hidden', borderRadius: 16, backgroundColor: '#EAF0E8' }}>
-                  <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}>
-                    <MapCamera initialViewState={{ center: [(restaurantPin.longitude + customerPin.longitude) / 2, (restaurantPin.latitude + customerPin.latitude) / 2], zoom: 11.5, pitch: 0, bearing: 0 }} />
-                    {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" paint={{ "line-color": "#315B45", "line-width": 5, "line-opacity": 0.9 }} layout={{ "line-cap": "round", "line-join": "round" }} /></GeoJSONSource> : null}
-                    <ViewAnnotation lngLat={[restaurantPin.longitude, restaurantPin.latitude]} anchor="bottom">
-                      <View style={{ width: 56, padding: 4, borderRadius: 12, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', alignItems: 'center' }}>
-                        {restaurantPin.image ? <Image source={{ uri: restaurantPin.image }} style={{ width: 42, height: 42, borderRadius: 9 }} contentFit="cover" /> : <Icon name="storefront" size={24} color="#315B45" />}
-                        <Txt s={9} w={700} color="#173D2A">المطعم</Txt>
-                      </View>
-                    </ViewAnnotation>
+                  <MapLibre mapStyle="https://tiles.openfreemap.org/styles/bright" attribution logo={false} compass style={StyleSheet.absoluteFill}>
+                    <MapCamera initialViewState={{ center: [([...orderedRestaurantPins.map((pin) => pin.longitude!), customerPin.longitude].reduce((sum, value) => sum + value, 0) / (orderedRestaurantPins.length + 1)), ([...orderedRestaurantPins.map((pin) => pin.latitude!), customerPin.latitude].reduce((sum, value) => sum + value, 0) / (orderedRestaurantPins.length + 1))], zoom: 11.5, pitch: 0, bearing: 0 }} />
+                    {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" paint={{ "line-color": "#315B45", "line-width": 5, "line-opacity": 0.92 }} layout={{ "line-cap": "round", "line-join": "round" }} /></GeoJSONSource> : null}
+                    {orderedRestaurantPins.map((pin) => (
+                      <ViewAnnotation key={pin.id} lngLat={[pin.longitude!, pin.latitude!]} anchor="bottom">
+                        <View style={styles.tawseelaPin}>
+                          <View style={styles.tawseelaPinPhotoFrame}><Image source={{ uri: pin.image }} style={styles.tawseelaPinPhoto} contentFit="cover" /></View>
+                          <View style={styles.tawseelaPinTail} />
+                        </View>
+                      </ViewAnnotation>
+                    ))}
                     <ViewAnnotation lngLat={[customerPin.longitude, customerPin.latitude]} anchor="bottom">
-                      <View style={{ width: 56, padding: 4, borderRadius: 12, backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#315B45', alignItems: 'center' }}>
-                        {customerPin.image ? <Image source={{ uri: customerPin.image }} style={{ width: 42, height: 42, borderRadius: 9 }} contentFit="cover" /> : <Icon name="person" size={24} color="#315B45" />}
-                        <Txt s={9} w={700} color="#173D2A">أنت</Txt>
+                      <View style={styles.tawseelaPin}>
+                        <View style={styles.tawseelaPinPhotoFrame}>
+                          {customerPin.image ? <Image source={{ uri: customerPin.image }} style={styles.tawseelaPinPhoto} contentFit="cover" /> : <View style={styles.tawseelaPinFallback}><Icon name="person" size={26} color="#D8F000" /></View>}
+                        </View>
+                        <View style={styles.tawseelaPinTail} />
                       </View>
                     </ViewAnnotation>
                   </MapLibre>
                 </View>
-                <Txt s={11.5} color={c.text3}>{routeCoordinates.length > 1 ? 'المسار المعروض على شبكة الطرق' : 'جارٍ تحميل المسار أو أن خدمة الطرق غير متاحة مؤقتًا'}</Txt>
+                <Txt s={11.5} color={c.text3}>{routeCoordinates.length > 1 ? 'مسار متصل يمر على المطاعم ثم يصل إليك' : 'جارٍ تحميل مسار الطرق أو أن خدمة التوجيه غير متاحة مؤقتًا'}</Txt>
               </Card>
             </Reveal>
           ) : null}
@@ -331,6 +346,11 @@ function StepRow({
 }
 
 const styles = StyleSheet.create({
+  tawseelaPin: { width: 78, height: 92, alignItems: 'center', justifyContent: 'flex-start' },
+  tawseelaPinPhotoFrame: { width: 76, height: 68, padding: 5, borderRadius: 22, borderWidth: 4, borderColor: '#D8F000', backgroundColor: '#003D27', overflow: 'hidden', zIndex: 2, elevation: 8 },
+  tawseelaPinPhoto: { width: '100%', height: '100%', borderRadius: 13 },
+  tawseelaPinFallback: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  tawseelaPinTail: { width: 0, height: 0, marginTop: -2, borderLeftWidth: 18, borderRightWidth: 18, borderTopWidth: 27, borderLeftColor: 'transparent', borderRightColor: 'transparent', borderTopColor: '#003D27', zIndex: 1 },
   head: { paddingHorizontal: 20, paddingBottom: 54, backgroundColor: fixed.ink, gap: 22, borderBottomLeftRadius: 34, borderBottomRightRadius: 34 },
   headRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   darkBtn: { backgroundColor: 'rgba(255,255,255,0.08)', borderColor: 'rgba(255,255,255,0.18)' },
