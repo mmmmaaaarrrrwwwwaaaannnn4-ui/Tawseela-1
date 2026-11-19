@@ -26,11 +26,28 @@ export function PaymentNetworkLogo({ brand, width, height }: NetworkLogoProps) {
   return <View style={[styles.logo,{width,height}]}><Txt s={Math.max(11,height*.5)} w={700} color="#777">CARD</Txt></View>;
 }
 
-export function WalletProviderLogo({ provider, width, height }: WalletLogoProps) {
+export function WalletProviderLogo({ provider, phone = '', width, height }: WalletLogoProps & { phone?: string }) {
   const name = provider.toLowerCase();
-  const color = name.includes('vodafone') ? '#E60000' : name.includes('orange') ? '#F58220' : name.includes('etisalat') ? '#007C52' : name.includes('we') ? '#6A2C91' : '#6A2C91';
-  const label = name.includes('vodafone') ? 'V' : name.includes('orange') ? 'Orange' : name.includes('etisalat') ? 'e&' : name.includes('we') ? 'WE' : 'IP';
-  return <View style={[styles.walletLogo,{width,height}]}><View style={[styles.walletMark,{backgroundColor:color}]}><Txt s={Math.max(10,height*.42)} w={800} color="#FFFFFF">{label}</Txt></View></View>;
+  const digits = phone.replace(/\\D/g, '');
+  const orange = name.includes('orange') || digits.startsWith('012');
+  const vodafone = name.includes('vodafone') || digits.startsWith('010');
+  const etisalat = name.includes('etisalat') || digits.startsWith('011');
+  const we = name === 'we' || name.includes(' telecom') || digits.startsWith('015');
+  const color = vodafone ? '#E60000' : orange ? '#F58220' : etisalat ? '#007C52' : we ? '#6A2C91' : '#176B87';
+  const label = vodafone ? 'V' : orange ? 'Orange' : etisalat ? 'e&' : we ? 'WE' : 'IP';
+  return (
+    <View style={[styles.walletLogo, { width, height }]}>
+      {vodafone ? (
+        <Svg width={width * .72} height={height * .82} viewBox="0 0 48 48"><Path d="M25 4c-10 0-18 8-18 18s8 18 18 18c8 0 14-5 17-12-3 2-6 3-10 3-8 0-14-6-14-14 0-5 2-9 7-13Z" fill="#E60000"/><Path d="M35 5c4 2 7 6 8 11-4-2-8-2-12-1 1-4 2-7 4-10Z" fill="#E60000"/></Svg>
+      ) : orange ? (
+        <Svg width={width * .9} height={height * .8} viewBox="0 0 90 32"><Rect x="1" y="1" width="88" height="30" rx="6" fill="#F58220"/><SvgText x="45" y="21" fill="#FFFFFF" fontSize="17" fontWeight="bold" textAnchor="middle">Orange</SvgText></Svg>
+      ) : etisalat ? (
+        <Svg width={width * .72} height={height * .82} viewBox="0 0 48 48"><Path d="M8 13c6-8 23-10 31 0-6-2-11 0-15 5-5 6-11 8-18 4 5-1 8-4 10-8-3-2-5-2-8-1Zm1 12c8 4 15 2 20-3 5-5 10-7 14-5-3 9-12 17-23 17-5 0-9-3-11-9Z" fill="#007C52"/></Svg>
+      ) : (
+        <View style={[styles.walletMark, { backgroundColor: color }]}><Txt s={Math.max(10, height * .42)} w={800} color="#FFFFFF">{label}</Txt></View>
+      )}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
