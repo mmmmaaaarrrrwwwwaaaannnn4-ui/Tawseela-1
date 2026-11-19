@@ -40,6 +40,7 @@ export default function AddressMapScreen() {
   const [addressText, setAddressText] = useState('بلبيس، الشرقية، مصر');
   const [zoom, setZoom] = useState(14);
   const [outside, setOutside] = useState(false);
+  const [addressVerified, setAddressVerified] = useState(false);
   const [far, setFar] = useState(false);
   const [searchOpen, setSearchOpen] = useState(false);
   const [query, setQuery] = useState('');
@@ -79,6 +80,7 @@ export default function AddressMapScreen() {
 
   const refreshPoint = async (latitude: number, longitude: number, nextZoom = zoom) => {
     setPoint({ latitude, longitude });
+    setAddressVerified(false);
     setZoom(nextZoom);
     camera.current?.flyTo({ center: [longitude, latitude], zoom: nextZoom, duration: 450 });
     try {
@@ -88,7 +90,8 @@ export default function AddressMapScreen() {
       setAddressText([p?.streetNumber, p?.street, city].filter(Boolean).join('، ') || 'الموقع المحدد');
       const bilbeis = /بلبيس/.test([p?.city, p?.district, p?.subregion, p?.region].filter(Boolean).join(' '));
       setOutside(!bilbeis);
-    } catch { setAddressText('تعذر قراءة العنوان — حرّك الدبوس إلى شارع واضح'); setOutside(true); }
+      setAddressVerified(true);
+    } catch { setAddressText('تعذر قراءة العنوان — حرّك الدبوس إلى شارع واضح'); setOutside(true); setAddressVerified(false); }
   };
 
   useEffect(() => {
@@ -111,15 +114,17 @@ export default function AddressMapScreen() {
   useEffect(() => {
     setFar(!!current && kmBetween(current.latitude, current.longitude, point.latitude, point.longitude) > 5);
     if (reverseTimer.current) clearTimeout(reverseTimer.current);
+    setAddressVerified(false);
     reverseTimer.current = setTimeout(async () => {
       try {
         const rows = await Location.reverseGeocodeAsync(point);
         const p = rows[0];
-        if (!p) return;
+        if (!p) { setOutside(true); setAddressVerified(false); setAddressText('تعذر العثور على عنوان لهذه النقطة'); return; }
         const city = [p.city, p.district, p.subregion, p.region].filter(Boolean).join(' ');
         setOutside(!/بلبيس/.test(city));
+        setAddressVerified(true);
         setAddressText([p.streetNumber, p.street, p.district, p.city, p.region].filter(Boolean).join('، ') || 'الموقع المحدد');
-      } catch { /* The pin remains valid while reverse geocoding is unavailable. */ }
+      } catch { setAddressVerified(false); setOutside(true); setAddressText('تعذر التحقق من العنوان. حرّك الخريطة إلى شارع واضح وحاول مرة أخرى.'); }
     }, 500);
     return () => { if (reverseTimer.current) clearTimeout(reverseTimer.current); };
   }, [current, point.latitude, point.longitude]);
@@ -131,7 +136,7 @@ export default function AddressMapScreen() {
       : far
         ? 'الموقع يبعد أكثر من 5 كم عن موقعك الحالي. اختر نقطة أقرب أو تأكد من العنوان'
         : null;
-  const canConfirm = zoom >= 13 && !outside && !far;
+  const canConfirm = zoom >= 13 && addressVerified && !outside && !far;
   const update = (p: Partial<NewAddress>) => setForm((f) => ({ ...f, ...p }));
   const chooseHit = (hit: SearchHit) => {
     Keyboard.dismiss();
