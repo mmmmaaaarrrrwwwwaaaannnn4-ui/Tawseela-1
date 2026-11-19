@@ -1,181 +1,147 @@
-import { useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
+import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { ScrollView, StyleSheet, View } from 'react-native';
 
-import { AddressSheet, blankAddress } from '@/components/account/address-sheet';
 import { Icon } from '@/components/icons/icon';
-import { AccentButton, AccentFill } from '@/components/ui/buttons';
-import { Radio } from '@/components/ui/controls';
-import { Eyebrow, FloatingBar, ScreenHeader, useChrome } from '@/components/ui/layout';
+import { CircleButton } from '@/components/ui/buttons';
+import { Sheet } from '@/components/ui/overlays';
 import { PressableScale } from '@/components/ui/pressable-scale';
-import { Reveal, RevealScope } from '@/components/ui/reveal';
 import { Txt } from '@/components/ui/txt';
 import { useStatusBar } from '@/hooks/use-status-bar';
-import { useApp, type NewAddress } from '@/store/app-store';
+import { useApp } from '@/store/app-store';
 import { useTheme } from '@/theme/theme';
 
 export default function AddressesScreen() {
   const { c } = useTheme();
-  const chrome = useChrome();
   useStatusBar();
   const addrs = useApp((s) => s.addrs);
   const selected = useApp((s) => s.addr);
-  const [open, setOpen] = useState(false);
-  const [draft, setDraft] = useState<NewAddress>(() => blankAddress());
-  const [err, setErr] = useState(false);
-  const reverseGeocodeTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [current, setCurrent] = useState<{ title: string; address: string; latitude: number; longitude: number } | null>(null);
+  const [locating, setLocating] = useState(false);
 
-  const useCurrentLocation = async () => {
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      try {
+        const permission = await Location.getForegroundPermissionsAsync();
+        if (!permission.granted) return;
+        const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        const rows = await Location.reverseGeocodeAsync({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+        const place = rows[0];
+        if (!active) return;
+        setCurrent({
+          title: 'الموقع الحالي',
+          address: [place?.streetNumber, place?.street, place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'موقعك الحالي',
+          latitude: p.coords.latitude,
+          longitude: p.coords.longitude,
+        });
+      } catch { /* Location is optional until the customer grants permission. */ }
+    })();
+    return () => { active = false; };
+  }, []);
+
+  const useCurrent = async () => {
+    setLocating(true);
     try {
       const permission = await Location.requestForegroundPermissionsAsync();
-      if (!permission.granted) { useApp.getState().showToast('Location permission needed', 'Allow location access to use your current position.', 'error'); return; }
-      const position = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
-      const latitude = position.coords.latitude;
-      const longitude = position.coords.longitude;
-      const places = await Location.reverseGeocodeAsync({ latitude, longitude });
-      const place = places[0];
-      startAddr({ latitude, longitude, l1: [place?.streetNumber, place?.street].filter(Boolean).join(' ') || place?.name || 'Pinned location', city: [place?.district, place?.city, place?.region, place?.country].filter(Boolean).join(', '), zip: place?.postalCode || '', tag: 'Other', custom: 'Current location' });
-    } catch { useApp.getState().showToast('Could not get location', 'Try moving the pin on the map.', 'error'); }
+      if (!permission.granted) {
+        useApp.getState().showToast('إذن الموقع مطلوب', 'اسمح لتوصيلة بالوصول إلى موقعك لتحديد العنوان الحالي.', 'error');
+        return;
+      }
+      const p = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.High });
+      const rows = await Location.reverseGeocodeAsync({ latitude: p.coords.latitude, longitude: p.coords.longitude });
+      const place = rows[0];
+      const address = [place?.streetNumber, place?.street, place?.district, place?.city, place?.region].filter(Boolean).join('، ') || 'موقعك الحالي';
+      setCurrent({ title: 'الموقع الحالي', address, latitude: p.coords.latitude, longitude: p.coords.longitude });
+      const existing = useApp.getState().addrs.findIndex((a) => a.latitude === p.coords.latitude && a.longitude === p.coords.longitude);
+      if (existing >= 0) useApp.getState().setCheckout({ addr: existing });
+      else {
+        useApp.getState().addAddress({ tag: 'Other', custom: 'الموقع الحالي', l1: address, apt: '', city: place?.city || 'بلبيس، الشرقية', zip: '', note: '', door: true, phone: '', def: true, latitude: p.coords.latitude, longitude: p.coords.longitude });
+      }
+    } catch {
+      useApp.getState().showToast('تعذر تحديد الموقع', 'تأكد من تفعيل خدمة الموقع وحاول مرة أخرى.', 'error');
+    } finally { setLocating(false); }
   };
 
-  const selectMapPoint = (latitude: number, longitude: number) => {
-    setDraft((d) => ({ ...d, latitude, longitude }));
-    if (reverseGeocodeTimer.current) clearTimeout(reverseGeocodeTimer.current);
-    reverseGeocodeTimer.current = setTimeout(async () => {
-      try {
-        const places = await Location.reverseGeocodeAsync({ latitude, longitude });
-        const place = places[0];
-        if (place) setDraft((d) => ({ ...d, latitude, longitude, l1: [place.streetNumber, place.street].filter(Boolean).join(' ') || place.name || 'Pinned location', city: [place.district, place.city, place.region, place.country].filter(Boolean).join(', '), zip: place.postalCode || '' }));
-      } catch { /* Keep the selected coordinates; the customer can type the address. */ }
-    }, 650);
-  };
-
-  const startAddr = (prefill?: Partial<NewAddress>) => {
-    setDraft(blankAddress(prefill));
-    setErr(false);
-    setOpen(true);
-  };
-
-  const save = () => {
-    const miss = useApp.getState().addAddress(draft);
-    if (miss) {
-      setErr(true);
-      return;
-    }
-    setErr(false);
-    setOpen(false);
-  };
+  const addNew = () => router.push('/address-map' as never);
+  const home = addrs.find((a) => a.tag.toLowerCase() === 'home' || a.tag === 'المنزل');
+  const homeIndex = home ? addrs.indexOf(home) : -1;
+  const otherAddresses = addrs.map((a, i) => ({ a, i })).filter(({ a }) => a !== home);
 
   return (
-    <RevealScope>
-      <View style={{ flex: 1, backgroundColor: c.bg }}>
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={{ paddingTop: chrome.underHeader, paddingHorizontal: 20, paddingBottom: chrome.bottomPad, gap: 12 }}
-        >
-          <PressableScale
-            scaleTo={0.98}
-            onPress={() => { void useCurrentLocation(); }}
-            style={[styles.locate, { borderColor: c.line, backgroundColor: c.surface1 }]}
-          >
-            <View style={styles.locateTile}>
-              <AccentFill radius={14} />
-              <Icon name="my_location" size={22} color={c.accentInk} />
+    <Sheet
+      visible
+      onClose={() => router.back()}
+      title="اختار عنوان التوصيل"
+      scroll={false}
+      header={
+        <View style={styles.header}>
+          <Txt s={22} w={700}>اختار عنوان التوصيل</Txt>
+          <CircleButton icon="close" size={42} iconSize={21} variant="soft" label="إغلاق" onPress={() => router.back()} />
+        </View>
+      }
+      footer={
+        <PressableScale onPress={addNew} style={styles.add}>
+          <Icon name="add" size={25} color={c.accent} />
+          <Txt s={17} w={700} color={c.accent}>إضافة عنوان جديد</Txt>
+        </PressableScale>
+      }
+    >
+      <ScrollView contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 18, gap: 12 }} showsVerticalScrollIndicator={false}>
+        {home ? (
+          <AddressRow
+            title="المنزل"
+            address={home.l1 + (home.l2 ? '، ' + home.l2 : '')}
+            icon="home"
+            selected={selected === homeIndex}
+            onPress={() => { useApp.getState().setCheckout({ addr: homeIndex }); router.back(); }}
+          />
+        ) : (
+          <View style={[styles.emptyHome, { borderColor: c.line }]}>
+            <Icon name="home" size={23} color={c.text3} />
+            <View style={{ flex: 1, gap: 3 }}>
+              <Txt s={16} w={700}>المنزل</Txt>
+              <Txt s={13} color={c.text3}>لم يتم حفظ عنوان المنزل بعد</Txt>
             </View>
-            <View style={{ flex: 1, gap: 2 }}>
-              <Txt s={14.5} w={700}>
-                Use my current location
-              </Txt>
-              <Txt s={12.5} color={c.text3}>
-                We’ll fill in the street for you
-              </Txt>
-            </View>
-            <Icon name="chevron_right" size={21} color={c.text3} />
-          </PressableScale>
-
-          <Eyebrow>Saved addresses</Eyebrow>
-
-          {addrs.map((a, i) => {
-            const on = selected === i;
-            return (
-              <Reveal key={`${a.l1}-${i}`} i={Math.min(i, 6)}>
-                <PressableScale
-                  scaleTo={0.985}
-                  onPress={() => useApp.getState().setCheckout({ addr: i })}
-                  style={[styles.card, { borderColor: on ? c.accent : c.line, backgroundColor: c.surface1 }]}
-                >
-                  <View style={styles.top}>
-                    <View style={[styles.tile, { backgroundColor: c.accentSoft }]}>
-                      <Icon name={a.icon} size={22} fill color={c.accent} />
-                    </View>
-                    <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                        <Txt s={15} w={700}>
-                          {a.tag}
-                        </Txt>
-                        {on ? (
-                          <View style={styles.def}>
-                            <AccentFill radius={6} />
-                            <Txt s={9.5} w={700} ls={0.06} upper color={c.accentInk}>
-                              Default
-                            </Txt>
-                          </View>
-                        ) : null}
-                      </View>
-                      <Txt s={13.5} w={500}>
-                        {a.l1}
-                      </Txt>
-                      <Txt s={12.5} color={c.text3}>
-                        {a.l2}
-                      </Txt>
-                    </View>
-                    <Radio on={on} size={22} />
-                  </View>
-                  <View style={[styles.bottom, { borderTopColor: c.line, backgroundColor: c.bg }]}>
-                    <View style={{ flex: 1, minWidth: 0, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <Icon name={a.door ? 'door_front' : 'front_hand'} size={16} color={c.text3} />
-                      <Txt s={12} w={500} color={c.text2} numberOfLines={1} style={{ flexShrink: 1 }}>
-                        {a.door ? 'Leave at door' : 'Hand it to me'} · {a.note || 'No delivery note'}
-                      </Txt>
-                    </View>
-                    {addrs.length > 1 ? (
-                      <PressableScale scaleTo={0.94} onPress={() => useApp.getState().removeAddress(i)} style={[styles.remove, { borderColor: c.lineStrong }]}>
-                        <Txt s={12} w={600} color={c.err}>
-                          Remove
-                        </Txt>
-                      </PressableScale>
-                    ) : null}
-                  </View>
-                </PressableScale>
-              </Reveal>
-            );
-          })}
-        </ScrollView>
-        <ScreenHeader title="Addresses" />
-        <FloatingBar>
-          <AccentButton label="Add a new address" icon="add_location_alt" iconSize={21} onPress={() => startAddr()} />
-        </FloatingBar>
-        <AddressSheet
-          visible={open}
-          value={draft}
-          onChange={(p) => setDraft((d) => ({ ...d, ...p }))}
-          showErrors={err}
-          onSave={save}
-          onClose={() => setOpen(false)}
-          onMapSelect={(latitude, longitude) => { void selectMapPoint(latitude, longitude); }}
+          </View>
+        )}
+        <AddressRow
+          title="الموقع الحالي"
+          address={locating ? 'جارٍ تحديد موقعك…' : current?.address || 'اسمح بالوصول إلى موقعك لتحديده بدقة'}
+          icon="location_on"
+          selected={false}
+          onPress={() => { void useCurrent(); }}
         />
+        {otherAddresses.map(({ a, i }) => (
+          <AddressRow key={i} title={a.tag} address={a.l1 + (a.l2 ? '، ' + a.l2 : '')} icon="location_on" selected={selected === i} onPress={() => { useApp.getState().setCheckout({ addr: i }); router.back(); }} />
+        ))}
+      </ScrollView>
+    </Sheet>
+  );
+}
+
+function AddressRow({ title, address, icon, selected, onPress }: { title: string; address: string; icon: 'home' | 'location_on'; selected: boolean; onPress: () => void }) {
+  const { c } = useTheme();
+  return (
+    <PressableScale onPress={onPress} style={[styles.row, { borderColor: selected ? c.accent : c.line, backgroundColor: selected ? c.accentSoft : c.surface1 }]}>
+      <Icon name={icon} size={25} color={selected ? c.accent : c.text1} fill={selected} />
+      <View style={{ flex: 1, gap: 4 }}>
+        <View style={styles.rowTitle}>
+          <Txt s={16} w={700}>{title}</Txt>
+          {selected ? <Txt s={11} w={700} color={c.accent}>محدد</Txt> : null}
+        </View>
+        <Txt s={13} color={c.text2} numberOfLines={2}>{address}</Txt>
       </View>
-    </RevealScope>
+      {selected ? <Icon name="check_circle" size={22} color={c.accent} fill /> : <Icon name="chevron_left" size={20} color={c.text3} />}
+    </PressableScale>
   );
 }
 
 const styles = StyleSheet.create({
-  locate: { flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14, borderRadius: 20, borderWidth: 1 },
-  locateTile: { width: 44, height: 44, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
-  card: { borderRadius: 22, borderWidth: 1.5, overflow: 'hidden' },
-  top: { flexDirection: 'row', alignItems: 'flex-start', gap: 14, padding: 14 },
-  tile: { width: 46, height: 46, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  def: { paddingHorizontal: 7, paddingVertical: 2, borderRadius: 6, overflow: 'hidden' },
-  bottom: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 10, paddingHorizontal: 14, borderTopWidth: 1 },
-  remove: { height: 30, paddingHorizontal: 10, borderRadius: 15, borderWidth: 1, alignItems: 'center', justifyContent: 'center' },
+  header: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingBottom: 18 },
+  row: { minHeight: 86, borderRadius: 17, borderWidth: 1.5, paddingHorizontal: 16, paddingVertical: 14, flexDirection: 'row-reverse', alignItems: 'center', gap: 13 },
+  rowTitle: { flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'space-between' },
+  emptyHome: { minHeight: 78, borderRadius: 17, borderWidth: 1, padding: 15, flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
+  add: { minHeight: 52, flexDirection: 'row-reverse', alignItems: 'center', justifyContent: 'center', gap: 8 },
 });
