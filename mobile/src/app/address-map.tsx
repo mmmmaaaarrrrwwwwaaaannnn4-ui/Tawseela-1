@@ -209,7 +209,7 @@ export default function AddressMapScreen() {
           <View style={styles.searchHeader}>
             <View style={[styles.searchBar, { backgroundColor: c.surface2, borderColor: c.line }]}>
               <Icon name="search" size={22} color={c.text3} />
-              <TextInput ref={searchRef} value={query} onChangeText={setQuery} placeholder="ابحث عن شارع أو مكان في بلبيس" placeholderTextColor={c.text3} style={[styles.searchInput, { color: c.text1 }]} align="right" returnKeyType="search" />
+              <TextInput ref={(instance) => { if (instance) searchRef.current = instance; }} value={query} onChangeText={setQuery} placeholder="ابحث عن شارع أو مكان في بلبيس" placeholderTextColor={c.text3} style={[styles.searchInput, { color: c.text1, textAlign: "right" }]} returnKeyType="search" />
               {query ? <Pressable onPress={() => setQuery('')}><Icon name="close" size={20} color={c.text2} /></Pressable> : null}
             </View>
             <CircleButton icon="close" size={42} iconSize={20} variant="soft" label="إغلاق البحث" onPress={() => setSearchOpen(false)} />
@@ -270,7 +270,7 @@ export default function AddressMapScreen() {
 
 function FormField({ label, value, onChange, placeholder, keyboardType }: { label: string; value: string; onChange: (v: string) => void; placeholder: string; keyboardType?: 'default' | 'phone-pad' }) {
   const { c } = useTheme();
-  return <View style={{ gap: 7 }}><Txt s={14} w={600} align="right">{label}</Txt><TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={c.text3} keyboardType={keyboardType} align="right" style={[styles.input, { color: c.text1, borderColor: c.line, backgroundColor: c.surface1 }]} /></View>;
+  return <View style={{ gap: 7 }}><Txt s={14} w={600} align="right">{label}</Txt><TextInput value={value} onChangeText={onChange} placeholder={placeholder} placeholderTextColor={c.text3} keyboardType={keyboardType} style={[styles.input, { color: c.text1, borderColor: c.line, backgroundColor: c.surface1, textAlign: "right" }]} /></View>;
 }
 
 const styles = StyleSheet.create({
@@ -282,7 +282,7 @@ const styles = StyleSheet.create({
   pin: { width: 42, height: 42, borderRadius: 24, borderBottomLeftRadius: 5, backgroundColor: '#FF5A00', transform: [{ rotate: '-45deg' }], alignItems: 'center', justifyContent: 'center', elevation: 8 },
   pinDot: { width: 13, height: 13, borderRadius: 7, backgroundColor: '#FFFFFF', transform: [{ rotate: '45deg' }] },
   pinShadow: { width: 13, height: 6, borderRadius: 8, backgroundColor: 'rgba(0,0,0,0.25)', marginTop: 2 },
-  warning: { position: 'absolute', bottom: 65, width: Math.min(300, width - 70), alignSelf: 'center', backgroundColor: '#242424', paddingHorizontal: 18, paddingVertical: 15, borderRadius: 18, elevation: 10 },
+  warning: { position: 'absolute', bottom: 65, width: '85%', alignSelf: 'center', backgroundColor: '#242424', paddingHorizontal: 18, paddingVertical: 15, borderRadius: 18, elevation: 10 },
   locate: { position: 'absolute', bottom: 20, left: 18, width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', elevation: 4 },
   bottom: { paddingHorizontal: 20, paddingTop: 16, gap: 16 },
   addressLine: { flexDirection: 'row-reverse', alignItems: 'center', gap: 12 },
