@@ -414,7 +414,7 @@ function Checkout() {
             <View style={styles.orderMap}>
               <MapLibre mapStyle="https://tiles.openfreemap.org/styles/liberty" attribution logo={false} compass style={StyleSheet.absoluteFill}>
                 <MapCamera initialViewState={{ center: mapCenter, zoom: 11.5, pitch: 0, bearing: 0 }} />
-                {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" style={{ lineColor: '#315B45', lineWidth: 5, lineOpacity: 0.9, lineCap: 'round', lineJoin: 'round' }} /></GeoJSONSource> : null}
+                {routeFeature ? <GeoJSONSource data={{ type: 'FeatureCollection', features: [routeFeature] }}><Layer type="line" paint={{ "line-color": "#315B45", "line-width": 5, "line-opacity": 0.9 }} layout={{ "line-cap": "round", "line-join": "round" }} /></GeoJSONSource> : null}
                 <ViewAnnotation lngLat={[restaurant!.lng!, restaurant!.lat!]} anchor="bottom">
                   <View style={styles.mapPinCard}><Image source={{ uri: restaurant!.img }} style={styles.mapPinImage} contentFit="cover" /><Txt s={10} w={700} style={styles.mapPinLabel} numberOfLines={1}>المطعم</Txt></View>
                 </ViewAnnotation>
