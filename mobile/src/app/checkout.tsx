@@ -589,7 +589,7 @@ function Checkout() {
               </View>
               <View style={styles.chips}>
                 <PressableScale onPress={() => { setCustomTip(true); setTip(0); }} style={[styles.chip, { minWidth: 56 }, customTip && styles.chipOn]}>
-                  <Txt s={14} w={700} style={{ color: TEXT }}>آخر</Txt>
+                  <Txt s={14} w={700} style={{ color: TEXT }}>مبلغ آخر</Txt>
                 </PressableScale>
                 {[...TIP_OPTIONS].reverse().map((v) => (
                   <PressableScale
@@ -637,7 +637,7 @@ function Checkout() {
               </View>
               <PressableScale onPress={() => setSaveDeliveryInstruction((v) => !v)} style={styles.saveInstruction}>
                 <View style={[styles.instructionCheck, saveDeliveryInstruction && styles.instructionCheckOn]}>{saveDeliveryInstruction ? <Icon name="check" size={13} color="#FFFFFF" /> : null}</View>
-                <Txt s={13} color={TEXT}>استخدم تعليماتي لهذا العنوان في المرة القادمة</Txt>
+                <Txt s={13} color={TEXT}>استخدم تعليماتي في المرة القادمة</Txt>
               </PressableScale>
             </View>
           </View>
