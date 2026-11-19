@@ -225,6 +225,9 @@ export const AddressSnapshot = z.object({
   door: z.boolean().optional(),
   /** who to call about this delivery */
   phone: z.string().max(30).optional(),
+  /** exact drop-off pin captured from the address map */
+  latitude: z.number().min(-90).max(90).optional(),
+  longitude: z.number().min(-180).max(180).optional(),
 });
 export type AddressSnapshot = z.infer<typeof AddressSnapshot>;
 
@@ -260,6 +263,24 @@ export const Kitchen = z.object({
 });
 export type Kitchen = z.infer<typeof Kitchen>;
 
+/** Immutable map snapshot captured when the order is placed. */
+export const OrderLocations = z.object({
+  restaurants: z.array(z.object({
+    id: id,
+    name: z.string(),
+    image: z.string().max(2048),
+    latitude: z.number().min(-90).max(90).nullable(),
+    longitude: z.number().min(-180).max(180).nullable(),
+    address: z.string().max(240),
+  })).default([]),
+  customer: z.object({
+    latitude: z.number().min(-90).max(90).nullable(),
+    longitude: z.number().min(-180).max(180).nullable(),
+    image: z.string().max(2048).nullable(),
+  }),
+});
+export type OrderLocations = z.infer<typeof OrderLocations>;
+
 export const Order = z.object({
   /** the same as `no` — orders are addressed by their number */
   id,
@@ -288,6 +309,8 @@ export const Order = z.object({
   /** 0 Standard · 1 Priority */
   speed: z.number().int().min(0).max(1),
   address: AddressSnapshot.nullable(),
+  /** restaurant and customer pins frozen for this order */
+  locations: OrderLocations.optional(),
   note: z.string(),
   promo: z.string().nullable(),
   /** payment label, e.g. "Apple Pay", "Visa •••• 4242", "Cash" */
