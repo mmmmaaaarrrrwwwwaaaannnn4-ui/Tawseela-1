@@ -373,14 +373,18 @@ function Checkout() {
         <View style={styles.section}>
           <Txt s={17} w={700} style={styles.title}>{isDelivery ? 'عنوان التوصيل' : 'الاستلام من'}</Txt>
           {isDelivery ? (
-            <PressableScale onPress={() => router.push('/addresses')} style={styles.addrRow}>
-              <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
-                <Txt s={15} w={700} style={{ color: TEXT }}>{s.addr.tag}</Txt>
-                <Txt s={13} w={500} style={{ color: GREEN }} numberOfLines={1}>{s.addr.l1}</Txt>
-                <Txt s={11} w={600} style={{ color: BRAND }}>التوصيل لمكان آخر</Txt>
-              </View>
-              <Icon name="location_on" size={22} color={TEXT} />
-            </PressableScale>
+            <View style={styles.addrRow}>
+              <PressableScale onPress={() => router.push('/addresses')} style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                <Icon name="location_on" size={22} color={TEXT} />
+                <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
+                  <Txt s={15} w={700} style={{ color: TEXT }}>{s.addr.tag}</Txt>
+                  <Txt s={13} w={500} style={{ color: GREEN }} numberOfLines={1}>{s.addr.l1}</Txt>
+                </View>
+              </PressableScale>
+              <PressableScale onPress={() => router.push('/addresses')}>
+                <Txt s={12} w={600} style={{ color: GREEN }}>تغيير مكان التوصيل</Txt>
+              </PressableScale>
+            </View>
           ) : (
             <View style={styles.addrRow}>
               <View style={{ flex: 1, alignItems: 'flex-end', gap: 1 }}>
