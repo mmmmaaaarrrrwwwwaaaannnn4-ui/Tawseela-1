@@ -125,7 +125,7 @@ export interface Remote {
   patchCategory: (id: string, p: { on?: boolean; img?: string }) => Promise<ApiCategory>;
   reorder: (kind: 'categories' | 'banners' | 'sections', ids: string[]) => Promise<void>;
   createBrand: (b: Omit<Brand, 'id'>) => Promise<ApiBrand>;
-  patchBrand: (id: string, p: Partial<Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img' | 'on'>>) => Promise<ApiBrand>;
+  patchBrand: (id: string, p: Partial<Omit<ApiBrand, 'id' | 'order'>>) => Promise<ApiBrand>;
   deleteBrand: (id: string) => Promise<void>;
   patchBanner: (id: string, p: { on?: boolean }) => Promise<unknown>;
   patchSection: (k: HomeSectionKey, p: { on?: boolean }) => Promise<unknown>;
