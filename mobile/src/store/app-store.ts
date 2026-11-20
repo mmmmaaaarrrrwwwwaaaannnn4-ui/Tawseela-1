@@ -65,21 +65,87 @@ export interface ToastData {
   title: string;
   sub: string;
   icon: IconName;
-  /** 0 Apple Pay / Google Pay · 1 كارت محفوظ · 2 كاش · 3 محفظة موبايل */
+  action?: { label: string; href: string };
+}
+
+export interface FlyData {
+  key: number;
+  from: { x: number; y: number };
+  to: { x: number; y: number };
+}
+
+export interface NewAddress {
+  tag: string;
+  custom: string;
+  l1: string;
+  apt: string;
+  city: string;
+  zip: string;
+  note: string;
+  door: boolean;
+  phone: string;
+  def: boolean;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface NewCard {
+  num: string;
+  exp: string;
+  cvv: string;
+  name: string;
+  nick: string;
+  def: boolean;
+}
+
+export interface ItemDraft {
+  id?: string;
+  name: string;
+  price: number;
+  cat: string;
+  brand: string;
+  tag: 'None' | 'Bestseller' | 'New' | 'Spicy';
+  avail: boolean;
+  img: string;
+}
+
+interface State {
+  onboarded: boolean;
+  pendingCheckout: boolean;
+  theme: ThemePref;
+  catalogVersion: number;
+  catalogEtag: string | null;
+  menu: Dish[];
+  cats: Category[];
+  brands: Brand[];
+  banners: Banner[];
+  secs: HomeSection[];
+  deal: Deal;
+  posts: Post[];
+  promos: Promo[];
+  storeOpen: boolean;
+  prep: number;
+  fee: number;
+  freeAt: number;
+  sound: boolean;
+  customerLocation: { latitude: number; longitude: number } | null;
+  saved: string[];
+  cart: CartLine[];
+  mode: FulfilmentMode;
+  promo: AppliedPromo | null;
+  promoDraft: string;
+  addrs: Address[];
+  addr: number;
+  speed: number;
   payM: number;
   note: string;
-  /** Locally displayed saved-card placeholders; raw card data is never stored here. */
   cards: Card[];
   defCard: string;
-
-  /* the account, from GET /v1/me */
   credit: number;
   points: number;
   redeemed: string[];
   vouchers: Voucher[];
   liked: string[];
-
-  /** the signed-in customer's orders (and, in the console, everyone's) */
   orders: Order[];
   lastNo: string | null;
   inbox: InboxItem[];
@@ -89,11 +155,8 @@ export interface ToastData {
   prefs: Prefs;
   orderNotif: boolean;
   filters: MenuFilters;
-  /** Selected menu category + brand filter (shared by Home → Menu jumps). */
   menuCat: string;
   menuBrand: string | null;
-
-  /* transient ui */
   toast: ToastData | null;
   fly: FlyData | null;
   bump: number;
