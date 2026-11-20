@@ -44,6 +44,10 @@ interface SheetProps {
   /** 'modal' — bg surface, 90% max height (Add address/card…); 'glass' — filter sheet. */
   variant?: 'modal' | 'glass';
   scroll?: boolean;
+  /**
+   * Full-screen page. With no `title` / `header` the sheet draws no chrome of its own
+   * (no grabber, no close button, no safe-area padding) — the children own the whole page.
+   */
   fullScreen?: boolean;
 }
 
@@ -82,6 +86,8 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
     };
   }, []);
   const maxHeight = fullScreen ? height - kb : Math.min(height * 0.9, height - kb - insets.top - 8);
+  // A full-screen sheet without a title/header is a blank page: its children draw their own header and safe-area padding.
+  const hasHead = header !== undefined || title !== undefined || !fullScreen;
 
   useEffect(() => {
     if (visible) {
@@ -126,31 +132,54 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
 
   return (
     <View pointerEvents="box-none" style={styles.sheetOverlay}>
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: c.scrim }, scrimStyle]} />
-        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
-          <Animated.View
-            pointerEvents="auto"
-            style={[
-              styles.sheetShadow,
-              fullScreen ? styles.fullScreenShadow : null,
-              { maxHeight, ...(fullScreen ? { height: maxHeight, width: '100%' } : {}) },
-              sheetStyle,
-            ]}
-          >
-            {variant === 'glass' ? (
-              <Glass
-                variant="strong"
-                intensity={60}
-                style={[styles.sheet, { borderTopColor: c.glassLine, borderTopWidth: 1, paddingBottom: Math.max(insets.bottom, 20) + 14 }]}
-              >
-                <Grabber />
-                {header}
-                {body}
-              </Glass>
-            ) : (
-              <View style={[styles.sheet, fullScreen && styles.fullScreenSheet, { backgroundColor: c.bg, paddingTop: fullScreen ? insets.top + 8 : 10, borderTopLeftRadius: fullScreen ? 0 : 15, borderTopRightRadius: fullScreen ? 0 : 15, borderBottomLeftRadius: 0, borderBottomRightRadius: 0 }]}>
+      {/* the scrim catches taps outside the sheet (they used to fall through to the screen behind it) */}
+      <Pressable
+        accessibilityRole="button"
+        accessibilityLabel="إغلاق"
+        onPress={onClose}
+        pointerEvents={visible ? 'auto' : 'none'}
+        style={StyleSheet.absoluteFill}
+      >
+        <Animated.View style={[StyleSheet.absoluteFill, { backgroundColor: c.scrim }, scrimStyle]} />
+      </Pressable>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={styles.kav} pointerEvents="box-none">
+        <Animated.View
+          pointerEvents="auto"
+          style={[
+            styles.sheetShadow,
+            fullScreen ? styles.fullScreenShadow : null,
+            { maxHeight, ...(fullScreen ? { height: maxHeight, width: '100%' } : {}) },
+            sheetStyle,
+          ]}
+        >
+          {variant === 'glass' ? (
+            <Glass
+              variant="strong"
+              intensity={60}
+              style={[styles.sheet, { borderTopColor: c.glassLine, borderTopWidth: 1, paddingBottom: Math.max(insets.bottom, 20) + 14 }]}
+            >
+              <Grabber />
+              {header}
+              {body}
+            </Glass>
+          ) : (
+            <View
+              style={[
+                styles.sheet,
+                fullScreen && styles.fullScreenSheet,
+                {
+                  backgroundColor: c.bg,
+                  paddingTop: fullScreen ? (hasHead ? insets.top + 8 : 0) : 10,
+                  borderTopLeftRadius: fullScreen ? 0 : 15,
+                  borderTopRightRadius: fullScreen ? 0 : 15,
+                  borderBottomLeftRadius: 0,
+                  borderBottomRightRadius: 0,
+                },
+              ]}
+            >
+              {hasHead ? (
                 <View style={styles.head}>
-                  <Grabber />
+                  {fullScreen ? null : <Grabber />}
                   {header ?? (
                     <View style={styles.titleRow}>
                       <View style={{ flex: 1, gap: 2 }}>
@@ -167,19 +196,20 @@ export function Sheet({ visible, onClose, title, subtitle, header, footer, child
                     </View>
                   )}
                 </View>
-                {body}
-                {footer ? (
-                  <Glass variant="strong" style={[styles.footer, { borderTopColor: c.line, paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
-                    {footer}
-                  </Glass>
-                ) : (
-                  <View style={{ height: insets.bottom }} />
-                )}
-              </View>
-            )}
-          </Animated.View>
-        </KeyboardAvoidingView>
-        <ToastHost />
+              ) : null}
+              {body}
+              {footer ? (
+                <Glass variant="strong" style={[styles.footer, { borderTopColor: c.line, paddingBottom: Math.max(insets.bottom, 16) + 8 }]}>
+                  {footer}
+                </Glass>
+              ) : fullScreen && !hasHead ? null : (
+                <View style={{ height: insets.bottom }} />
+              )}
+            </View>
+          )}
+        </Animated.View>
+      </KeyboardAvoidingView>
+      <ToastHost />
     </View>
   );
 }
@@ -298,7 +328,7 @@ export function FlyLayer() {
 /** Measures `ref` and launches the fly-to-cart bubble towards the cart tab (or detail header). */
 export function useFlyToCart() {
   const { width, height } = useWindowDimensions();
-  const { floatBottom, top } = useChrome();
+  const { top } = useChrome();
   const flyToCart = useApp((s) => s.flyToCart);
   return (ref: RefObject<HostInstance | null> | null | undefined, target: 'tab' | 'header' = 'tab') => {
     const to = target === 'header' ? { x: width - 16 - 22, y: top + 2 + 22 } : { x: 14 + 38, y: height - 7 - 36 };
