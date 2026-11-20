@@ -99,7 +99,7 @@ export interface NewCard {
 }
 
 export interface ItemDraft {
-  id?: string;
+  id: string | null;
   name: string;
   price: number;
   cat: string;
@@ -108,6 +108,50 @@ export interface ItemDraft {
   avail: boolean;
   img: string;
 }
+
+/** The server calls used by the store; registered by lib/remote.ts at app startup. */
+export interface Remote {
+  validatePromo: (code: string) => Promise<{ code: string; pct: number }>;
+  redeem: (id: string) => Promise<Me>;
+  rate: (orderId: string, input: RateOrder) => Promise<Order>;
+  reportIssue: (orderId: string | null, type: number, text: string) => Promise<IssueResult>;
+  book: (b: CreateBooking) => Promise<ApiBooking>;
+  cancelBooking: (id: string) => Promise<ApiBooking>;
+  like: (postId: string) => Promise<LikeResult>;
+  createDish: (d: DishInput) => Promise<ApiDish>;
+  patchDish: (id: string, p: DishPatch) => Promise<ApiDish>;
+  deleteDish: (id: string) => Promise<void>;
+  createCategory: (name: string) => Promise<ApiCategory>;
+  patchCategory: (id: string, p: { on?: boolean; img?: string }) => Promise<ApiCategory>;
+  reorder: (kind: 'categories' | 'banners' | 'sections', ids: string[]) => Promise<void>;
+  createBrand: (b: Omit<Brand, 'id'>) => Promise<ApiBrand>;
+  patchBrand: (id: string, p: Partial<Pick<ApiBrand, 'name' | 'tag' | 'icon' | 'img' | 'on'>>) => Promise<ApiBrand>;
+  deleteBrand: (id: string) => Promise<void>;
+  patchBanner: (id: string, p: { on?: boolean }) => Promise<unknown>;
+  patchSection: (k: HomeSectionKey, p: { on?: boolean }) => Promise<unknown>;
+  patchDeal: (p: Partial<Deal>) => Promise<Deal>;
+  patchStore: (p: Partial<StoreSettings>) => Promise<StoreSettings>;
+  createPromo: (code: string, pct: number) => Promise<ApiPromo>;
+  patchPromo: (code: string, on: boolean) => Promise<ApiPromo>;
+  createPost: (p: Omit<Post, 'id' | 'date' | 'mins' | 'likes'>) => Promise<ApiPost>;
+  patchPost: (id: string, p: Partial<Omit<Post, 'id' | 'date' | 'mins' | 'likes'>>) => Promise<ApiPost>;
+  deletePost: (id: string) => Promise<void>;
+  advanceOrder: (id: string) => Promise<Order>;
+  cancelOrder: (id: string) => Promise<Order>;
+  fireTicket: (id: string) => Promise<Order>;
+  itemDone: (id: string, index: number, done: boolean) => Promise<Order>;
+  setBookingStatus: (id: string, status: BookingStatus) => Promise<ApiBooking>;
+  replyReview: (id: string) => Promise<Review>;
+  catalogChanged: () => void;
+  errorMessage: (e: unknown) => string;
+}
+
+let remote: Remote | null = null;
+export const registerRemote = (r: Remote) => { remote = r; };
+const server = (): Remote => {
+  if (!remote) throw new Error('lib/remote.ts is not loaded');
+  return remote;
+};
 
 interface State {
   onboarded: boolean;
