@@ -65,140 +65,7 @@ export interface ToastData {
   title: string;
   sub: string;
   icon: IconName;
-  /** Optional action button: label + route to open. */
-  action?: { label: string; href: string };
-}
-
-export interface FlyData {
-  key: number;
-  from: { x: number; y: number };
-  to: { x: number; y: number };
-}
-
-export interface ItemDraft {
-  id: string | null;
-  name: string;
-  price: number;
-  cat: string;
-  brand: string;
-  tag: 'None' | 'Bestseller' | 'New' | 'Spicy';
-  avail: boolean;
-  img: string;
-}
-
-export interface NewAddress {
-  tag: 'Home' | 'Work' | 'Other';
-  custom: string;
-  l1: string;
-  apt: string;
-  city: string;
-  zip: string;
-  note: string;
-  door: boolean;
-  phone: string;
-  def: boolean;
-  latitude?: number;
-  longitude?: number;
-}
-
-export interface NewCard {
-  num: string;
-  name: string;
-  exp: string;
-  cvv: string;
-  nick: string;
-  def: boolean;
-}
-
-/** The server calls the store makes (lib/remote.ts registers them, so the store never imports the API). */
-export interface Remote {
-  validatePromo: (code: string) => Promise<{ code: string; pct: number }>;
-  redeem: (id: string) => Promise<Me>;
-  rate: (orderId: string, input: RateOrder) => Promise<Order>;
-  reportIssue: (orderId: string | null, type: number, text: string) => Promise<IssueResult>;
-  book: (b: CreateBooking) => Promise<ApiBooking>;
-  cancelBooking: (id: string) => Promise<ApiBooking>;
-  like: (postId: string) => Promise<LikeResult>;
-
-  createDish: (d: DishInput) => Promise<ApiDish>;
-  patchDish: (id: string, p: DishPatch) => Promise<ApiDish>;
-  deleteDish: (id: string) => Promise<void>;
-  createCategory: (name: string) => Promise<ApiCategory>;
-  patchCategory: (id: string, p: { on?: boolean; img?: string }) => Promise<ApiCategory>;
-  reorder: (kind: 'categories' | 'banners' | 'sections', ids: string[]) => Promise<void>;
-  createBrand: (b: Omit<ApiBrand, 'id' | 'order'>) => Promise<ApiBrand>;
-  patchBrand: (id: string, p: Partial<Omit<ApiBrand, 'id' | 'order'>>) => Promise<ApiBrand>;
-  deleteBrand: (id: string) => Promise<void>;
-  patchBanner: (id: string, p: { on?: boolean }) => Promise<unknown>;
-  patchSection: (k: HomeSectionKey, p: { on?: boolean }) => Promise<unknown>;
-  patchDeal: (p: Partial<Deal>) => Promise<Deal>;
-  patchStore: (p: Partial<StoreSettings>) => Promise<StoreSettings>;
-  createPromo: (code: string, pct: number) => Promise<ApiPromo>;
-  patchPromo: (code: string, on: boolean) => Promise<ApiPromo>;
-  createPost: (p: Omit<Post, 'id' | 'date' | 'mins' | 'likes'>) => Promise<ApiPost>;
-  patchPost: (id: string, p: Partial<Omit<Post, 'id' | 'date' | 'mins' | 'likes'>>) => Promise<ApiPost>;
-  deletePost: (id: string) => Promise<void>;
-
-  advanceOrder: (id: string) => Promise<Order>;
-  cancelOrder: (id: string) => Promise<Order>;
-  fireTicket: (id: string) => Promise<Order>;
-  itemDone: (id: string, index: number, done: boolean) => Promise<Order>;
-  setBookingStatus: (id: string, status: BookingStatus) => Promise<ApiBooking>;
-  replyReview: (id: string) => Promise<Review>;
-
-  /** a console write landed: refresh the catalog (debounced) so its version and server fields catch up */
-  catalogChanged: () => void;
-  errorMessage: (e: unknown) => string;
-}
-
-let remote: Remote | null = null;
-export const registerRemote = (r: Remote) => {
-  remote = r;
-};
-const server = (): Remote => {
-  if (!remote) throw new Error('lib/remote.ts is not loaded');
-  return remote;
-};
-
-interface State {
-  /* session (who is signed in lives in store/session.ts) */
-  onboarded: boolean;
-  /** Set when a guest tries to check out; after auth we jump to checkout. */
-  pendingCheckout: boolean;
-  theme: ThemePref;
-
-  /* catalog — from the API, cached on the device (version 0 = the copy bundled with the app) */
-  catalogVersion: number;
-  catalogEtag: string | null;
-  menu: Dish[];
-  cats: Category[];
-  brands: Brand[];
-  banners: Banner[];
-  secs: HomeSection[];
-  deal: Deal;
-  posts: Post[];
-  /** the console's promo codes (admins only) */
-  promos: Promo[];
-
-  /* store settings */
-  storeOpen: boolean;
-  prep: number;
-  fee: number;
-  freeAt: number;
-  sound: boolean;
-
-  /* customer */
-  customerLocation: { latitude: number; longitude: number } | null;
-  saved: string[];
-  cart: CartLine[];
-  mode: FulfilmentMode;
-  promo: AppliedPromo | null;
-  /** Promo field prefill (e.g. from a notification’s “Apply in cart”). */
-  promoDraft: string;
-  addrs: Address[];
-  addr: number;
-  speed: number;
-  /** 0 direct card form · 1 previously selected card option · 2 cash */
+  /** 0 Apple Pay / Google Pay · 1 كارت محفوظ · 2 كاش · 3 محفظة موبايل */
   payM: number;
   note: string;
   /** Locally displayed saved-card placeholders; raw card data is never stored here. */
@@ -632,18 +499,17 @@ export const useApp = create<AppStore>()(
 
         /* account */
         addAddress: (n) => {
-          const miss: string[] = [];
-          if (!n.l1.trim()) miss.push('a street');
-          // The form uses this optional value for floor/unit detail, not a postal code.
-          if (miss.length) {
-            toast('Almost there', 'Add ' + miss.join(' and '), 'error');
-            return miss.join(' and ');
+          if (!n.l1.trim()) {
+            toast('باقي خطوة بسيطة', 'اكتب اسم الشارع أو المبنى', 'error');
+            return 'اكتب اسم الشارع أو المبنى';
           }
-          const tag = n.tag === 'Other' ? n.custom.trim() || 'Other' : n.tag;
+          const join = (parts: string[]) => parts.map((p) => p.trim()).filter(Boolean).join('، ');
+          // اللي بيظهر في قايمة العناوين: تسمية العميل، وإلا نوع العنوان (شقة / فيلا / مكتب)
+          const tag = n.custom.trim() || n.tag;
           const a: Address = {
             tag,
             icon: addressIconFor(n.tag),
-            l1: n.l1.trim() + (n.apt.trim() ? ', ' + n.apt.trim() : ''),
+            l1: join([n.l1, n.apt]),
             l2: (n.city.trim() + ' ' + n.zip.trim()).trim(),
             note: n.note.trim(),
             door: n.door,
@@ -653,7 +519,7 @@ export const useApp = create<AppStore>()(
           };
           const existingIndex = get().addrs.findIndex((saved) => {
             if (n.latitude == null || n.longitude == null || saved.latitude == null || saved.longitude == null) return false;
-            const rad = (v: number) => v * Math.PI / 180;
+            const rad = (v: number) => (v * Math.PI) / 180;
             const dLat = rad(saved.latitude - n.latitude);
             const dLng = rad(saved.longitude - n.longitude);
             const h = Math.sin(dLat / 2) ** 2 + Math.cos(rad(n.latitude)) * Math.cos(rad(saved.latitude)) * Math.sin(dLng / 2) ** 2;
@@ -666,7 +532,7 @@ export const useApp = create<AppStore>()(
             return null;
           }
           set((s) => ({ addrs: [...s.addrs, a], addr: n.def ? s.addrs.length : s.addr }));
-          toast('Address saved', a.l1, 'location_on');
+          toast('تم حفظ العنوان', a.l1, 'location_on');
           return null;
         },
         removeAddress: (i) => {
@@ -676,7 +542,7 @@ export const useApp = create<AppStore>()(
             addrs: s.addrs.filter((_, k) => k !== i),
             addr: s.addr === i ? 0 : s.addr > i ? s.addr - 1 : s.addr,
           }));
-          toast('Address removed', a.l1, 'delete');
+          toast('تم حذف العنوان', a.l1, 'delete');
         },
 
         addCard: (c) => {
