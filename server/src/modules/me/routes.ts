@@ -83,6 +83,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     for (const card of localCards) byToken.set(String(card.cardToken), card);
     for (const card of providerCards) byToken.set(String(card.cardToken), card);
 
+    const defaultCardToken = String(snap.get('paymentMethods.defaultCardToken') || '');
     return {
       cards: [...byToken.values()].map((card: any) => ({
         id: String(card.cardToken),
@@ -91,6 +92,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
         name: String(card.nameOnCard || card.name || ''),
         expiry: card.expiry ? { month: String(card.expiry.month || ''), year: String(card.expiry.year || '') } : null,
         brand: String(card.brand || card.scheme || 'CARD'),
+        isDefault: String(card.cardToken) === defaultCardToken,
       })),
     };
   });
@@ -103,7 +105,18 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     const body: any = await response.json().catch(() => ({}));
     const card = body?.response?.paymentMethod?.card;
     if (!response.ok || !card?.cardToken || card.cardToken !== req.body.cardToken) throw new AppError(400, 'card_token_invalid', 'Kashier could not verify this saved card.');
-    await userRef(db, user.uid).set({ paymentMethods: { cards: { [req.body.cardToken]: { token: req.body.cardToken, number: maskCardNumber(card.number), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD'), savedAt: now() } } } }, { merge: true });
+    const profileRef = userRef(db, user.uid);
+    await db.runTransaction(async (tx) => {
+      const profile = await tx.get(profileRef);
+      const currentDefault = String(profile.get('paymentMethods.defaultCardToken') || '');
+      tx.set(profileRef, {
+        paymentMethods: {
+          cards: { [req.body.cardToken]: { token: req.body.cardToken, number: maskCardNumber(card.number), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD'), savedAt: now() } },
+          ...(!currentDefault ? { defaultCardToken: req.body.cardToken } : {}),
+        },
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    });
     return { saved: true, card: { id: String(card.cardToken), number: maskCardNumber(card.number), name: String(card.nameOnCard || ''), expiry: card.expiry || null, brand: String(card.brand || card.scheme || 'CARD') } };
   });
 
@@ -113,8 +126,31 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     const url = `${tokenBase()}/v3/cards/tokens/${encodeURIComponent(req.params.token)}?customerReference=${encodeURIComponent(user.uid)}&merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}`;
     const response = await fetch(url, { method: 'DELETE', headers: { 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new AppError(502, 'card_delete_failed', 'Kashier could not remove this card.');
-    await userRef(db, user.uid).set({ paymentMethods: { cards: { [req.params.token]: FieldValue.delete() } } }, { merge: true });
+    const profileRef = userRef(db, user.uid);
+    await db.runTransaction(async (tx) => {
+      const profile = await tx.get(profileRef);
+      const stored = profile.get('paymentMethods.cards');
+      const cards = stored && typeof stored === 'object' && !Array.isArray(stored) ? { ...(stored as Record<string, any>) } : {};
+      delete cards[req.params.token];
+      const currentDefault = String(profile.get('paymentMethods.defaultCardToken') || '');
+      const nextDefault = currentDefault === req.params.token ? (Object.keys(cards)[0] || '') : currentDefault;
+      tx.set(profileRef, {
+        paymentMethods: { cards, defaultCardToken: nextDefault },
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+    });
     return { deleted: true };
+  });
+
+  app.post('/me/cards/:token/default', { schema: { tags: ['payments'], summary: 'Set the default saved Kashier card', ...secured, params: z.object({ token: z.string().min(8).max(200) }) } }, async (req) => {
+    const user = requireUser(req);
+    if (!config.KASHIER_MERCHANT_ID || !config.KASHIER_PAYMENT_API_KEY) throw new AppError(503, 'payments_unavailable', 'Kashier card saving is not configured.');
+    const url = `${tokenBase()}/v3/cards/tokens/${encodeURIComponent(req.params.token)}?merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}&customerReference=${encodeURIComponent(user.uid)}`;
+    const response = await fetch(url, { headers: { 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+    const body: any = await response.json().catch(() => ({}));
+    if (!response.ok || body?.response?.paymentMethod?.card?.cardToken !== req.params.token) throw new AppError(404, 'card_not_found', 'This saved card does not belong to your account.');
+    await userRef(db, user.uid).set({ paymentMethods: { defaultCardToken: req.params.token }, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { defaultCardToken: req.params.token };
   });
 
   // Customer-owned wallet contacts are stored in users/{uid}, never in Kashier.
@@ -155,6 +191,20 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     const stored = latest.get('paymentMethods.wallets') || {};
     const wallet = Object.values(stored).find((w: any) => w?.provider === input.provider && w?.phone === input.phone) as any;
     return { saved: true, wallet: wallet ? { id: wallet.id, provider: wallet.provider, phone: wallet.phone, name: wallet.name, isDefault: wallet.isDefault === true } : null };
+  });
+
+  app.post('/me/wallets/:id/default', { schema: { tags: ['payments'], summary: 'Set the default saved wallet contact', ...secured, params: z.object({ id: z.string().uuid() }) } }, async (req) => {
+    const user = requireUser(req);
+    const ref = userRef(db, user.uid);
+    await db.runTransaction(async (tx) => {
+      const snap = await tx.get(ref);
+      const stored = snap.get('paymentMethods.wallets');
+      const wallets = stored && typeof stored === 'object' && !Array.isArray(stored) ? { ...(stored as Record<string, any>) } : {};
+      if (!wallets[req.params.id]) throw notFound('Saved wallet');
+      for (const [id, value] of Object.entries(wallets)) wallets[id] = { ...(value as Record<string, unknown>), isDefault: id === req.params.id };
+      tx.set(ref, { paymentMethods: { wallets, defaultWalletId: req.params.id }, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    });
+    return { defaultWalletId: req.params.id };
   });
 
   app.delete('/me/wallets/:id', { schema: { tags: ['payments'], summary: 'Delete one of this customer’s saved wallet contacts', ...secured, params: z.object({ id: z.string().uuid() }) } }, async (req) => {
