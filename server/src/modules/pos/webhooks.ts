@@ -3,7 +3,6 @@ import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
 
-import { COL } from '../../lib/collections';
 import { AppError, badRequest, notFound } from '../../lib/errors';
 
 const eventSchema = z.object({
