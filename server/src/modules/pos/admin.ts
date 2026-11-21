@@ -126,8 +126,19 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
     const ticketSubtotal = Number(kitchenItems.reduce((sum, item) => sum + item.unit * item.q, 0).toFixed(2));
     const jobId = `${req.params.id}__${order.id}`;
     const jobRef = jobs.doc(jobId);
-    const existing = await jobRef.get();
-    if (existing.exists && existing.get('status') === 'sent') return { jobId, status: 'sent', replay: true };
+    const claim = await db.runTransaction(async (tx) => {
+      const current = await tx.get(jobRef);
+      if (current.exists && current.get('status') === 'sent') return 'sent';
+      if (current.exists && current.get('status') === 'sending' && Number(current.get('lockUntil') ?? 0) > now()) return 'sending';
+      tx.set(jobRef, {
+        connectionId: req.params.id, orderId: order.id, status: 'sending',
+        attempts: FieldValue.increment(1), lockUntil: now() + 30_000,
+        updatedAt: FieldValue.serverTimestamp(),
+      }, { merge: true });
+      return 'claimed';
+    });
+    if (claim === 'sent') return { jobId, status: 'sent', replay: true };
+    if (claim === 'sending') return { jobId, status: 'sending', replay: true };
     const key = encryptionKey(config.POS_ENCRYPTION_KEY);
     const secret = decryptSecret(data, key);
     const eventId = randomUUID();
@@ -145,7 +156,6 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
     };
     const body = JSON.stringify(payload);
     const sig = signature(secret, timestamp, body);
-    await jobRef.set({ connectionId: req.params.id, orderId: order.id, eventId, status: 'sending', attempts: FieldValue.increment(1), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     try {
       const webhookUrl = assertPublicWebhookUrl(String(data.webhookUrl));
       const response = await fetch(webhookUrl, {
@@ -155,12 +165,12 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
         body, signal: AbortSignal.timeout(10_000),
       });
       if (!response.ok) throw new Error(`POS endpoint returned HTTP ${response.status}`);
-      await jobRef.set({ status: 'sent', responseStatus: response.status, sentAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      await jobRef.set({ status: 'sent', responseStatus: response.status, sentAt: FieldValue.serverTimestamp(), lockUntil: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
       await ref.update({ status: 'connected', lastSeenAt: FieldValue.serverTimestamp(), lastError: null, updatedAt: FieldValue.serverTimestamp() });
       return { jobId, status: 'sent', replay: false };
     } catch (error) {
       const message = error instanceof Error ? error.message.slice(0, 300) : 'POS dispatch failed';
-      await jobRef.set({ status: 'failed', lastError: message, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      await jobRef.set({ status: 'failed', lastError: message, lockUntil: FieldValue.delete(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
       await ref.update({ status: 'error', lastError: message, updatedAt: FieldValue.serverTimestamp() });
       throw new AppError(502, 'pos_dispatch_failed', 'Could not deliver this order to the POS. The dispatch can be retried safely.');
     }
