@@ -174,7 +174,7 @@ export default function AdminPosScreen() {
             <Txt s={16} w={800} color={c.text1} align="right">مفتاح الاتصال — يظهر مرة واحدة</Txt>
             <Txt s={12} color={c.text3} align="right">انسخه وضعه في نظام POS. لا تشاركه مع أي شخص، ولن يظهر مرة أخرى بعد مغادرة هذه الشاشة.</Txt>
             <Txt s={12} color={c.text1}>{oneTimeSecret}</Txt>
-            <OutlineButton label="مشاركة أو نسخ المفتاح" icon="share" height={42} onPress={() => void Share.share({ message: oneTimeSecret })} />
+            <OutlineButton label="مشاركة أو نسخ المفتاح" icon="ios_share" height={42} onPress={() => void Share.share({ message: oneTimeSecret })} />
             <OutlineButton label="إخفاء المفتاح"  height={42} onPress={() => setOneTimeSecret('')} />
           </View>
         ) : null}
