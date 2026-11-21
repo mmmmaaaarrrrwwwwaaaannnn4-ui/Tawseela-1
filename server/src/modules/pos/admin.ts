@@ -102,7 +102,16 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
     if (!orderSnap.exists) throw notFound('Order');
     const order = toOrder(orderSnap);
     if (order.stage === 'cancelled') throw conflict('order_cancelled', 'Cancelled orders cannot be sent to a POS.');
-    if (!order.locations?.restaurants?.some((r) => r.id === data.storeId)) throw conflict('pos_store_mismatch', 'This order does not belong to the selected kitchen/store.');
+    const restaurantIds = order.locations?.restaurants?.map((r) => r.id) ?? [];
+    if (!restaurantIds.includes(data.storeId)) throw conflict('pos_store_mismatch', 'This order does not belong to the selected kitchen/store.');
+    const dishSnapshots = await Promise.all(order.items.map((item) => db.collection(COL.dishes).doc(item.id).get()));
+    const kitchenItems = order.items.filter((item, index) => {
+      const itemStoreId = String(dishSnapshots[index]?.get('brand') ?? '');
+      if (itemStoreId) return itemStoreId === data.storeId;
+      return restaurantIds.length === 1 && restaurantIds[0] === data.storeId;
+    });
+    if (!kitchenItems.length) throw conflict('pos_item_mapping_missing', 'No order items could be mapped safely to this kitchen. Check the dish-to-kitchen assignments.');
+    const ticketSubtotal = Number(kitchenItems.reduce((sum, item) => sum + item.unit * item.q, 0).toFixed(2));
     const jobId = `${req.params.id}__${order.id}`;
     const jobRef = jobs.doc(jobId);
     const existing = await jobRef.get();
@@ -117,9 +126,9 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
         id: order.id, number: order.no, createdAt: order.placedAt, mode: order.mode,
         customer: { name: order.customer.name, phone: order.customer.phone },
         address: order.address ? { label: order.address.tag, line1: order.address.l1, line2: order.address.l2, note: order.address.note, latitude: order.address.latitude, longitude: order.address.longitude } : null,
-        items: order.items.map((item) => ({ sku: item.id, name: item.name, quantity: item.q, unitPrice: item.unit, options: item.meta })),
-        subtotal: order.subtotal, deliveryFee: order.fee, total: order.total, currency: config.CURRENCY || 'EGP',
-        payment: { method: order.payment.method, status: order.payment.status }, note: order.note,
+        items: kitchenItems.map((item) => ({ sku: item.id, name: item.name, quantity: item.q, unitPrice: item.unit, options: item.meta })),
+        ticketSubtotal, customerOrderTotal: order.total, currency: config.CURRENCY || 'EGP',
+        payment: { method: order.payment.method, status: order.payment.status, doNotChargeCustomer: true }, note: order.note,
       },
     };
     const body = JSON.stringify(payload);
