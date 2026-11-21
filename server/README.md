@@ -110,7 +110,7 @@ The first POS gateway release provides a secure, capability-based cloud Webhook 
 2. In Admin → Smart POS, create a Cloud Webhook connection for an existing kitchen/store. The generated shared secret is displayed once; store it in the POS endpoint's secret manager.
 3. Configure the POS receiver to accept `order.created` at the HTTPS URL you supplied. Admins can dispatch an order from the connection card; each order/connection pair is recorded as a dispatch job so retries can be audited.
 4. Configure the POS system to send signed events to `POST /v1/pos/{connectionId}/events`. Send `x-tawseela-timestamp` as Unix milliseconds and `x-tawseela-signature` as lowercase HMAC-SHA256 of `{timestamp}.{JSON.stringify(payload)}`, keyed by the shared secret. Timestamps older than five minutes are rejected.
-5. Supported inbound event types are `inventory.snapshot`, `inventory.delta`, `product.upsert`, `order.acknowledged` and `order.status`. Inventory is stored in POS-scoped collections; it does not silently overwrite Tawseela's catalog or deduct customer stock before an order is accepted.
+5. Supported inbound event types are `inventory.snapshot`, `inventory.delta`, `product.upsert`, `order.acknowledged` and `order.status`. Inventory events are currently stored in POS-scoped collections only; they do not yet reserve stock, change customer-facing availability or deduct sellable stock. Do not treat these snapshots as a live stock check until the product-mapping and reservation stages are completed.
 
 The currently exposed capabilities are deliberately limited to `orders.push`, `inventory.write` and `orders.status`. Windows local bridge transport, thermal printer delivery, automatic catalog reconciliation and provider-specific cloud connectors remain separate implementation stages and must not be treated as live until built and tested.
 
@@ -123,7 +123,7 @@ All routes are under `/v1`. Signed-in routes take the Firebase ID token as `Auth
 | --- | --- |
 | Catalog (public) | `GET /catalog` (ETag / `304`), `POST /promos/validate` |
 | Account | `GET /me`, `PATCH /me`, `POST /me/rewards/:id/redeem`, `POST /posts/:id/like`, `POST /issues` |
-| Smart POS (admin) | `GET/POST /admin/pos/connections`, `DELETE /admin/pos/connections/:id`, `POST /admin/pos/connections/:id/rotate-secret`, `POST /admin/pos/connections/:id/dispatch-order`, `GET /admin/pos/jobs` |
+| Smart POS (admin) | `GET/POST /admin/pos/connections`, `DELETE /admin/pos/connections/:id`, `POST /admin/pos/connections/:id/rotate-secret`, `POST /admin/pos/connections/:id/dispatch-order`, `GET /admin/pos/jobs`, `GET /admin/pos/inventory`, `GET /admin/pos/events` |
 | Smart POS (signed inbound) | `POST /pos/:connectionId/events` — signed inventory/product and external order-status events |
 | Orders | `POST /orders` (`Idempotency-Key`), `GET /orders`, `GET /orders/:id`, `POST /orders/:id/payment/sync`, `POST /orders/:id/cancel` (unpaid checkouts), `POST /orders/:id/rating`, `POST /orders/:id/issues` |
 | Bookings | `POST /bookings`, `GET /bookings`, `POST /bookings/:id/cancel` |
