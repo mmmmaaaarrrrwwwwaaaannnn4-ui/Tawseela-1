@@ -4,7 +4,7 @@ import { isApiErrorBody } from './contract';
 import { auth } from './firebase';
 
 /**
- * Base URL of the Fig & Fennel API (fullstack/server). Set EXPO_PUBLIC_API_URL for phones and store
+ * Base URL of the Tawseela API (fullstack/server). Set EXPO_PUBLIC_API_URL for phones and store
  * builds; left empty in development, simulators use this computer — the iOS simulator reaches it as
  * 127.0.0.1 and the Android emulator as 10.0.2.2.
  */
@@ -111,8 +111,8 @@ async function send<T>(path: string, opts: RequestOptions, forceToken: boolean):
       0,
       timedOut ? 'timeout' : 'offline',
       timedOut
-        ? `Fig & Fennel is taking too long to answer. Try again in a moment.${where}`
-        : `Can’t reach Fig & Fennel right now. Check your connection and try again.${where}`,
+        ? `Tawseela is taking too long to answer. Try again in a moment.${where}`
+        : `Can’t reach Tawseela right now. Check your connection and try again.${where}`,
     );
   } finally {
     clearTimeout(timer);
@@ -129,7 +129,7 @@ async function send<T>(path: string, opts: RequestOptions, forceToken: boolean):
     throw new ApiError(
       res.status,
       `http_${res.status}`,
-      res.status >= 500 ? 'Fig & Fennel is having trouble right now. Try again in a moment.' : 'That didn’t work.',
+      res.status >= 500 ? 'Tawseela is having trouble right now. Try again in a moment.' : 'That didn’t work.',
     );
   }
   return { data: json as T, status: res.status, etag, notModified: false };
