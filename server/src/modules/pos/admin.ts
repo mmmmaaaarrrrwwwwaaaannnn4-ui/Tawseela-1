@@ -1,4 +1,4 @@
-import { randomBytes, randomUUID, createCipheriv, createDecipheriv, createHmac, timingSafeEqual } from 'node:crypto';
+import { randomBytes, randomUUID, createCipheriv, createDecipheriv, createHmac } from 'node:crypto';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
@@ -46,10 +46,6 @@ function safeConnection(id: string, data: Record<string, any>) {
 }
 function signature(secret: string, timestamp: string, body: string) {
   return createHmac('sha256', secret).update(timestamp + '.' + body).digest('hex');
-}
-function equalHex(a: string, b: string) {
-  if (!/^[a-f0-9]{64}$/i.test(a) || !/^[a-f0-9]{64}$/i.test(b)) return false;
-  return timingSafeEqual(Buffer.from(a, 'hex'), Buffer.from(b, 'hex'));
 }
 
 const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
