@@ -52,7 +52,7 @@ export function AdminHeader({ title, back }: { title: string; back?: boolean }) 
         )}
         <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
           <Txt s={10.5} w={700} ls={0.1} upper color={c.accentText}>
-            {team ? 'Fig team' : 'Fig admin'}
+            {team ? 'Tawseela Team' : 'Tawseela Admin'}
           </Txt>
           <Txt s={19} w={600} ls={-0.02} numberOfLines={1}>
             {title}
