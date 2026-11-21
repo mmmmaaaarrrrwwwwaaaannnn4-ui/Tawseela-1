@@ -38,7 +38,7 @@ firebase.json · firestore.rules · firestore.indexes.json · .firebaserc
 
 ## Run it locally
 
-You need Node 22+ and Java 21 for the Firebase emulators (Android Studio ships one). From `full-stack/`:
+You need Node 24.12+ and Java 21 for the Firebase emulators (Android Studio ships one). From `full-stack/`:
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
