@@ -330,7 +330,7 @@ function Checkout() {
     useApp.setState({ cards: [], defCard: '' });
     let active = true;
     api
-      .get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string }[] }>('/v1/me/cards')
+      .get<{ cards: { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string; isDefault?: boolean }[] }>('/v1/me/cards')
       .then((result) => {
         if (!active) return;
         const next = result.cards.map((x) => {
@@ -346,7 +346,8 @@ function Checkout() {
           };
         });
         const cur = useApp.getState().defCard;
-        useApp.setState({ cards: next, defCard: next.some((x) => x.id === cur) ? cur : next[0]?.id ?? '' });
+        const serverDefault = result.cards.find((x) => x.isDefault)?.id;
+        useApp.setState({ cards: next, defCard: serverDefault || (next.some((x) => x.id === cur) ? cur : next[0]?.id ?? '') });
       })
       .catch(() => { if (active) useApp.setState({ cards: [], defCard: '' }); })
       .finally(() => { if (active) setCardsReady(true); });
