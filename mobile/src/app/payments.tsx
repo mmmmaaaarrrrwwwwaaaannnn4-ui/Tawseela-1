@@ -50,7 +50,7 @@ const RECEIPT = { uri: 'data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAASwAAAE6CA
 const CARD_GAP = 20;
 const NETWORKS = ['MADA', 'VISA', 'AMEX', 'MASTERCARD', 'DISCOVER'];
 
-type ServerCard = { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string; [k: string]: unknown };
+type ServerCard = { id: string; number: string; name: string; expiry?: { month?: string; year?: string } | null; brand: string; isDefault?: boolean; [k: string]: unknown };
 type SavedWallet = { id: string; provider: 'insta' | 'orange' | 'we' | 'etisalat' | 'vodafone'; phone: string; name: string; isDefault: boolean };
 
 const WALLET_INFO = {
@@ -339,7 +339,8 @@ export default function PaymentsScreen() {
     console.log('CARDS RESPONSE:', JSON.stringify(res, null, 2)); // مؤقت للتشخيص — امسحه بعد ما نخلص
     const next = (res.cards ?? []).map(mapCard);
     const current = useApp.getState().defCard;
-    useApp.setState({ cards: next, defCard: next.some((x) => x.id === current) ? current : (next[0]?.id ?? '') });
+    const serverDefault = res.cards?.find((x) => x.isDefault)?.id;
+    useApp.setState({ cards: next, defCard: serverDefault || (next.some((x) => x.id === current) ? current : (next[0]?.id ?? '')) });
     return next;
   }, []);
 
@@ -392,7 +393,7 @@ export default function PaymentsScreen() {
         body: JSON.stringify({
           merchantId: intent.merchantId,
           customerReference: intent.customerReference,
-          paymentMethod: { type: 'CARD', card: { number: digits, nameOnCard: draft.name.trim(), expiry: { month: draft.exp.slice(0, 2), year: draft.exp.slice(-2) }, securityCode: draft.cvv } },
+          paymentMethod: { type: 'CARD', card: { number: digits, nameOnCard: draft.name.trim(), expiry: { month: draft.exp.slice(0, 2), year: draft.exp.slice(-2) }, securityCode: draft.cvv, save: true } },
           customer: { reference: intent.customerReference },
         }),
       });
@@ -529,7 +530,11 @@ export default function PaymentsScreen() {
               title={cur.name || curBrand}
               subtitle={`•••• •••• •••• ${last4(cur.num)}`}
               isDefault={payM === PAY_CARD && defCard === cur.id}
-              onDefault={() => useApp.getState().makeDefaultCard(cur.id)}
+              onDefault={() => {
+                api.post(`/v1/me/cards/${encodeURIComponent(cur.id)}/default`, {})
+                  .then(async () => { await loadCards(); useApp.setState({ defCard: cur.id, payM: PAY_CARD }); })
+                  .catch((e) => useApp.getState().showToast('تعذر تعيين البطاقة كافتراضية', errMsg(e, 'حاول مرة أخرى.'), 'error'));
+              }}
               onDelete={() => deleteCard(cur.id)}
             />
           ) : null}
