@@ -7,17 +7,16 @@ import { COL } from '../../lib/collections';
 import { AppError, badRequest, conflict, notFound, unavailable } from '../../lib/errors';
 import { orderRef, toOrder } from '../orders/service';
 
-const capabilities = z.enum(['catalog.pull', 'inventory.read', 'inventory.write', 'orders.push', 'orders.status', 'receipts.print']);
+const capabilities = z.enum(['inventory.write', 'orders.push']);
 const connectionInput = z.object({
   name: z.string().trim().min(2).max(80),
-  provider: z.enum(['custom_webhook', 'local_bridge']),
+  provider: z.literal('custom_webhook'),
   storeId: z.string().min(1).max(64),
   webhookUrl: z.url().max(2048).optional(),
   capabilities: z.array(capabilities).min(1).max(6),
   enabled: z.boolean().default(true),
 }).superRefine((v, ctx) => {
-  if (v.provider === 'custom_webhook' && !v.webhookUrl) ctx.addIssue({ code: 'custom', path: ['webhookUrl'], message: 'A webhook URL is required for cloud webhook connections.' });
-  if (v.provider === 'local_bridge' && v.webhookUrl) ctx.addIssue({ code: 'custom', path: ['webhookUrl'], message: 'Local bridge connections do not use a public webhook URL.' });
+  if (!v.webhookUrl?.startsWith('https://')) ctx.addIssue({ code: 'custom', path: ['webhookUrl'], message: 'A public HTTPS webhook URL is required.' });
 });
 const idParams = z.object({ id: z.string().min(1).max(100) });
 
@@ -97,7 +96,7 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
     const snap = await ref.get();
     if (!snap.exists || snap.get('enabled') !== true) throw notFound('Enabled POS connection');
     const data = snap.data()!;
-    if (data.provider !== 'custom_webhook' || !data.webhookUrl) throw conflict('pos_transport_unavailable', 'This connection uses a local bridge; cloud webhook dispatch is not available for it yet.');
+    if (!data.webhookUrl) throw conflict('pos_transport_unavailable', 'This connection has no cloud webhook URL configured.');
     if (!(data.capabilities as string[]).includes('orders.push')) throw conflict('pos_capability_missing', 'This POS connection does not advertise order dispatch.');
     const orderSnap = await orderRef(db, req.body.orderId).get();
     if (!orderSnap.exists) throw notFound('Order');
