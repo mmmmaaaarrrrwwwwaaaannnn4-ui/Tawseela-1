@@ -13,7 +13,7 @@ import { useTheme } from '@/theme/theme';
 type PosConnection = {
   id: string;
   name: string;
-  provider: 'custom_webhook' | 'local_bridge';
+  provider: 'custom_webhook';
   storeId: string;
   webhookUrl?: string | null;
   capabilities: string[];
@@ -25,12 +25,8 @@ type PosJob = { id: string; orderId: string; status: string; lastError?: string;
 type Capability = { id: string; label: string; description: string };
 
 const CAPABILITIES: Capability[] = [
-  { id: 'catalog.pull', label: 'استيراد المنتجات', description: 'قراءة الأصناف والتصنيفات من نظام POS' },
-  { id: 'inventory.read', label: 'قراءة المخزون', description: 'عرض أرصدة المخزون القادمة من POS' },
-  { id: 'inventory.write', label: 'تحديث المخزون', description: 'استقبال تحديثات الكميات والباركود والأسعار' },
-  { id: 'orders.push', label: 'إرسال الطلبات', description: 'إرسال طلبات توصيلة إلى نظام الكاشير' },
-  { id: 'orders.status', label: 'حالات الطلب', description: 'استقبال تأكيدات وحالات الطلب من POS' },
-  { id: 'receipts.print', label: 'الإيصالات والطباعة', description: 'إتاحة مسار الطباعة إذا كان الموصل يدعمه' },
+  { id: 'orders.push', label: 'إرسال الطلبات', description: 'إرسال الطلبات إلى نقطة الاستقبال الآمنة في نظام الكاشير' },
+  { id: 'inventory.write', label: 'استقبال تحديثات المخزون', description: 'استقبال كميات الأصناف والباركود والأسعار من نظام POS' },
 ];
 
 export default function AdminPosScreen() {
@@ -163,7 +159,7 @@ export default function AdminPosScreen() {
           {connections.map((connection) => (
             <View key={connection.id} style={{ borderTopWidth: 1, borderTopColor: c.line, paddingTop: 12, gap: 7 }}>
               <Txt s={15} w={800} color={c.text1} align="right">{connection.name}</Txt>
-              <Txt s={12} color={c.text3} align="right">{storeName.get(connection.storeId) ?? connection.storeId} · {connection.provider === 'local_bridge' ? 'Local Bridge' : 'Cloud Webhook'}</Txt>
+              <Txt s={12} color={c.text3} align="right">{storeName.get(connection.storeId) ?? connection.storeId} · {'Cloud Webhook'}</Txt>
               <Txt s={12} color={connection.lastError ? '#D14343' : connection.enabled ? '#4c5b42' : c.text3} align="right">{connection.lastError || (connection.enabled ? 'مفعّل' : 'متوقف')}</Txt>
               <Txt s={11} color={c.text3} align="right">{connection.capabilities.join(' · ')}</Txt>
               <View style={{ flexDirection: 'row', gap: 8 }}>
