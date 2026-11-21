@@ -18,6 +18,7 @@ type PosConnection = {
   webhookUrl?: string | null;
   capabilities: string[];
   enabled: boolean;
+  status?: 'pending' | 'connected' | 'error';
   lastSeenAt?: unknown;
   lastError?: string | null;
 };
@@ -177,7 +178,7 @@ export default function AdminPosScreen() {
             <View key={connection.id} style={{ borderTopWidth: 1, borderTopColor: c.line, paddingTop: 12, gap: 7 }}>
               <Txt s={15} w={800} color={c.text1} align="right">{connection.name}</Txt>
               <Txt s={12} color={c.text3} align="right">{storeName.get(connection.storeId) ?? connection.storeId} · {'Cloud Webhook'}</Txt>
-              <Txt s={12} color={connection.lastError ? '#D14343' : connection.enabled ? '#4c5b42' : c.text3} align="right">{connection.lastError || (connection.enabled ? 'مفعّل' : 'متوقف')}</Txt>
+              <Txt s={12} color={connection.lastError ? '#D14343' : connection.enabled ? '#4c5b42' : c.text3} align="right">{!connection.enabled ? 'متوقف' : connection.lastError || (connection.status === 'connected' ? 'متصل' : connection.status === 'error' ? 'يحتاج مراجعة' : 'في انتظار أول اتصال')}</Txt>
               <Txt s={11} color={c.text3} align="right">{connection.capabilities.join(' · ')}</Txt>
               <Txt s={11} color={c.text3} align="right">استقبال أحداث المخزون: POST /v1/pos/{connection.id}/events</Txt>
               {connection.capabilities.includes('orders.push') ? (
