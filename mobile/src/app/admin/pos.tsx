@@ -23,6 +23,8 @@ type PosConnection = {
   lastError?: string | null;
 };
 type PosJob = { id: string; orderId: string; status: string; lastError?: string; updatedAt?: unknown };
+type PosInventory = { id: string; storeId: string; sku: string; onHand: number; updatedAt?: unknown };
+type PosEvent = { id: string; connectionId: string; storeId: string; type: string; receivedAt?: unknown };
 type Capability = { id: string; label: string; description: string };
 
 const CAPABILITIES: Capability[] = [
@@ -38,6 +40,8 @@ export default function AdminPosScreen() {
   const brands = useApp((s) => s.brands);
   const [connections, setConnections] = useState<PosConnection[]>([]);
   const [jobs, setJobs] = useState<PosJob[]>([]);
+  const [inventory, setInventory] = useState<PosInventory[]>([]);
+  const [events, setEvents] = useState<PosEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState('');
@@ -52,12 +56,16 @@ export default function AdminPosScreen() {
 
   const storeName = useMemo(() => new Map(brands.map((b) => [b.id, b.name])), [brands]);
   const refresh = useCallback(async () => {
-    const [connectionResult, jobResult] = await Promise.all([
+    const [connectionResult, jobResult, inventoryResult, eventResult] = await Promise.all([
       api.get<{ connections: PosConnection[] }>('/v1/admin/pos/connections'),
       api.get<{ jobs: PosJob[] }>('/v1/admin/pos/jobs?limit=30'),
+      api.get<{ inventory: PosInventory[] }>('/v1/admin/pos/inventory?limit=50'),
+      api.get<{ events: PosEvent[] }>('/v1/admin/pos/events?limit=30'),
     ]);
     setConnections(connectionResult.connections ?? []);
     setJobs(jobResult.jobs ?? []);
+    setInventory(inventoryResult.inventory ?? []);
+    setEvents(eventResult.events ?? []);
   }, []);
 
   useEffect(() => {
@@ -195,6 +203,29 @@ export default function AdminPosScreen() {
             </View>
           ))}
           <OutlineButton label="تحديث الحالة" icon="sync" height={42} onPress={() => void refresh().catch((e) => setError(String(e)))} />
+        </View>
+
+        <View style={cardStyle}>
+          <Txt s={18} w={800} color={c.text1} align="right">المخزون القادم من أنظمة POS</Txt>
+          {inventory.length === 0 ? <Txt s={13} color={c.text3} align="right">لم تصل تحديثات مخزون بعد.</Txt> : inventory.map((row) => (
+            <View key={row.id} style={{ borderTopWidth: 1, borderTopColor: c.line, paddingTop: 9, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+              <Txt s={14} w={800} color={c.text1} tabular>{row.onHand}</Txt>
+              <View style={{ flex: 1, gap: 3 }}>
+                <Txt s={13} w={700} color={c.text1} align="right">{row.sku}</Txt>
+                <Txt s={11} color={c.text3} align="right">{storeName.get(row.storeId) ?? row.storeId}</Txt>
+              </View>
+            </View>
+          ))}
+        </View>
+
+        <View style={cardStyle}>
+          <Txt s={18} w={800} color={c.text1} align="right">أحداث المزامنة الواردة</Txt>
+          {events.length === 0 ? <Txt s={13} color={c.text3} align="right">لا توجد أحداث واردة بعد.</Txt> : events.map((event) => (
+            <View key={event.id} style={{ borderTopWidth: 1, borderTopColor: c.line, paddingTop: 9, gap: 3 }}>
+              <Txt s={13} w={700} color={c.text1} align="right">{event.type}</Txt>
+              <Txt s={11} color={c.text3} align="right">{storeName.get(event.storeId) ?? event.storeId} · {event.connectionId}</Txt>
+            </View>
+          ))}
         </View>
 
         <View style={cardStyle}>
