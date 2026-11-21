@@ -61,7 +61,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
       signal: AbortSignal.timeout(15000),
     });
     const body: any = await response.json().catch(() => ({}));
-    const noCards = response.status === 400 && /no cards/i.test(JSON.stringify(body));
+    const noCards = response.status === 400 && /(no cards|لا توجد بطاقات|لا يوجد بطاقات)/i.test(JSON.stringify(body));
     if (!response.ok && !noCards) {
       throw new AppError(502, 'card_list_failed', 'Could not retrieve saved cards from Kashier.');
     }
