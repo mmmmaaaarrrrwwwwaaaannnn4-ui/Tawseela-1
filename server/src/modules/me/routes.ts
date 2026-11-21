@@ -124,7 +124,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     const user = requireUser(req);
     if (!config.KASHIER_MERCHANT_ID || !config.KASHIER_PAYMENT_API_KEY || !config.KASHIER_SECRET_KEY) throw new AppError(503, 'payments_unavailable', 'Kashier is not configured.');
     const url = `${tokenBase()}/v3/cards/tokens/${encodeURIComponent(req.params.token)}?customerReference=${encodeURIComponent(user.uid)}&merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}`;
-    const response = await fetch(url, { method: 'DELETE', headers: { 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
+    const response = await fetch(url, { method: 'DELETE', headers: { Authorization: config.KASHIER_SECRET_KEY, 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' }, signal: AbortSignal.timeout(15000) });
     if (!response.ok) throw new AppError(502, 'card_delete_failed', 'Kashier could not remove this card.');
     const profileRef = userRef(db, user.uid);
     await db.runTransaction(async (tx) => {
