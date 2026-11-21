@@ -286,8 +286,8 @@ describe('photo uploads', () => {
     const body = multipart({ name: 'Dish Photo.PNG', type: 'image/png', bytes: png }, { folder: 'dishes' });
     const res = await withUploads.inject({ method: 'POST', url: '/v1/admin/uploads', headers: { ...as('admin'), ...body.headers }, payload: body.payload });
     expect(res.statusCode).toBe(201);
-    expect(res.json()).toEqual({ url: expect.stringContaining('/fig-fennel/dishes/dishes-'), fileId: 'file_123' });
-    expect(uploads.at(-1)).toMatchObject({ folder: '/fig-fennel/dishes', type: 'image/png', size: png.length });
+    expect(res.json()).toEqual({ url: expect.stringContaining('/tawseela/dishes/dishes-'), fileId: 'file_123' });
+    expect(uploads.at(-1)).toMatchObject({ folder: '/tawseela/dishes', type: 'image/png', size: png.length });
     expect(uploads.at(-1)!.fileName).toMatch(/^dishes-[a-z0-9]+\.png$/);
   });
 
