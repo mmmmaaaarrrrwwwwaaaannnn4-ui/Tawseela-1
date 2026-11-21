@@ -36,7 +36,7 @@ const CAPABILITIES: Capability[] = [
 export default function AdminPosScreen() {
   useStatusBar();
   const { c } = useTheme();
-  const pad = useAdminPadding('screen');
+  const pad = useAdminPadding('push');
   const brands = useApp((s) => s.brands);
   const [connections, setConnections] = useState<PosConnection[]>([]);
   const [jobs, setJobs] = useState<PosJob[]>([]);
@@ -108,26 +108,26 @@ export default function AdminPosScreen() {
     }
   };
 
-  const cardStyle = { backgroundColor: c.card, borderColor: c.line, borderWidth: 1, borderRadius: 18, padding: 16, gap: 12 } as const;
-  const inputStyle = { minHeight: 48, borderRadius: 12, borderWidth: 1, borderColor: c.line, backgroundColor: c.bg, color: c.text, paddingHorizontal: 13, textAlign: 'right' as const, fontSize: 14 };
+  const cardStyle = { backgroundColor: c.surface1, borderColor: c.line, borderWidth: 1, borderRadius: 18, padding: 16, gap: 12 } as const;
+  const inputStyle = { minHeight: 48, borderRadius: 12, borderWidth: 1, borderColor: c.line, backgroundColor: c.bg, color: c.text1, paddingHorizontal: 13, textAlign: 'right' as const, fontSize: 14 };
 
   return (
     <View style={{ flex: 1, backgroundColor: c.bg }}>
       <ScrollView contentContainerStyle={[pad, { gap: 14, paddingBottom: 120 }]} showsVerticalScrollIndicator={false}>
         <View style={cardStyle}>
-          <Txt s={20} w={800} color={c.text} align="right">ربط نظام POS سحابي</Txt>
-          <Txt s={13} color={c.muted} align="right">أنشئ موصل Webhook موحدًا لربط الكاشير. لازم يكون رابط الاستقبال HTTPS عامًا، ومفتاح التشفير مضبوطًا على الخادم.</Txt>
-          <TextInput value={name} onChangeText={setName} placeholder="اسم الاتصال — مثال: كاشير الفرع الرئيسي" placeholderTextColor={c.muted} style={inputStyle} />
-          <TextInput value={webhookUrl} onChangeText={setWebhookUrl} autoCapitalize="none" keyboardType="url" placeholder="https://pos.example.com/tawseela/orders" placeholderTextColor={c.muted} style={inputStyle} />
-          <Txt s={13} w={700} color={c.text} align="right">الفرع المرتبط</Txt>
+          <Txt s={20} w={800} color={c.text1} align="right">ربط نظام POS سحابي</Txt>
+          <Txt s={13} color={c.text3} align="right">أنشئ موصل Webhook موحدًا لربط الكاشير. لازم يكون رابط الاستقبال HTTPS عامًا، ومفتاح التشفير مضبوطًا على الخادم.</Txt>
+          <TextInput value={name} onChangeText={setName} placeholder="اسم الاتصال — مثال: كاشير الفرع الرئيسي" placeholderTextColor={c.text3} style={inputStyle} />
+          <TextInput value={webhookUrl} onChangeText={setWebhookUrl} autoCapitalize="none" keyboardType="url" placeholder="https://pos.example.com/tawseela/orders" placeholderTextColor={c.text3} style={inputStyle} />
+          <Txt s={13} w={700} color={c.text1} align="right">الفرع المرتبط</Txt>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {brands.map((brand) => (
               <PressableScale key={brand.id} onPress={() => setStoreId(brand.id)} style={{ paddingHorizontal: 12, paddingVertical: 9, borderRadius: 20, backgroundColor: storeId === brand.id ? '#4c5b42' : c.bg, borderWidth: 1, borderColor: storeId === brand.id ? '#4c5b42' : c.line }}>
-                <Txt s={12} w={700} color={storeId === brand.id ? '#FFFFFF' : c.text}>{brand.name}</Txt>
+                <Txt s={12} w={700} color={storeId === brand.id ? '#FFFFFF' : c.text1}>{brand.name}</Txt>
               </PressableScale>
             ))}
           </View>
-          <Txt s={13} w={700} color={c.text} align="right">الصلاحيات المطلوبة</Txt>
+          <Txt s={13} w={700} color={c.text1} align="right">الصلاحيات المطلوبة</Txt>
           {CAPABILITIES.map((cap) => {
             const active = selected.includes(cap.id);
             return (
@@ -136,8 +136,8 @@ export default function AdminPosScreen() {
                   {active ? <Txt s={13} w={800} color="#FFFFFF">✓</Txt> : null}
                 </View>
                 <View style={{ flex: 1, gap: 2 }}>
-                  <Txt s={13} w={700} color={c.text} align="right">{cap.label}</Txt>
-                  <Txt s={11} color={c.muted} align="right">{cap.description}</Txt>
+                  <Txt s={13} w={700} color={c.text1} align="right">{cap.label}</Txt>
+                  <Txt s={11} color={c.text3} align="right">{cap.description}</Txt>
                 </View>
               </PressableScale>
             );
@@ -148,24 +148,24 @@ export default function AdminPosScreen() {
 
         {oneTimeSecret ? (
           <View style={[cardStyle, { borderColor: '#4c5b42' }]}>
-            <Txt s={16} w={800} color={c.text} align="right">مفتاح الاتصال — يظهر مرة واحدة</Txt>
-            <Txt s={12} color={c.muted} align="right">انسخه وضعه في نظام POS. لا تشاركه مع أي شخص، ولن يظهر مرة أخرى بعد مغادرة هذه الشاشة.</Txt>
-            <Txt s={12} color={c.text}>{oneTimeSecret}</Txt>
+            <Txt s={16} w={800} color={c.text1} align="right">مفتاح الاتصال — يظهر مرة واحدة</Txt>
+            <Txt s={12} color={c.text3} align="right">انسخه وضعه في نظام POS. لا تشاركه مع أي شخص، ولن يظهر مرة أخرى بعد مغادرة هذه الشاشة.</Txt>
+            <Txt s={12} color={c.text1}>{oneTimeSecret}</Txt>
             <OutlineButton label="نسخ المفتاح" icon="content_copy" height={42} onPress={() => GenUI.copy(oneTimeSecret)} />
             <OutlineButton label="إخفاء المفتاح" icon="visibility_off" height={42} onPress={() => setOneTimeSecret('')} />
           </View>
         ) : null}
 
         <View style={cardStyle}>
-          <Txt s={18} w={800} color={c.text} align="right">الاتصالات المرتبطة</Txt>
-          {loading ? <Txt s={13} color={c.muted} align="right">جارٍ التحميل…</Txt> : null}
-          {!loading && connections.length === 0 ? <Txt s={13} color={c.muted} align="right">لا توجد أنظمة POS مرتبطة حتى الآن.</Txt> : null}
+          <Txt s={18} w={800} color={c.text1} align="right">الاتصالات المرتبطة</Txt>
+          {loading ? <Txt s={13} color={c.text3} align="right">جارٍ التحميل…</Txt> : null}
+          {!loading && connections.length === 0 ? <Txt s={13} color={c.text3} align="right">لا توجد أنظمة POS مرتبطة حتى الآن.</Txt> : null}
           {connections.map((connection) => (
             <View key={connection.id} style={{ borderTopWidth: 1, borderTopColor: c.line, paddingTop: 12, gap: 7 }}>
-              <Txt s={15} w={800} color={c.text} align="right">{connection.name}</Txt>
-              <Txt s={12} color={c.muted} align="right">{storeName.get(connection.storeId) ?? connection.storeId} · {connection.provider === 'local_bridge' ? 'Local Bridge' : 'Cloud Webhook'}</Txt>
-              <Txt s={12} color={connection.lastError ? '#D14343' : connection.enabled ? '#4c5b42' : c.muted} align="right">{connection.lastError || (connection.enabled ? 'مفعّل' : 'متوقف')}</Txt>
-              <Txt s={11} color={c.muted} align="right">{connection.capabilities.join(' · ')}</Txt>
+              <Txt s={15} w={800} color={c.text1} align="right">{connection.name}</Txt>
+              <Txt s={12} color={c.text3} align="right">{storeName.get(connection.storeId) ?? connection.storeId} · {connection.provider === 'local_bridge' ? 'Local Bridge' : 'Cloud Webhook'}</Txt>
+              <Txt s={12} color={connection.lastError ? '#D14343' : connection.enabled ? '#4c5b42' : c.text3} align="right">{connection.lastError || (connection.enabled ? 'مفعّل' : 'متوقف')}</Txt>
+              <Txt s={11} color={c.text3} align="right">{connection.capabilities.join(' · ')}</Txt>
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <OutlineButton label="تدوير المفتاح" icon="key" height={38} onPress={() => void rotateSecret(connection.id)} />
                 <OutlineButton label="حذف الاتصال" icon="delete" height={38} onPress={() => void removeConnection(connection.id)} />
@@ -176,19 +176,19 @@ export default function AdminPosScreen() {
         </View>
 
         <View style={cardStyle}>
-          <Txt s={18} w={800} color={c.text} align="right">سجل إرسال الطلبات</Txt>
-          {jobs.length === 0 ? <Txt s={13} color={c.muted} align="right">لا توجد عمليات إرسال حتى الآن.</Txt> : jobs.map((job) => (
+          <Txt s={18} w={800} color={c.text1} align="right">سجل إرسال الطلبات</Txt>
+          {jobs.length === 0 ? <Txt s={13} color={c.text3} align="right">لا توجد عمليات إرسال حتى الآن.</Txt> : jobs.map((job) => (
             <View key={job.id} style={{ borderTopWidth: 1, borderTopColor: c.line, paddingTop: 9, gap: 4 }}>
-              <Txt s={13} w={700} color={c.text} align="right">{job.orderId}</Txt>
-              <Txt s={12} color={job.status === 'sent' ? '#4c5b42' : job.status === 'failed' ? '#D14343' : c.muted} align="right">{job.status}</Txt>
+              <Txt s={13} w={700} color={c.text1} align="right">{job.orderId}</Txt>
+              <Txt s={12} color={job.status === 'sent' ? '#4c5b42' : job.status === 'failed' ? '#D14343' : c.text3} align="right">{job.status}</Txt>
               {job.lastError ? <Txt s={11} color="#D14343" align="right">{job.lastError}</Txt> : null}
             </View>
           ))}
         </View>
 
         <View style={cardStyle}>
-          <Txt s={15} w={800} color={c.text} align="right">مهم قبل التشغيل الفعلي</Txt>
-          <Txt s={12} color={c.muted} align="right">هذه المرحلة توفر موصل Webhook موحدًا، وتشفيرًا لمفتاحه، وإرسال الطلبات، واستقبال تحديثات المخزون الموقعة. تكاملات Loyverse وFoodics وOdoo والطابعات المحلية تحتاج موصلًا خاصًا بكل مزود واعتماداته الرسمية؛ لن تظهر كأنها متصلة قبل تنفيذ واختبار الموصل الفعلي.</Txt>
+          <Txt s={15} w={800} color={c.text1} align="right">مهم قبل التشغيل الفعلي</Txt>
+          <Txt s={12} color={c.text3} align="right">هذه المرحلة توفر موصل Webhook موحدًا، وتشفيرًا لمفتاحه، وإرسال الطلبات، واستقبال تحديثات المخزون الموقعة. تكاملات Loyverse وFoodics وOdoo والطابعات المحلية تحتاج موصلًا خاصًا بكل مزود واعتماداته الرسمية؛ لن تظهر كأنها متصلة قبل تنفيذ واختبار الموصل الفعلي.</Txt>
         </View>
       </ScrollView>
       <AdminHeader title="Smart POS" />
