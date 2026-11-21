@@ -43,6 +43,9 @@ export default function AdminPosScreen() {
   const [storeId, setStoreId] = useState(brands[0]?.id ?? '');
   const [selected, setSelected] = useState<string[]>(['orders.push', 'inventory.write']);
   const [oneTimeSecret, setOneTimeSecret] = useState('');
+  const [dispatchIds, setDispatchIds] = useState<Record<string, string>>({});
+  const [dispatchingId, setDispatchingId] = useState<string | null>(null);
+  const [notice, setNotice] = useState('');
   const [error, setError] = useState('');
 
   const storeName = useMemo(() => new Map(brands.map((b) => [b.id, b.name])), [brands]);
@@ -104,6 +107,19 @@ export default function AdminPosScreen() {
     }
   };
 
+  const dispatchOrder = async (connectionId: string) => {
+    const orderId = (dispatchIds[connectionId] || '').trim();
+    if (!orderId) { setError('اكتب رقم الطلب أولًا.'); return; }
+    setError(''); setNotice(''); setDispatchingId(connectionId);
+    try {
+      const result = await api.post<{ jobId: string; status: string }>(`/v1/admin/pos/connections/${encodeURIComponent(connectionId)}/dispatch-order`, { orderId });
+      setNotice(`تم إرسال ${orderId} إلى POS. حالة الإرسال: ${result.status}.`);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'تعذر إرسال الطلب إلى POS');
+    } finally { setDispatchingId(null); }
+  };
+
   const cardStyle = { backgroundColor: c.surface1, borderColor: c.line, borderWidth: 1, borderRadius: 18, padding: 16, gap: 12 } as const;
   const inputStyle = { minHeight: 48, borderRadius: 12, borderWidth: 1, borderColor: c.line, backgroundColor: c.bg, color: c.text1, paddingHorizontal: 13, textAlign: 'right' as const, fontSize: 14 };
 
@@ -140,6 +156,7 @@ export default function AdminPosScreen() {
           })}
           <OutlineButton label={saving ? 'جارٍ إنشاء الاتصال…' : 'إنشاء اتصال POS'} icon="link" height={48} onPress={() => void createConnection()} />
           {error ? <Txt s={12} color="#D14343" align="right">{error}</Txt> : null}
+          {notice ? <Txt s={12} color="#4c5b42" align="right">{notice}</Txt> : null}
         </View>
 
         {oneTimeSecret ? (
@@ -162,6 +179,13 @@ export default function AdminPosScreen() {
               <Txt s={12} color={c.text3} align="right">{storeName.get(connection.storeId) ?? connection.storeId} · {'Cloud Webhook'}</Txt>
               <Txt s={12} color={connection.lastError ? '#D14343' : connection.enabled ? '#4c5b42' : c.text3} align="right">{connection.lastError || (connection.enabled ? 'مفعّل' : 'متوقف')}</Txt>
               <Txt s={11} color={c.text3} align="right">{connection.capabilities.join(' · ')}</Txt>
+              <Txt s={11} color={c.text3} align="right">استقبال أحداث المخزون: POST /v1/pos/{connection.id}/events</Txt>
+              {connection.capabilities.includes('orders.push') ? (
+                <View style={{ gap: 8 }}>
+                  <TextInput value={dispatchIds[connection.id] ?? ''} onChangeText={(value) => setDispatchIds((current) => ({ ...current, [connection.id]: value }))} placeholder="رقم الطلب — EK-4822" placeholderTextColor={c.text3} style={inputStyle} autoCapitalize="characters" />
+                  <OutlineButton label={dispatchingId === connection.id ? 'جارٍ الإرسال…' : 'إرسال الطلب إلى POS'} height={40} onPress={() => void dispatchOrder(connection.id)} />
+                </View>
+              ) : null}
               <View style={{ flexDirection: 'row', gap: 8 }}>
                 <OutlineButton label="تدوير المفتاح" icon="sync" height={38} onPress={() => void rotateSecret(connection.id)} />
                 <OutlineButton label="حذف الاتصال" icon="delete" height={38} onPress={() => void removeConnection(connection.id)} />
