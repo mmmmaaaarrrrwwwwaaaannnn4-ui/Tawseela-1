@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, TextInput, View } from 'react-native';
+import { ScrollView, Share, TextInput, View } from 'react-native';
 
 import { AdminHeader, useAdminPadding } from '@/components/admin/admin-ui';
 import { OutlineButton } from '@/components/ui/buttons';
@@ -174,7 +174,7 @@ export default function AdminPosScreen() {
             <Txt s={16} w={800} color={c.text1} align="right">مفتاح الاتصال — يظهر مرة واحدة</Txt>
             <Txt s={12} color={c.text3} align="right">انسخه وضعه في نظام POS. لا تشاركه مع أي شخص، ولن يظهر مرة أخرى بعد مغادرة هذه الشاشة.</Txt>
             <Txt s={12} color={c.text1}>{oneTimeSecret}</Txt>
-            <OutlineButton label="نسخ المفتاح" icon="content_copy" height={42} onPress={() => GenUI.copy(oneTimeSecret)} />
+            <OutlineButton label="مشاركة أو نسخ المفتاح" icon="share" height={42} onPress={() => void Share.share({ message: oneTimeSecret })} />
             <OutlineButton label="إخفاء المفتاح"  height={42} onPress={() => setOneTimeSecret('')} />
           </View>
         ) : null}
