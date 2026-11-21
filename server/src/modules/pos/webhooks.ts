@@ -21,6 +21,9 @@ const eventSchema = z.object({
     price: z.number().min(0).max(100000).optional(),
     currency: z.string().length(3).optional(),
   })).max(1000).optional(),
+}).superRefine((event, ctx) => {
+  const skus = (event.items ?? []).map((item) => item.sku);
+  if (new Set(skus).size !== skus.length) ctx.addIssue({ code: 'custom', path: ['items'], message: 'An event may include each SKU only once.' });
 });
 
 function equalHex(a: string, b: string) {
@@ -70,13 +73,16 @@ const posWebhookRoutes: FastifyPluginAsyncZod = async (app) => {
       if (event.type === 'inventory.snapshot' || event.type === 'inventory.delta' || event.type === 'product.upsert') {
         const items = event.items ?? [];
         const inventoryRefs = items.map((item) => db.collection('posInventory').doc(`${event.storeId}__${item.sku}`));
-        const inventorySnaps = event.type === 'inventory.delta' ? await Promise.all(inventoryRefs.map((inventoryRef) => tx.get(inventoryRef))) : [];
+        const inventorySnaps = event.type.startsWith('inventory.') ? await Promise.all(inventoryRefs.map((inventoryRef) => tx.get(inventoryRef))) : [];
         for (let index = 0; index < items.length; index += 1) {
           const item = items[index];
           const productRef = db.collection('posProducts').doc(`${req.params.connectionId}__${item.sku}`);
           const inventoryRef = inventoryRefs[index];
           const current = inventorySnaps[index];
           const currentQty = Number(current?.get('onHand') ?? 0);
+          const eventTime = event.occurredAt ?? now();
+          const currentEventTime = Number(current?.get('sourceOccurredAt') ?? 0);
+          const stale = event.type.startsWith('inventory.') && currentEventTime > eventTime;
           const nextQty = event.type === 'inventory.delta' ? currentQty + item.quantity : item.quantity;
           if (event.type.startsWith('inventory.') && nextQty < 0) throw new AppError(409, 'pos_inventory_negative', `Inventory for SKU ${item.sku} would become negative.`);
           if (event.type === 'product.upsert' || item.name || item.barcode || item.price !== undefined || item.dishId) {
@@ -89,11 +95,11 @@ const posWebhookRoutes: FastifyPluginAsyncZod = async (app) => {
               updatedAt: FieldValue.serverTimestamp(),
             }, { merge: true });
           }
-          if (event.type.startsWith('inventory.')) {
+          if (event.type.startsWith('inventory.') && !stale) {
             tx.set(inventoryRef, {
               connectionId: req.params.connectionId, storeId: event.storeId, sku: item.sku,
               onHand: nextQty, updatedAt: FieldValue.serverTimestamp(),
-              sourceEventId: event.eventId,
+              sourceEventId: event.eventId, sourceOccurredAt: eventTime,
             }, { merge: true });
           }
         }
