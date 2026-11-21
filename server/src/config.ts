@@ -31,7 +31,7 @@ const Env = z.object({
   /** Firebase project. Locally the emulators use `demo-fig`. */
   FIREBASE_PROJECT_ID: z.string().min(1).default('demo-fig'),
   /** Firestore database inside the project; empty = `(default)`. Use a named one when the project is shared. */
-  FIRESTORE_DATABASE_ID: optional(z.string().regex(/^[a-z][a-z0-9-]{2,62}$|^\(default\)$/, 'should be a Firestore database id like fig-fennel')),
+  FIRESTORE_DATABASE_ID: optional(z.string().regex(/^[a-z][a-z0-9-]{2,62}$|^\(default\)$/, 'should be a Firestore database id like tawseela')),
   /** JSON text for a service-account key, stored as a Replit Secret (never commit it). */
   FIREBASE_SERVICE_ACCOUNT_JSON: optional(),
   /** Optional path to a service-account JSON key for local development; not needed with emulators. */
@@ -54,7 +54,7 @@ const Env = z.object({
 
   /** ImageKit private key — uploads only; delivery URLs are public */
   IMAGEKIT_PRIVATE_KEY: optional(),
-  IMAGEKIT_FOLDER: z.string().default('/fig-fennel'),
+  IMAGEKIT_FOLDER: z.string().default('/tawseela'),
 
   /** Demo kitchen: move new orders one stage every N seconds, as if staff worked them (0 = off — the team does it). */
   DEMO_KITCHEN_SECONDS: z.coerce.number().int().min(0).default(0),
