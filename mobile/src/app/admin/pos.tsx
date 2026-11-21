@@ -142,7 +142,7 @@ export default function AdminPosScreen() {
               </PressableScale>
             );
           })}
-          <OutlineButton label={saving ? 'جارٍ إنشاء الاتصال…' : 'إنشاء اتصال POS'} icon="add_link" height={48} onPress={() => void createConnection()} />
+          <OutlineButton label={saving ? 'جارٍ إنشاء الاتصال…' : 'إنشاء اتصال POS'} icon="link" height={48} onPress={() => void createConnection()} />
           {error ? <Txt s={12} color="#D14343" align="right">{error}</Txt> : null}
         </View>
 
@@ -152,7 +152,7 @@ export default function AdminPosScreen() {
             <Txt s={12} color={c.text3} align="right">انسخه وضعه في نظام POS. لا تشاركه مع أي شخص، ولن يظهر مرة أخرى بعد مغادرة هذه الشاشة.</Txt>
             <Txt s={12} color={c.text1}>{oneTimeSecret}</Txt>
             <OutlineButton label="نسخ المفتاح" icon="content_copy" height={42} onPress={() => GenUI.copy(oneTimeSecret)} />
-            <OutlineButton label="إخفاء المفتاح" icon="visibility_off" height={42} onPress={() => setOneTimeSecret('')} />
+            <OutlineButton label="إخفاء المفتاح"  height={42} onPress={() => setOneTimeSecret('')} />
           </View>
         ) : null}
 
@@ -167,12 +167,12 @@ export default function AdminPosScreen() {
               <Txt s={12} color={connection.lastError ? '#D14343' : connection.enabled ? '#4c5b42' : c.text3} align="right">{connection.lastError || (connection.enabled ? 'مفعّل' : 'متوقف')}</Txt>
               <Txt s={11} color={c.text3} align="right">{connection.capabilities.join(' · ')}</Txt>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <OutlineButton label="تدوير المفتاح" icon="key" height={38} onPress={() => void rotateSecret(connection.id)} />
+                <OutlineButton label="تدوير المفتاح" icon="sync" height={38} onPress={() => void rotateSecret(connection.id)} />
                 <OutlineButton label="حذف الاتصال" icon="delete" height={38} onPress={() => void removeConnection(connection.id)} />
               </View>
             </View>
           ))}
-          <OutlineButton label="تحديث الحالة" icon="refresh" height={42} onPress={() => void refresh().catch((e) => setError(String(e)))} />
+          <OutlineButton label="تحديث الحالة" icon="sync" height={42} onPress={() => void refresh().catch((e) => setError(String(e)))} />
         </View>
 
         <View style={cardStyle}>
