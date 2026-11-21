@@ -399,7 +399,7 @@ export default function PaymentsScreen() {
       });
       const result: any = await response.json().catch(() => ({}));
       const token = result?.response?.paymentMethod?.card?.cardToken ?? result?.response?.paymentMethod?.card?.cardDataToken;
-      if (!response.ok || result?.status !== 'SUCCESS' || typeof token !== 'string') throw new Error(result?.messages?.ar || result?.messages?.en || 'تعذر تأكيد البطاقة. راجع البيانات وحاول مرة أخرى.');
+      if (!response.ok || !['SUCCESS', 'PENDING'].includes(String(result?.status)) || typeof token !== 'string') throw new Error(result?.messages?.ar || result?.messages?.en || 'تعذر تأكيد البطاقة. راجع البيانات وحاول مرة أخرى.');
       await api.post('/v1/me/cards', { cardToken: token }, { idempotencyKey: `saved-card-${Crypto.randomUUID()}` });
       if (draft.def) await api.post(`/v1/me/cards/${encodeURIComponent(token)}/default`, {});
       const next = await loadCards();
