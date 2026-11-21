@@ -21,7 +21,7 @@ server/
 
 ## Run it locally
 
-Node 22 or later (Node 26 works) and Java 21 for the Firebase emulators. Android Studio ships one:
+Node 24.12 or later (Node 26 works) and Java 21 for the Firebase emulators. Android Studio ships one:
 
 ```bash
 export JAVA_HOME="/Applications/Android Studio.app/Contents/jbr/Contents/Home"
@@ -112,7 +112,7 @@ The first POS gateway release provides a secure, capability-based cloud Webhook 
 4. Configure the POS system to send signed events to `POST /v1/pos/{connectionId}/events`. Send `x-tawseela-timestamp` as Unix milliseconds and `x-tawseela-signature` as lowercase HMAC-SHA256 of `{timestamp}.{JSON.stringify(payload)}`, keyed by the shared secret. Timestamps older than five minutes are rejected.
 5. Supported inbound event types are `inventory.snapshot`, `inventory.delta`, `product.upsert`, `order.acknowledged` and `order.status`. Inventory is stored in POS-scoped collections; it does not silently overwrite Tawseela's catalog or deduct customer stock before an order is accepted.
 
-The currently exposed capabilities are deliberately limited to `orders.push` and `inventory.write`. Windows local bridge transport, thermal printer delivery, automatic catalog reconciliation and provider-specific cloud connectors remain separate implementation stages and must not be treated as live until built and tested.
+The currently exposed capabilities are deliberately limited to `orders.push`, `inventory.write` and `orders.status`. Windows local bridge transport, thermal printer delivery, automatic catalog reconciliation and provider-specific cloud connectors remain separate implementation stages and must not be treated as live until built and tested.
 
 ## The API
 
