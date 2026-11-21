@@ -28,6 +28,7 @@ type Capability = { id: string; label: string; description: string };
 const CAPABILITIES: Capability[] = [
   { id: 'orders.push', label: 'إرسال الطلبات', description: 'إرسال الطلبات إلى نقطة الاستقبال الآمنة في نظام الكاشير' },
   { id: 'inventory.write', label: 'استقبال تحديثات المخزون', description: 'استقبال كميات الأصناف والباركود والأسعار من نظام POS' },
+  { id: 'orders.status', label: 'استقبال حالات الطلب', description: 'استقبال تأكيد استلام الطلب وحالته الخارجية من نظام POS' },
 ];
 
 export default function AdminPosScreen() {
