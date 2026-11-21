@@ -49,6 +49,9 @@ const Env = z.object({
   PUBLIC_API_URL: optional(z.string().url()),
   CURRENCY: z.string().length(3).default('EGP'),
 
+  /** AES-256-GCM key for encrypting POS connector secrets at rest (64 hex chars). */
+  POS_ENCRYPTION_KEY: optional(z.string().regex(/^[a-f0-9]{64}$/i, 'must be 64 hexadecimal characters')),
+
   /** ImageKit private key — uploads only; delivery URLs are public */
   IMAGEKIT_PRIVATE_KEY: optional(),
   IMAGEKIT_FOLDER: z.string().default('/fig-fennel'),
