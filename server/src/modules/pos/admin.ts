@@ -180,6 +180,20 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
     const snap = await jobs.orderBy('updatedAt', 'desc').limit(req.query.limit).get();
     return { jobs: snap.docs.map((d) => ({ id: d.id, ...d.data() })) };
   });
+
+  app.get('/inventory', { schema: { tags: ['pos'], summary: 'Recent POS-scoped inventory snapshots', querystring: z.object({ storeId: z.string().min(1).max(64).optional(), limit: z.coerce.number().int().min(1).max(100).default(50) }) } }, async (req) => {
+    const snap = await db.collection('posInventory').orderBy('updatedAt', 'desc').limit(200).get();
+    const rows = snap.docs
+      .map((d) => ({ id: d.id, ...d.data() }))
+      .filter((row: any) => !req.query.storeId || row.storeId === req.query.storeId)
+      .slice(0, req.query.limit);
+    return { inventory: rows };
+  });
+
+  app.get('/events', { schema: { tags: ['pos'], summary: 'Recent signed inbound POS events', querystring: z.object({ limit: z.coerce.number().int().min(1).max(100).default(50) }) } }, async (req) => {
+    const snap = await db.collection('posWebhookEvents').orderBy('receivedAt', 'desc').limit(req.query.limit).get();
+    return { events: snap.docs.map((d) => ({ id: d.id, ...d.data() })) };
+  });
 };
 
 export default posAdminRoutes;
