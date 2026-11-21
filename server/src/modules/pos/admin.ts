@@ -43,6 +43,16 @@ function safeConnection(id: string, data: Record<string, any>) {
     lastSeenAt: data.lastSeenAt ?? null, lastError: data.lastError ?? null,
   };
 }
+function assertPublicWebhookUrl(value: string) {
+  let url: URL;
+  try { url = new URL(value); } catch { throw badRequest('Enter a valid POS webhook URL.'); }
+  const host = url.hostname.toLowerCase();
+  if (url.protocol !== 'https:' || url.username || url.password || isIP(host) || host === 'localhost' || host.endsWith('.localhost') || host.endsWith('.local') || host.endsWith('.internal') || host === 'metadata.google.internal') {
+    throw badRequest('POS webhook URLs must use a public HTTPS hostname without embedded credentials.');
+  }
+  return url.toString();
+}
+
 function signature(secret: string, timestamp: string, body: string) {
   return createHmac('sha256', secret).update(timestamp + '.' + body).digest('hex');
 }
@@ -59,6 +69,7 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
 
   app.post('/connections', { schema: { tags: ['pos'], summary: 'Create a capability-based POS connector', body: connectionInput } }, async (req, reply) => {
     const input = connectionInput.parse(req.body);
+    const webhookUrl = assertPublicWebhookUrl(input.webhookUrl!);
     const store = await db.collection(COL.brands).doc(input.storeId).get();
     if (!store.exists) throw badRequest('The selected kitchen/store does not exist.');
     const key = encryptionKey(config.POS_ENCRYPTION_KEY);
@@ -66,7 +77,7 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
     const sharedSecret = randomBytes(32).toString('base64url');
     const encrypted = encryptSecret(sharedSecret, key);
     const data = {
-      ...input, ...encrypted, status: 'pending', createdAt: FieldValue.serverTimestamp(),
+      ...input, webhookUrl, ...encrypted, status: 'pending', createdAt: FieldValue.serverTimestamp(),
       updatedAt: FieldValue.serverTimestamp(), lastSeenAt: null, lastError: null,
     };
     await connections.doc(id).create(data);
@@ -135,8 +146,10 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
     const sig = signature(secret, timestamp, body);
     await jobRef.set({ connectionId: req.params.id, orderId: order.id, eventId, status: 'sending', attempts: FieldValue.increment(1), createdAt: FieldValue.serverTimestamp(), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     try {
-      const response = await fetch(String(data.webhookUrl), {
+      const webhookUrl = assertPublicWebhookUrl(String(data.webhookUrl));
+      const response = await fetch(webhookUrl, {
         method: 'POST',
+        redirect: 'manual',
         headers: { 'content-type': 'application/json', 'x-tawseela-timestamp': timestamp, 'x-tawseela-signature': sig, 'x-tawseela-event-id': eventId },
         body, signal: AbortSignal.timeout(10_000),
       });
