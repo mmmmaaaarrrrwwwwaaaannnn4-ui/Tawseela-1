@@ -118,7 +118,7 @@ const posAdminRoutes: FastifyPluginAsyncZod = async (app) => {
     if (!restaurantIds.includes(data.storeId)) throw conflict('pos_store_mismatch', 'This order does not belong to the selected kitchen/store.');
     const dishSnapshots = await Promise.all(order.items.map((item) => db.collection(COL.dishes).doc(item.id).get()));
     const kitchenItems = order.items.filter((item, index) => {
-      const itemStoreId = String(dishSnapshots[index]?.get('brand') ?? '');
+      const itemStoreId = String(item.brandId ?? dishSnapshots[index]?.get('brand') ?? '');
       if (itemStoreId) return itemStoreId === data.storeId;
       return restaurantIds.length === 1 && restaurantIds[0] === data.storeId;
     });
