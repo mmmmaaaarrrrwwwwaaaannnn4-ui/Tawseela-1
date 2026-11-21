@@ -62,6 +62,9 @@ const posWebhookRoutes: FastifyPluginAsyncZod = async (app) => {
     if (['inventory.snapshot', 'inventory.delta', 'product.upsert'].includes(event.type) && !(data.capabilities as string[]).includes('inventory.write')) {
       throw new AppError(403, 'pos_capability_missing', 'This POS connection is not allowed to update inventory.');
     }
+    if (['order.acknowledged', 'order.status'].includes(event.type) && !(data.capabilities as string[]).includes('orders.status')) {
+      throw new AppError(403, 'pos_capability_missing', 'This POS connection is not allowed to send order status events.');
+    }
     if (['inventory.snapshot', 'inventory.delta', 'product.upsert'].includes(event.type) && !event.items?.length) throw badRequest('Product and inventory events must include at least one item.');
     const eventRef = db.collection('posWebhookEvents').doc(`${req.params.connectionId}__${event.eventId}`);
     const seen = await eventRef.get();
