@@ -234,6 +234,8 @@ export type AddressSnapshot = z.infer<typeof AddressSnapshot>;
 /** A priced line, frozen at order time (so history survives menu edits). */
 export const OrderItem = CartLine.extend({
   name: z.string(),
+  /** kitchen/brand captured at order time, so POS routing survives later menu edits */
+  brandId: id.optional(),
   /** size and extras, e.g. '12" · Extra cheese' (lineMeta) */
   meta: z.string(),
   /** unit price charged */
