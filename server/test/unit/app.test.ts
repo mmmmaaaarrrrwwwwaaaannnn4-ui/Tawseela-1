@@ -125,6 +125,21 @@ describe('http', () => {
     expect(res.headers['x-content-type-options']).toBe('nosniff');
   });
 
+  it('protects POS connection management with the admin role', async () => {
+    const res = await app.inject({ method: 'GET', url: '/v1/admin/pos/connections', headers: as('diner') });
+    expect(res.statusCode).toBe(403);
+  });
+
+  it('rejects POS webhook events without a fresh signature timestamp', async () => {
+    const res = await app.inject({
+      method: 'POST',
+      url: '/v1/pos/connection-1/events',
+      payload: { eventId: 'event-12345678', type: 'inventory.snapshot', storeId: 'kitchen-1', items: [{ sku: 'sku-1', quantity: 4 }] },
+    });
+    expect(res.statusCode).toBe(401);
+    expect(res.json().error.code).toBe('pos_timestamp_invalid');
+  });
+
   it('publishes the OpenAPI document behind /docs', async () => {
     const res = await app.inject({ method: 'GET', url: '/docs/json' });
     expect(res.statusCode).toBe(200);
