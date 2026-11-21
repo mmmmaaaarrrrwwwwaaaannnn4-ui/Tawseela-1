@@ -39,7 +39,7 @@ function safeConnection(id: string, data: Record<string, any>) {
   return {
     id, name: data.name, provider: data.provider, storeId: data.storeId,
     webhookUrl: data.webhookUrl ?? null, capabilities: data.capabilities ?? [],
-    enabled: data.enabled === true, createdAt: data.createdAt ?? null, updatedAt: data.updatedAt ?? null,
+    enabled: data.enabled === true, status: data.status ?? 'pending', createdAt: data.createdAt ?? null, updatedAt: data.updatedAt ?? null,
     lastSeenAt: data.lastSeenAt ?? null, lastError: data.lastError ?? null,
   };
 }
