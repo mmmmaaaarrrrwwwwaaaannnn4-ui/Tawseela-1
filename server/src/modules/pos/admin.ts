@@ -1,4 +1,5 @@
 import { randomBytes, randomUUID, createCipheriv, createDecipheriv, createHmac } from 'node:crypto';
+import { isIP } from 'node:net';
 import type { FastifyPluginAsyncZod } from 'fastify-type-provider-zod';
 import { FieldValue } from 'firebase-admin/firestore';
 import { z } from 'zod';
