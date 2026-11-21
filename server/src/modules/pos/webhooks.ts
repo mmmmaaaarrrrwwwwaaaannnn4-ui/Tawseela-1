@@ -69,13 +69,17 @@ const posWebhookRoutes: FastifyPluginAsyncZod = async (app) => {
       const duplicate = await tx.get(eventRef);
       if (duplicate.exists) return;
       if (event.type === 'inventory.snapshot' || event.type === 'inventory.delta' || event.type === 'product.upsert') {
-        for (const item of event.items ?? []) {
+        const items = event.items ?? [];
+        const inventoryRefs = items.map((item) => db.collection('posInventory').doc(`${event.storeId}__${item.sku}`));
+        const inventorySnaps = event.type === 'inventory.delta' ? await Promise.all(inventoryRefs.map((inventoryRef) => tx.get(inventoryRef))) : [];
+        for (let index = 0; index < items.length; index += 1) {
+          const item = items[index];
           const productRef = db.collection('posProducts').doc(`${req.params.connectionId}__${item.sku}`);
-          const inventoryRef = db.collection('posInventory').doc(`${event.storeId}__${item.sku}`);
-          const current = event.type === 'inventory.delta' ? await tx.get(inventoryRef) : null;
+          const inventoryRef = inventoryRefs[index];
+          const current = inventorySnaps[index];
           const currentQty = Number(current?.get('onHand') ?? 0);
           const nextQty = event.type === 'inventory.delta' ? currentQty + item.quantity : item.quantity;
-          if (nextQty < 0) throw new AppError(409, 'pos_inventory_negative', `Inventory for SKU ${item.sku} would become negative.`);
+          if (event.type.startsWith('inventory.') && nextQty < 0) throw new AppError(409, 'pos_inventory_negative', `Inventory for SKU ${item.sku} would become negative.`);
           if (event.type === 'product.upsert' || item.name || item.barcode || item.price !== undefined || item.dishId) {
             tx.set(productRef, {
               connectionId: req.params.connectionId, storeId: event.storeId, sku: item.sku,
