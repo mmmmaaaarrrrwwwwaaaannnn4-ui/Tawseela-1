@@ -137,7 +137,7 @@ async function priceOrder(tx: Transaction, db: Firestore, input: CreateOrderInpu
     }
     const s = settleLine(line, deal);
     settled.push(s);
-    return { ...s, name: p.name, meta: lineMeta(s, p), unit: lineUnit(s, p) };
+    return { ...s, name: p.name, brandId: p.brand, meta: lineMeta(s, p), unit: lineUnit(s, p) };
   });
 
   let promoPct: number | null = null;
