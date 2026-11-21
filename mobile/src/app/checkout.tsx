@@ -381,23 +381,30 @@ function Checkout() {
     setSheetError(false);
   };
 
-  const confirmPaymentSelection = () => {
+  const confirmPaymentSelection = async () => {
     if (!sheetSelection) { flashSheetError(); return; }
-    if (sheetSelection.startsWith('card:')) {
-      useApp.getState().makeDefaultCard(sheetSelection.slice(5));
-      set({ payM: 1 });
-      setWalletProvider('');
-      setWalletPhone('');
-    } else {
-      const wallet = savedWallets.find((w) => w.id === sheetSelection.slice(7));
-      if (!wallet) { flashSheetError(); return; }
-      set({ payM: 3 });
-      setWalletProvider(wallet.name);
-      setWalletPhone(wallet.phone);
+    try {
+      if (sheetSelection.startsWith('card:')) {
+        const cardId = sheetSelection.slice(5);
+        await api.post(`/v1/me/cards/${encodeURIComponent(cardId)}/default`, {});
+        useApp.getState().makeDefaultCard(cardId);
+        set({ payM: 1 });
+        setWalletProvider('');
+        setWalletPhone('');
+      } else {
+        const wallet = savedWallets.find((w) => w.id === sheetSelection.slice(7));
+        if (!wallet) { flashSheetError(); return; }
+        await api.post(`/v1/me/wallets/${encodeURIComponent(wallet.id)}/default`, {});
+        set({ payM: 3 });
+        setWalletProvider(wallet.name);
+        setWalletPhone(wallet.phone);
+      }
+      setPayPicked('online');
+      setPaymentSheet(false);
+      setSheetError(false);
+    } catch (error) {
+      useApp.getState().showToast('تعذر حفظ وسيلة الدفع الافتراضية', error instanceof Error ? error.message : 'حاول مرة أخرى.', 'error');
     }
-    setPayPicked('online');
-    setPaymentSheet(false);
-    setSheetError(false);
   };
 
   /* ───────── 3DS ───────── */
