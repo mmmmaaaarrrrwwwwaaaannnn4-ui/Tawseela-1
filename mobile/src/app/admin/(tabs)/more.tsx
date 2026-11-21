@@ -45,6 +45,7 @@ function More() {
     ],
     ['/admin/journal', 'Journal', `${posts.filter((p) => p.on).length} published · ${posts.filter((p) => !p.on).length} draft`, 'auto_stories'],
     ['/admin/promos', 'Promotions', cnt(promos.filter((x) => x.on).length, 'active code'), 'sell'],
+    ['/admin/pos', 'Smart POS', 'Connect cloud cashiers and monitor order sync', 'point_of_sale'],
     ['/admin/users', 'Users & roles', 'Add staff, change roles, disable accounts', 'group_add'],
     ['/staff', 'Fulfilment', 'Every order in progress, by stage', 'local_shipping'],
     ['/admin/customers', 'Customers', cnt(customers.length, 'customer'), 'group'],
