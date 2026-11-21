@@ -57,7 +57,7 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     // Kashier is the source of truth: this also finds cards saved before this app recorded local metadata.
     const url = `${tokenBase()}/v3/cards/customer?customerReference=${encodeURIComponent(user.uid)}&merchantId=${encodeURIComponent(config.KASHIER_MERCHANT_ID)}`;
     const response = await fetch(url, {
-      headers: { 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' },
+      headers: { Authorization: config.KASHIER_SECRET_KEY, 'Kashier-Hash': tokenHash(user.uid), accept: 'application/json' },
       signal: AbortSignal.timeout(15000),
     });
     const body: any = await response.json().catch(() => ({}));
