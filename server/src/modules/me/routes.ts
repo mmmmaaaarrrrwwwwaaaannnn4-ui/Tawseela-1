@@ -183,9 +183,11 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
       const wallets = stored && typeof stored === 'object' && !Array.isArray(stored) ? stored as Record<string, any> : {};
       const same = Object.values(wallets).find((w: any) => w?.provider === input.provider && w?.phone === input.phone) as any;
       const walletId = same?.id || id;
-      const next = Object.fromEntries(Object.entries(wallets).map(([key, value]: [string, any]) => [key, { ...value, ...(input.isDefault ? { isDefault: false } : {}) }]));
-      next[walletId] = { id: walletId, provider: input.provider, phone: input.phone, name: input.name, isDefault: input.isDefault || (!Object.keys(next).length), createdAt: same?.createdAt ?? savedAt, updatedAt: savedAt };
-      tx.set(ref, { paymentMethods: { wallets: next }, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+      const existingDefaultId = String(snap.get('paymentMethods.defaultWalletId') || Object.values(wallets).find((w: any) => w?.isDefault === true)?.id || '');
+      const makeDefault = input.isDefault || !existingDefaultId || same?.id === existingDefaultId;
+      const next = Object.fromEntries(Object.entries(wallets).map(([key, value]: [string, any]) => [key, { ...value, ...(makeDefault ? { isDefault: false } : {}) }]));
+      next[walletId] = { id: walletId, provider: input.provider, phone: input.phone, name: input.name, isDefault: makeDefault, createdAt: same?.createdAt ?? savedAt, updatedAt: savedAt };
+      tx.set(ref, { paymentMethods: { wallets: next, defaultWalletId: makeDefault ? walletId : existingDefaultId }, updatedAt: FieldValue.serverTimestamp() }, { merge: true });
     });
     const latest = await ref.get();
     const stored = latest.get('paymentMethods.wallets') || {};
@@ -217,11 +219,12 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
       if (!wallets[req.params.id]) throw notFound('Saved wallet');
       const wasDefault = wallets[req.params.id]?.isDefault === true;
       delete wallets[req.params.id];
-      if (wasDefault) {
-        const first = Object.keys(wallets)[0];
-        if (first) wallets[first] = { ...wallets[first], isDefault: true };
+      let defaultWalletId = String(snap.get('paymentMethods.defaultWalletId') || '');
+      if (wasDefault || defaultWalletId === req.params.id) {
+        defaultWalletId = Object.keys(wallets)[0] || '';
+        if (defaultWalletId) wallets[defaultWalletId] = { ...wallets[defaultWalletId], isDefault: true };
       }
-      tx.update(ref, { 'paymentMethods.wallets': wallets, updatedAt: FieldValue.serverTimestamp() });
+      tx.update(ref, { 'paymentMethods.wallets': wallets, 'paymentMethods.defaultWalletId': defaultWalletId, updatedAt: FieldValue.serverTimestamp() });
     });
     return { deleted: true };
   });
