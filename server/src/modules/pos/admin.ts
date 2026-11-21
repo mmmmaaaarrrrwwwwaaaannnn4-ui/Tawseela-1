@@ -7,7 +7,7 @@ import { COL } from '../../lib/collections';
 import { AppError, badRequest, conflict, notFound, unavailable } from '../../lib/errors';
 import { orderRef, toOrder } from '../orders/service';
 
-const capabilities = z.enum(['inventory.write', 'orders.push']);
+const capabilities = z.enum(['inventory.write', 'orders.push', 'orders.status']);
 const connectionInput = z.object({
   name: z.string().trim().min(2).max(80),
   provider: z.literal('custom_webhook'),
