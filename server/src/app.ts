@@ -24,6 +24,7 @@ import opsRoutes from './modules/ops/routes';
 import orderRoutes from './modules/orders/routes';
 import webhookRoutes from './modules/payments/webhook';
 import auth from './plugins/auth';
+import posWebhookRoutes from './modules/pos/webhooks';
 
 declare module 'fastify' {
   interface FastifyInstance {
@@ -121,6 +122,7 @@ export async function buildApp(deps: Deps, opts: { logger?: FastifyServerOptions
       await v1.register(orderRoutes);
       await v1.register(bookingRoutes);
       await v1.register(webhookRoutes);
+      await v1.register(posWebhookRoutes, { prefix: '/pos' });
       await v1.register(adminRoutes, { prefix: '/admin' });
       await v1.register(opsRoutes, { prefix: '/ops' });
     },
