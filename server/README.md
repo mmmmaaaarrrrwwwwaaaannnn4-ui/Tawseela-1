@@ -1,7 +1,6 @@
-# Fig & Fennel API
+# Tawseela API
 
-The server behind the full-stack edition of Fig & Fennel: the catalog, accounts and Fig Club, orders and Kashier
-payments, table bookings, the team's queues and the restaurant console. Fastify 5 with Zod-validated requests and
+The server behind Tawseela: catalog, customer accounts, orders and Kashier payments, table bookings, team queues, restaurant administration and the Smart POS gateway. Fastify 5 with Zod-validated requests and
 responses, Firebase Admin (Auth + Firestore), Kashier and ImageKit.
 
 The contract (Zod schemas, pricing, roles and the order workflow) lives in **`@fig/shared`** (`../shared/src`), which
@@ -14,7 +13,7 @@ server/
   src/config.ts          every setting, validated at startup
   src/lib/               Firebase/Kashier/ImageKit clients (deps.ts), Firestore layout, errors, role lookup
   src/plugins/auth.ts    Firebase ID token → req.user with the role from users/{uid}
-  src/modules/           catalog · me · orders · payments (Kashier, webhook) · bookings · ops (team) · admin (console)
+  src/modules/           catalog · me · orders · payments (Kashier, webhook) · bookings · ops (team) · admin (console) · pos (gateway and signed events)
   src/seed/data.ts       the local edition's catalog and demo activity, copied for the seed
   test/unit              HTTP layer without Firebase (ImageKit and Firebase Auth faked)
   test/integration       the API end to end against the emulators (+ Kashier test mode)
@@ -92,6 +91,7 @@ server at startup with the setting's name (never its value).
 | `KASHIER_MERCHANT_ID` | — | Kashier merchant ID (MID). |
 | `KASHIER_MODE` | `test` | `test` or `live`; must match the credential set. |
 | `PUBLIC_API_URL` | — | Public HTTPS base URL of this backend; required for the Kashier webhook callback. |
+| `POS_ENCRYPTION_KEY` | — | Required to create POS connections. Generate a 32-byte key with `openssl rand -hex 32`; keep it in server secrets only. POS webhook credentials are encrypted at rest with AES-256-GCM. |
 | `CURRENCY` | `EGP` | Currency of the Kashier payment sessions |
 | `IMAGEKIT_PRIVATE_KEY` | — | ImageKit private key for `POST /admin/uploads`. Without it uploads get `503 uploads_unavailable` |
 | `IMAGEKIT_FOLDER` | `/tawseela` | Upload folder; photos land in `<folder>/dishes`, `/kitchens`, `/banners`, `/journal` or `/uploads` |
@@ -102,6 +102,18 @@ server at startup with the setting's name (never its value).
 | `API_DOCS` | `true` | Swagger UI at `/docs` (OpenAPI JSON at `/docs/json`) |
 | `NODE_ENV` | `development` | `production` turns off pretty logs |
 
+## Smart POS gateway
+
+The first POS gateway release provides a secure, capability-based cloud Webhook adapter. It currently supports **outbound order dispatch** and **signed inbound product/inventory events**. It does not claim a native integration with Loyverse, Foodics, Odoo or local Windows cash-register software; each vendor needs its own official API/OAuth adapter and contract tests before it can be enabled.
+
+1. Set `POS_ENCRYPTION_KEY` to the output of `openssl rand -hex 32` in the backend's secret manager. Never commit the key.
+2. In Admin → Smart POS, create a Cloud Webhook connection for an existing kitchen/store. The generated shared secret is displayed once; store it in the POS endpoint's secret manager.
+3. Configure the POS receiver to accept `order.created` at the HTTPS URL you supplied. Admins can dispatch an order from the connection card; each order/connection pair is recorded as a dispatch job so retries can be audited.
+4. Configure the POS system to send signed events to `POST /v1/pos/{connectionId}/events`. Send `x-tawseela-timestamp` as Unix milliseconds and `x-tawseela-signature` as lowercase HMAC-SHA256 of `{timestamp}.{JSON.stringify(payload)}`, keyed by the shared secret. Timestamps older than five minutes are rejected.
+5. Supported inbound event types are `inventory.snapshot`, `inventory.delta`, `product.upsert`, `order.acknowledged` and `order.status`. Inventory is stored in POS-scoped collections; it does not silently overwrite Tawseela's catalog or deduct customer stock before an order is accepted.
+
+The currently exposed capabilities are deliberately limited to `orders.push` and `inventory.write`. Windows local bridge transport, thermal printer delivery, automatic catalog reconciliation and provider-specific cloud connectors remain separate implementation stages and must not be treated as live until built and tested.
+
 ## The API
 
 All routes are under `/v1`. Signed-in routes take the Firebase ID token as `Authorization: Bearer <token>`. Errors are
@@ -111,6 +123,8 @@ All routes are under `/v1`. Signed-in routes take the Firebase ID token as `Auth
 | --- | --- |
 | Catalog (public) | `GET /catalog` (ETag / `304`), `POST /promos/validate` |
 | Account | `GET /me`, `PATCH /me`, `POST /me/rewards/:id/redeem`, `POST /posts/:id/like`, `POST /issues` |
+| Smart POS (admin) | `GET/POST /admin/pos/connections`, `DELETE /admin/pos/connections/:id`, `POST /admin/pos/connections/:id/rotate-secret`, `POST /admin/pos/connections/:id/dispatch-order`, `GET /admin/pos/jobs` |
+| Smart POS (signed inbound) | `POST /pos/:connectionId/events` — signed inventory/product and external order-status events |
 | Orders | `POST /orders` (`Idempotency-Key`), `GET /orders`, `GET /orders/:id`, `POST /orders/:id/payment/sync`, `POST /orders/:id/cancel` (unpaid checkouts), `POST /orders/:id/rating`, `POST /orders/:id/issues` |
 | Bookings | `POST /bookings`, `GET /bookings`, `POST /bookings/:id/cancel` |
 | Team (any staff role) | `GET /ops/orders` (the caller's queue), `GET /ops/orders/:id`, `GET /ops/riders` (warehouse), `POST /ops/orders/:id/advance`, `PATCH /ops/orders/:id/contact` (call center), `POST /ops/orders/:id/items/:index/done` (packer) |
