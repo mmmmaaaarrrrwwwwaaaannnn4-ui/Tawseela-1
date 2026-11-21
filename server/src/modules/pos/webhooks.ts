@@ -6,14 +6,14 @@ import { z } from 'zod';
 import { AppError, badRequest, notFound } from '../../lib/errors';
 
 const eventSchema = z.object({
-  eventId: z.string().min(8).max(120),
+  eventId: z.string().regex(/^[A-Za-z0-9._:-]{8,120}$/),
   type: z.enum(['inventory.snapshot', 'inventory.delta', 'product.upsert', 'order.acknowledged', 'order.status']),
   storeId: z.string().min(1).max(64),
   occurredAt: z.number().int().optional(),
   orderId: z.string().min(1).max(64).optional(),
   externalStatus: z.string().max(80).optional(),
   items: z.array(z.object({
-    sku: z.string().trim().min(1).max(100),
+    sku: z.string().trim().regex(/^[A-Za-z0-9._:-]{1,100}$/),
     dishId: z.string().max(64).optional(),
     name: z.string().max(120).optional(),
     barcode: z.string().max(80).optional(),
@@ -59,8 +59,8 @@ const posWebhookRoutes: FastifyPluginAsyncZod = async (app) => {
     if (['inventory.snapshot', 'inventory.delta', 'product.upsert'].includes(event.type) && !(data.capabilities as string[]).includes('inventory.write')) {
       throw new AppError(403, 'pos_capability_missing', 'This POS connection is not allowed to update inventory.');
     }
-    if (event.type.startsWith('inventory.') && !event.items?.length) throw badRequest('Inventory events must include at least one item.');
-    const eventRef = db.collection('posWebhookEvents').doc(event.eventId);
+    if (['inventory.snapshot', 'inventory.delta', 'product.upsert'].includes(event.type) && !event.items?.length) throw badRequest('Product and inventory events must include at least one item.');
+    const eventRef = db.collection('posWebhookEvents').doc(`${req.params.connectionId}__${event.eventId}`);
     const seen = await eventRef.get();
     if (seen.exists) return reply.code(200).send({ accepted: true, replay: true });
 
