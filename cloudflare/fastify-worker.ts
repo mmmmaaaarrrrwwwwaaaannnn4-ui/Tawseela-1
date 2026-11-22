@@ -29,12 +29,9 @@ app.setNotFoundHandler((_request, reply) => {
   });
 });
 
-// Fastify must complete its own ready/initialization lifecycle before its
-// underlying Node server is exposed to Cloudflare's HTTP bridge. Calling
-// app.server.listen() directly bypasses that lifecycle and leaves Fastify's
-// internal router state uninitialized, causing Error 1101 at runtime.
-void app.listen({ port }).catch((error) => {
-  console.error('Fastify probe failed to start:', error);
-});
+// Complete Fastify's asynchronous plugin/router initialization before exposing
+// its underlying Node HTTP server to Cloudflare's request bridge.
+await app.ready();
+app.server.listen(port);
 
 export default httpServerHandler({ port });
