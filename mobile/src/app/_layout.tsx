@@ -11,6 +11,7 @@ import { FlyLayer, ToastHost } from '@/components/ui/overlays';
 import { useAccountSession } from '@/lib/account';
 import '@/lib/remote';
 import { useActiveOrderSync, useServerSync } from '@/lib/sync';
+import { registerForPushNotifications } from '@/lib/push-notifications';
 import { useAppHydrated } from '@/store/app-store';
 import { selectIsAdmin, selectIsStaff, selectSignedIn, useSession, useSessionHydrated } from '@/store/session';
 import { AppThemeProvider, useTheme } from '@/theme/theme';
@@ -54,6 +55,10 @@ export default function RootLayout() {
  */
 function AccountSync() {
   useAccountSession();
+  const uid = useSession((s) => s.user?.uid ?? null);
+  useEffect(() => {
+    if (uid) void registerForPushNotifications(uid);
+  }, [uid]);
   useServerSync();
   useActiveOrderSync();
   return null;
