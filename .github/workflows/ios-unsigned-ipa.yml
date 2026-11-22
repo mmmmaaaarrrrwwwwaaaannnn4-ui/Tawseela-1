@@ -20,10 +20,15 @@ jobs:
     runs-on: xcode-27
     timeout-minutes: 60
     env:
-      EXPO_PUBLIC_API_URL: https://tawseela-ap-pzip-1--marwankomanda0.replit.app
+      EXPO_PUBLIC_API_URL: ${{ vars.TAWSEELA_API_URL }}
       EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
 
     steps:
+      - name: Require production API URL
+        run: |
+          test -n "$EXPO_PUBLIC_API_URL" || { echo "TAWSEELA_API_URL repository variable must point to the verified production Cloudflare API"; exit 1; }
+          case "$EXPO_PUBLIC_API_URL" in https://*) ;; *) echo "TAWSEELA_API_URL must use HTTPS"; exit 1 ;; esac
+
       - name: Checkout repository
         uses: actions/checkout@v4
 
