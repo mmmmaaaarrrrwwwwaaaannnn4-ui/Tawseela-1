@@ -5,6 +5,7 @@ import adminCatalogRoutes from './catalog';
 import adminOperationRoutes from './operations';
 import adminUserRoutes from './users';
 import posAdminRoutes from '../pos/admin';
+import notificationRoutes from './notifications';
 
 /** /v1/admin/* — the restaurant console. Every route needs the admin role. */
 const adminRoutes: FastifyPluginAsync = async (app) => {
@@ -19,6 +20,7 @@ const adminRoutes: FastifyPluginAsync = async (app) => {
   await app.register(adminOperationRoutes);
   await app.register(adminUserRoutes);
   await app.register(posAdminRoutes, { prefix: '/pos' });
+  await app.register(notificationRoutes);
 };
 
 export default adminRoutes;
