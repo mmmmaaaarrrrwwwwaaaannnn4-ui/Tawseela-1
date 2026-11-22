@@ -3,9 +3,8 @@
  * This is not the production API and has no customer-data bindings.
  */
 import Fastify from 'fastify';
-import { handleAsNodeRequest } from 'cloudflare:node';
+import { httpServerHandler } from 'cloudflare:node';
 
-const port = 8787;
 const app = Fastify({ logger: false, bodyLimit: 64 * 1024 });
 
 app.get('/health', async () => ({
@@ -25,24 +24,13 @@ app.setNotFoundHandler((_request, reply) =>
   reply.code(404).send({ error: { code: 'not_found', message: 'Probe route not found.' } }),
 );
 
-// Fastify's ready() resolves after plugin initialization, but Node's listen()
-// is callback-based. Wait for the listening event before routing Worker requests
-// to the port; otherwise the bridge can see an unregistered server and return 500.
-const ready = (async () => {
-  await app.ready();
-  await new Promise<void>((resolve, reject) => {
-    const onError = (error: Error) => reject(error);
-    app.server.once('error', onError);
-    app.server.listen(port, () => {
-      app.server.off('error', onError);
-      resolve();
-    });
-  });
-})();
+// Use Cloudflare's documented server-instance integration. Fastify completes
+// its plugin lifecycle before its Node HTTP server is handed to the bridge.
+const handlerPromise = app.ready().then(() => httpServerHandler(app.server));
 
 export default {
-  async fetch(request: Request): Promise<Response> {
-    await ready;
-    return handleAsNodeRequest(port, request);
+  async fetch(request: Request, env: unknown, ctx: unknown): Promise<Response> {
+    const handler = await handlerPromise;
+    return handler.fetch(request, env, ctx);
   },
 };
