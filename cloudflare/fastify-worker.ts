@@ -5,7 +5,7 @@
  * storage, notification, or customer-data bindings.
  */
 import Fastify from 'fastify';
-import { httpServerHandler } from 'cloudflare:node';
+import { handleAsNodeRequest } from 'cloudflare:node';
 
 const port = 8787;
 const app = Fastify({ logger: false, bodyLimit: 64 * 1024 });
@@ -29,9 +29,15 @@ app.setNotFoundHandler((_request, reply) => {
   });
 });
 
-// Complete Fastify's asynchronous plugin/router initialization before exposing
-// its underlying Node HTTP server to Cloudflare's request bridge.
-await app.ready();
-app.server.listen(port);
+// Workers disallow top-level await in entrypoint modules. Initialize Fastify
+// once, then route each request only after its async plugin setup has completed.
+const ready = app.ready().then(() => {
+  app.server.listen(port);
+});
 
-export default httpServerHandler({ port });
+export default {
+  async fetch(request: Request): Promise<Response> {
+    await ready;
+    return handleAsNodeRequest(port, request);
+  },
+};
