@@ -21,11 +21,16 @@ export async function registerForPushNotifications(uid: string): Promise<void> {
     }
 
     let permissions = await Notifications.getPermissionsAsync();
-    if (permissions.status !== 'granted' && permissions.status !== 'provisional') {
-      if (permissions.status === 'denied') return;
+    const hasPushPermission = () =>
+      permissions.granted ||
+      (Platform.OS === 'ios' &&
+        permissions.ios?.status === Notifications.IosAuthorizationStatus.PROVISIONAL);
+
+    if (!hasPushPermission()) {
+      if (permissions.status === 'denied' && !permissions.canAskAgain) return;
       permissions = await Notifications.requestPermissionsAsync();
     }
-    if (permissions.status !== 'granted' && permissions.status !== 'provisional') return;
+    if (!hasPushPermission()) return;
 
     const projectId = Constants.expoConfig?.extra?.eas?.projectId;
     if (!projectId) {
