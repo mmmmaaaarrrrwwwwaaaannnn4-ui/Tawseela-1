@@ -18,7 +18,7 @@ const isExpoToken = (value: unknown): value is string =>
   typeof value === 'string' && /^(Expo|Exponent)PushToken\[[^\]]+\]$/.test(value);
 
 const notificationRoutes: FastifyPluginAsyncZod = async (app) => {
-  const { db, now } = app.deps;
+  const { db } = app.deps;
 
   app.post(
     '/notifications/send',
