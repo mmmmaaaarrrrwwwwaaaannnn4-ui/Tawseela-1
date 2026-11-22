@@ -57,3 +57,12 @@ Any adapter must preserve current authorization checks, idempotency, webhook sig
 - FCM, ImageKit, POS HMAC/replay/idempotency, and notifications pass tests.
 - `GET /health` returns `200 { "ok": true }`.
 - No production cutover until integration and load tests pass.
+
+## Probe status — 2026-11-22
+
+- GitHub Actions typecheck and unit-test workflow completed successfully (run #65).
+- The isolated Fastify probe has been deployed to the separate Worker name `tawseela-fastify-workers-probe`; the API migration probe is a different Worker named `tawseela-api-migration-probe`. Neither is the production API.
+- The Fastify probe has no application bindings configured (no Firebase, Kashier, ImageKit, or customer-data secrets).
+- An earlier public check returned Cloudflare Error 1101 at 07:36 UTC. Cloudflare deployment history shows a later Fastify probe deployment at approximately 07:38 UTC, but deployment success alone does not prove the public endpoint is healthy. Re-check `/health` and `POST /echo` against the latest deployment before treating the bridge as validated.
+- Do not interpret the green repository typecheck/unit-test workflow as a deployed HTTP smoke test. Keep runtime smoke tests as a separate required gate.
+- The current probe source starts Fastify with an asynchronous `app.listen()` call and immediately exports the port-based HTTP bridge. If the 1101 persists, inspect Worker invocation logs and test a server-instance form of `httpServerHandler` or a readiness-gated bridge; do not bypass Fastify's `ready()` lifecycle.
