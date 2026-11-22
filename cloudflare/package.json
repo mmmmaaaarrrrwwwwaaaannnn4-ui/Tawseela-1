@@ -1,0 +1,8 @@
+{
+  "name": "tawseela-cloudflare-probes",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "fastify": "^5.12.7"
+  }
+}
