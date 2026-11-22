@@ -2,12 +2,12 @@
  * Isolated Fastify-on-Workers compatibility probe.
  *
  * This is deliberately NOT the Tawseela API: it has no Firebase, payment,
- * storage, notification, or customer-data bindings. Its only purpose is to
- * prove Fastify 5 can be served through Cloudflare's Node HTTP bridge.
+ * storage, notification, or customer-data bindings.
  */
 import Fastify from 'fastify';
 import { httpServerHandler } from 'cloudflare:node';
 
+const port = 8787;
 const app = Fastify({ logger: false, bodyLimit: 64 * 1024 });
 
 app.get('/health', async () => ({
@@ -29,20 +29,8 @@ app.setNotFoundHandler((_request, reply) => {
   });
 });
 
-const port = 8787;
-const bridge = httpServerHandler({ port });
+// Fastify exposes its underlying Node HTTP server. Start it synchronously;
+// Cloudflare's bridge routes Worker requests to this logical port.
+void app.server.listen(port);
 
-export default {
-  async fetch(request: Request, env: unknown, ctx: ExecutionContext) {
-    // Fastify's ready() is asynchronous; await it per request instead of
-    // using top-level await, which Workers rejects for synchronously loaded
-    // Node-compatibility entrypoint modules.
-    await app.ready();
-
-    if (!app.server.listening) {
-      app.server.listen(port);
-    }
-
-    return bridge(request, env, ctx);
-  },
-};
+export default httpServerHandler({ port });
