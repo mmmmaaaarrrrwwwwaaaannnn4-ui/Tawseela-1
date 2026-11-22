@@ -40,7 +40,7 @@ export default {
     await app.ready();
 
     if (!app.server.listening) {
-      app.server.listen(port, '127.0.0.1');
+      app.server.listen(port);
     }
 
     return bridge(request, env, ctx);
