@@ -130,6 +130,11 @@ describe('http', () => {
     expect(res.statusCode).toBe(403);
   });
 
+  it('protects push notification campaigns with the admin role', async () => {
+    const res = await app.inject({ method: 'GET', url: '/v1/admin/notifications/history', headers: as('diner') });
+    expect(res.statusCode).toBe(403);
+  });
+
   it('rejects POS webhook events without a fresh signature timestamp', async () => {
     const res = await app.inject({
       method: 'POST',
@@ -145,7 +150,7 @@ describe('http', () => {
     expect(res.statusCode).toBe(200);
     const spec = res.json();
     expect(spec.info.title).toBe('Tawseela API');
-    for (const path of ['/v1/catalog', '/v1/orders', '/v1/ops/orders/{id}/advance', '/v1/admin/orders/{id}/fire', '/v1/admin/users/{uid}', '/v1/posts/{id}/like']) {
+    for (const path of ['/v1/catalog', '/v1/orders', '/v1/ops/orders/{id}/advance', '/v1/admin/orders/{id}/fire', '/v1/admin/users/{uid}', '/v1/admin/notifications/send', '/v1/admin/notifications/history', '/v1/posts/{id}/like']) {
       expect(spec.paths).toHaveProperty([path]);
     }
   });
