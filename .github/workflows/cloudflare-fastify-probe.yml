@@ -11,7 +11,7 @@ permissions:
 
 jobs:
   deploy-probe:
-    name: Build and deploy isolated Fastify probe
+    name: Build, deploy, and smoke-test isolated Fastify probe
     runs-on: ubuntu-latest
     steps:
       - name: Check out migration branch
@@ -33,3 +33,39 @@ jobs:
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Wait for deployment and smoke-test GET /health
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://tawseela-fastify-workers-probe.mmmmaaaarrrrwwwwaaaannnn4.workers.dev"
+          for attempt in {1..12}; do
+            if curl --fail --silent --show-error "$URL/health" -o /tmp/health.json; then
+              break
+            fi
+            if [ "$attempt" -eq 12 ]; then
+              echo "Worker health check did not become ready."
+              exit 1
+            fi
+            sleep 5
+          done
+          node -e "const x=require('/tmp/health.json'); if(x.ok!==true || x.productionApi!==false) process.exit(1); console.log(JSON.stringify(x))"
+
+      - name: Smoke-test POST /echo
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://tawseela-fastify-workers-probe.mmmmaaaarrrrwwwwaaaannnn4.workers.dev"
+          curl --fail --silent --show-error \
+            -H 'content-type: application/json' \
+            -d '{"probe":"ok"}' "$URL/echo" -o /tmp/echo.json
+          node -e "const x=require('/tmp/echo.json'); if(x.ok!==true || x.body?.probe!=='ok') process.exit(1); console.log(JSON.stringify(x))"
+
+      - name: Smoke-test unknown route returns JSON 404
+        shell: bash
+        run: |
+          set -euo pipefail
+          URL="https://tawseela-fastify-workers-probe.mmmmaaaarrrrwwwwaaaannnn4.workers.dev"
+          status="$(curl --silent --output /tmp/not-found.json --write-out '%{http_code}' "$URL/__probe_missing_route__")"
+          test "$status" = "404"
+          node -e "const x=require('/tmp/not-found.json'); if(x.error?.code!=='not_found') process.exit(1); console.log(JSON.stringify(x))"
