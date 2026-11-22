@@ -29,7 +29,20 @@ app.setNotFoundHandler((_request, reply) => {
   });
 });
 
-// The Node HTTP bridge forwards Worker requests to this in-isolate server.
-await app.listen({ port: 8787, host: '127.0.0.1' });
+const port = 8787;
+const bridge = httpServerHandler({ port });
 
-export default httpServerHandler({ port: 8787 });
+export default {
+  async fetch(request: Request, env: unknown, ctx: ExecutionContext) {
+    // Fastify's ready() is asynchronous; await it per request instead of
+    // using top-level await, which Workers rejects for synchronously loaded
+    // Node-compatibility entrypoint modules.
+    await app.ready();
+
+    if (!app.server.listening) {
+      app.server.listen(port, '127.0.0.1');
+    }
+
+    return bridge(request, env, ctx);
+  },
+};
