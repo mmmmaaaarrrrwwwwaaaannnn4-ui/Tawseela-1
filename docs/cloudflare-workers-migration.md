@@ -23,7 +23,7 @@
 
 ## Runtime strategy
 
-Use a dedicated Worker entry point and preserve the Fastify route tree where practical. Cloudflare's Node HTTP server compatibility and `cloudflare:node` `httpServerHandler` may allow Fastify's HTTP server to run, but this must be proven with a minimal Worker smoke test before porting the whole application. Do not assume Node compatibility means every Node package or native dependency works.
+Use a dedicated Worker entry point and preserve the Fastify route tree where practical. Cloudflare's Node HTTP server compatibility and `cloudflare:node` `httpServerHandler` may allow Fastify's HTTP server to run. An isolated Fastify 5 bridge probe now exists at `cloudflare/fastify-worker.ts`, with its own config at `cloudflare/wrangler-fastify.toml`. It exposes only `/health` and `/echo`; it is not the production API and has no Firebase or payment bindings. It still must be built and deployed with Wrangler, then tested on the public Worker URL before the bridge can be considered proven. Cloudflare documents Node HTTP server support for Workers, but Node compatibility is not equivalent to full Node.js and some APIs remain stubs or partial implementations. Do not assume every dependency works.
 
 The Firebase Admin SDK is the main compatibility gate. Do not ship it in the Worker until a compatibility test proves the required Auth and Firestore operations work in the Workers runtime. If it does not, introduce a tested adapter layer:
 - Firebase ID token verification using a Workers-compatible JWT/JWK implementation and Google's published signing keys, with issuer/audience/expiry checks and key caching.
@@ -36,7 +36,7 @@ Any adapter must preserve current authorization checks, idempotency, webhook sig
 
 ## Implementation phases
 
-1. **Compatibility spike:** create a tiny Worker entry that boots the Fastify app using the Cloudflare HTTP bridge; run `/health` locally and on a preview deployment. Verify multipart, redirects, request raw-body/signature handling, and response behavior.
+1. **Compatibility spike:** the repository now contains an isolated Fastify 5 Worker entry at `cloudflare/fastify-worker.ts` and a separate Wrangler config. Next run `npx wrangler dev --config cloudflare/wrangler-fastify.toml`, then deploy this probe separately with `npx wrangler deploy --config cloudflare/wrangler-fastify.toml`. Verify `/health`, POST `/echo`, multipart, redirects, request raw-body/signature handling, and response behavior. Do not mark the bridge proven until local and deployed tests pass.
 2. **Firebase adapters:** prove Auth token verification and Firestore read/write/query/transaction behavior against a non-production Firebase project/emulator first. Do not point tests at live customer data.
 3. **Service adapters:** port POS cryptography, ImageKit uploads, FCM delivery, and Kashier webhook processing. Keep all external URLs and signatures identical.
 4. **Route parity:** test every existing API route and compare status codes, response payloads, and side effects with the current backend.
@@ -46,7 +46,7 @@ Any adapter must preserve current authorization checks, idempotency, webhook sig
 
 ## Capacity and cost gate
 
-The Workers Free plan currently documents 100,000 requests/day and 10 ms CPU per request; paid has no daily request cap and a higher CPU allowance. 1,000 daily active users does not tell us peak concurrency or API requests/day. Measure real request volume and CPU before promising the free tier is sufficient. Configure a spending limit/budget controls before production rollout.
+1,000 daily active users does not tell us peak concurrency or API requests/day. Measure real request volume, CPU time, subrequests, and external service latency before selecting a Workers plan or promising capacity. Configure spending controls before production rollout.
 
 ## Acceptance criteria
 
