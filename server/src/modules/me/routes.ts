@@ -28,6 +28,26 @@ const meRoutes: FastifyPluginAsyncZod = async (app) => {
     requireUser(req);
   });
 
+  app.post('/me/push-token', { schema: { tags: ['notifications'], summary: 'Register this device for remote push notifications', ...secured, body: z.object({ token: z.string().min(20).max(256).regex(/^(Expo|Exponent)PushToken\[[^\]]+\]$/) }) } }, async (req) => {
+    const user = requireUser(req);
+    await ensureUser(db, user);
+    const token = req.body.token;
+    const existing = await db.collection(COL.users).where('pushTokens', 'array-contains', token).limit(50).get();
+    const batch = db.batch();
+    for (const doc of existing.docs) {
+      if (doc.id !== user.uid) batch.update(doc.ref, { pushTokens: FieldValue.arrayRemove(token) });
+    }
+    batch.set(userRef(db, user.uid), { pushTokens: FieldValue.arrayUnion(token), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    await batch.commit();
+    return { registered: true };
+  });
+
+  app.delete('/me/push-token', { schema: { tags: ['notifications'], summary: 'Unregister this device from remote push notifications', ...secured, body: z.object({ token: z.string().min(20).max(256) }) } }, async (req) => {
+    const user = requireUser(req);
+    await userRef(db, user.uid).set({ pushTokens: FieldValue.arrayRemove(req.body.token), updatedAt: FieldValue.serverTimestamp() }, { merge: true });
+    return { removed: true };
+  });
+
   // Kashier card vault: PAN/CVV go directly from the device to Kashier, never through this API.
   const tokenBase = () => config.KASHIER_MODE === 'live' ? 'https://fep.kashier.io' : 'https://test-fep.kashier.io';
   const tokenHash = (uid: string) => {
