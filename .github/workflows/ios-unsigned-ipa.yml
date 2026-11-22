@@ -1,5 +1,5 @@
 name: Build Tawseela Unsigned iOS IPA
-# Re-run iOS build for latest Tawseela admin notification and push delivery updates
+# Trigger unsigned iOS build after repository ownership transfer
 
 on:
   workflow_dispatch:
