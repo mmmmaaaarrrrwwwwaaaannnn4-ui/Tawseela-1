@@ -24,10 +24,9 @@ app.setNotFoundHandler((_request, reply) =>
   reply.code(404).send({ error: { code: 'not_found', message: 'Probe route not found.' } }),
 );
 
-// Cloudflare routes Node HTTP requests by virtual port. Keep startup asynchronous
-// without top-level await: Workers reject TLA in the entrypoint module.
-const port = 8787;
-const handlerPromise = app.listen({ host: '0.0.0.0', port }).then(() => httpServerHandler({ port }));
+// Finish Fastify's plugin/route lifecycle before exposing its underlying Node HTTP
+// server. httpServerHandler(server) owns the listen lifecycle on Workers.
+const handlerPromise = app.ready().then(() => httpServerHandler(app.server));
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown): Promise<Response> {
