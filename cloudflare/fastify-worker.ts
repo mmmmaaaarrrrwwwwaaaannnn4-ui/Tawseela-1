@@ -24,13 +24,15 @@ app.setNotFoundHandler((_request, reply) =>
   reply.code(404).send({ error: { code: 'not_found', message: 'Probe route not found.' } }),
 );
 
-// Use Cloudflare's documented server-instance integration. Fastify completes
-// its plugin lifecycle before its Node HTTP server is handed to the bridge.
-const handlerPromise = app.ready().then(() => httpServerHandler(app.server));
+// Cloudflare's Node HTTP bridge routes requests by the port passed to
+// httpServerHandler. Start Fastify on that virtual port before exporting it;
+// passing an un-listening Fastify server instance caused the Worker to hang.
+const port = 8787;
+await app.listen({ host: '0.0.0.0', port });
+const handler = httpServerHandler({ port });
 
 export default {
-  async fetch(request: Request, env: unknown, ctx: unknown): Promise<Response> {
-    const handler = await handlerPromise;
+  fetch(request: Request, env: unknown, ctx: unknown): Promise<Response> {
     return handler.fetch(request, env, ctx);
   },
 };
