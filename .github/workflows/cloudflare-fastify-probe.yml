@@ -1,9 +1,6 @@
 name: Cloudflare Fastify compatibility probe
 
 on:
-  push:
-    branches:
-      - fix/saved-card-persistence-2026-11-14
   workflow_dispatch:
 
 permissions:
