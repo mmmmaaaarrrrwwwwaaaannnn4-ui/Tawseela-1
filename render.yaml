@@ -1,0 +1,40 @@
+services:
+  - type: web
+    name: tawseela-api
+    runtime: node
+    plan: starter
+    region: frankfurt
+    branch: fix/saved-card-persistence-2026-11-14
+    autoDeploy: false
+    buildCommand: npm install --include=dev && npm run build -w server
+    startCommand: npm run start -w server
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_VERSION
+        value: 24.12.0
+      - key: NODE_ENV
+        value: production
+      - key: HOST
+        value: 0.0.0.0
+      - key: API_DOCS
+        value: "false"
+      - key: FIREBASE_PROJECT_ID
+        value: tawssela-96447
+      - key: FIREBASE_SERVICE_ACCOUNT_JSON
+        sync: false
+      - key: KASHIER_MERCHANT_ID
+        sync: false
+      - key: KASHIER_PAYMENT_API_KEY
+        sync: false
+      - key: KASHIER_SECRET_KEY
+        sync: false
+      - key: KASHIER_MODE
+        value: test
+      - key: IMAGEKIT_PRIVATE_KEY
+        sync: false
+      - key: POS_ENCRYPTION_KEY
+        sync: false
+      - key: CORS_ORIGINS
+        value: ""
+      - key: DEMO_KITCHEN_SECONDS
+        value: "0"
