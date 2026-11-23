@@ -3,10 +3,6 @@ name: Build Tawseela Unsigned iOS IPA
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - build/tawseela-ios-ipa-v10
-      - fix/saved-card-persistence-2026-11-14
 
 permissions:
   contents: read
