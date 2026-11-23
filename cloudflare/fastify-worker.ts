@@ -1,6 +1,6 @@
 /**
  * Isolated Fastify-on-Workers compatibility probe.
- * This is not the production API and has no customer-data bindings.
+ * Temporary diagnostic response; never handles production/customer data.
  */
 import Fastify from 'fastify';
 import { httpServerHandler } from 'cloudflare:node';
@@ -24,13 +24,19 @@ app.setNotFoundHandler((_request, reply) =>
   reply.code(404).send({ error: { code: 'not_found', message: 'Probe route not found.' } }),
 );
 
-// Finish Fastify's plugin/route lifecycle before exposing its underlying Node HTTP
-// server. httpServerHandler(server) owns the listen lifecycle on Workers.
 const handlerPromise = app.ready().then(() => httpServerHandler(app.server));
 
 export default {
   async fetch(request: Request, env: unknown, ctx: unknown): Promise<Response> {
-    const handler = await handlerPromise;
-    return handler.fetch(request, env, ctx);
+    try {
+      const handler = await handlerPromise;
+      return await handler.fetch(request, env, ctx);
+    } catch (error) {
+      const detail = error instanceof Error
+        ? { name: error.name, message: error.message, stack: error.stack }
+        : { message: String(error) };
+      console.error('Fastify Worker bridge failure', detail);
+      return Response.json({ ok: false, diagnostic: detail }, { status: 500 });
+    }
   },
 };
