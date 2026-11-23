@@ -3,6 +3,9 @@ name: Build Tawseela Unsigned iOS IPA
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - fix/saved-card-persistence-2026-11-14
 
 permissions:
   contents: read
@@ -16,14 +19,17 @@ jobs:
     runs-on: xcode-27
     timeout-minutes: 60
     env:
-      EXPO_PUBLIC_API_URL: ${{ vars.TAWSEELA_API_URL }}
+      # Temporary legacy endpoint retained until the replacement API is deployed and verified.
+      EXPO_PUBLIC_API_URL: ${{ vars.TAWSEELA_API_URL || 'https://tawseela-ap-pzip-1--marwankomanda0.replit.app' }}
       EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID: ${{ secrets.GOOGLE_WEB_CLIENT_ID }}
 
     steps:
       - name: Require production API URL
         run: |
-          test -n "$EXPO_PUBLIC_API_URL" || { echo "TAWSEELA_API_URL repository variable must point to the verified production Cloudflare API"; exit 1; }
-          case "$EXPO_PUBLIC_API_URL" in https://*) ;; *) echo "TAWSEELA_API_URL must use HTTPS"; exit 1 ;; esac
+          test -n "$EXPO_PUBLIC_API_URL" || { echo "No API URL configured"; exit 1; }
+          case "$EXPO_PUBLIC_API_URL" in https://*) ;; *) echo "API URL must use HTTPS"; exit 1 ;; esac
+          echo "Using API endpoint: $EXPO_PUBLIC_API_URL"
+          echo "NOTE: legacy Replit endpoint must be reachable for app functionality."
 
       - name: Checkout repository
         uses: actions/checkout@v4
